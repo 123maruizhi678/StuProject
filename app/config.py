@@ -3,6 +3,7 @@
 使用 pydantic-settings，所有配置集中在此，供 logger / database 等模块共享。
 新增配置只需在 .env 添加对应字段并在 Settings 中声明即可。
 """
+
 from pathlib import Path
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -26,8 +27,8 @@ class Settings(BaseSettings):
     DB_HOST: str = "localhost"
     DB_PORT: int = 3306
     DB_USER: str = "root"
-    DB_PASSWORD: str = ""
-    DB_NAME: str = "stu_project"
+    DB_PASSWORD: str = "12345"
+    DB_NAME: str = "education_agent"
     DB_ECHO: bool = False
 
 
