@@ -131,9 +131,9 @@ CREATE TABLE after_sales_ticket (
   KEY idx_ticket_follower (follower_id, process_status, created_at),
   KEY idx_ticket_report (created_at, category),
   CONSTRAINT fk_ticket_student FOREIGN KEY (student_id) REFERENCES student_identity(id),
-  CONSTRAINT ck_ticket_type CHECK (feedback_type IN ('complaint', 'suggestion')),
+  CONSTRAINT ck_stu_ticket_type CHECK (feedback_type IN ('complaint', 'suggestion')),
   CONSTRAINT ck_ticket_category CHECK (category IN ('visa', 'application', 'life', 'other')),
-  CONSTRAINT ck_ticket_status CHECK (process_status IN ('pending', 'processing', 'resolved', 'cancelled')),
+  CONSTRAINT ck_stu_ticket_status CHECK (process_status IN ('pending', 'processing', 'resolved', 'cancelled')),
   CONSTRAINT ck_ticket_resolved CHECK (process_status <> 'resolved' OR (follower_id IS NOT NULL AND first_response_at IS NOT NULL AND resolved_at IS NOT NULL AND solution IS NOT NULL)),
   CONSTRAINT ck_ticket_score CHECK (satisfaction_score IS NULL OR (satisfaction_score BETWEEN 1 AND 5 AND process_status = 'resolved')),
   CONSTRAINT ck_ticket_version CHECK (version >= 1)
@@ -237,9 +237,9 @@ CREATE TABLE student_notification (
   KEY idx_notification_business (business_type, business_id),
   CONSTRAINT fk_notification_student FOREIGN KEY (student_id) REFERENCES student_identity(id),
   CONSTRAINT ck_notification_business CHECK (business_type IN ('administration', 'mental_warning', 'ticket', 'academic_reminder')),
-  CONSTRAINT ck_notification_recipient CHECK (recipient_type IN ('student', 'employee')),
+  CONSTRAINT ck_stu_notification_recipient CHECK (recipient_type IN ('student', 'employee')),
   CONSTRAINT ck_notification_channel CHECK (channel IN ('in_app', 'enterprise')),
-  CONSTRAINT ck_notification_status CHECK (status IN ('pending', 'processing', 'sent', 'failed', 'cancelled')),
+  CONSTRAINT ck_stu_notification_status CHECK (status IN ('pending', 'processing', 'sent', 'failed', 'cancelled')),
   CONSTRAINT ck_notification_attempts CHECK (attempts >= 0),
   CONSTRAINT ck_notification_sent CHECK (status <> 'sent' OR (recipient_id IS NOT NULL AND sent_at IS NOT NULL))
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='通知任务与收件记录';
