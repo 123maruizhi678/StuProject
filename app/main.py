@@ -6,7 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.logger import get_logger, init_logger
 from app.core.response import register_exception_handlers
-from app.database import dispose_db, init_db
+from app.database import dispose_db
 
 # 最先加载日志，保证后续所有模块输出都被捕获
 init_logger()
@@ -36,7 +36,7 @@ app.add_middleware(
 # 全局异常处理器：统一收敛为 {code, message, data} 信封
 register_exception_handlers(app)
 
-# 路由注册（各 api 模块完成后在此 include）
+# 路由注册（各业务模块就绪后在此 include，挂载到 /api/v1）
 # from app.api import customer, agent, enterprise, student, report
 # app.include_router(customer.router, prefix="/api/v1")
 # app.include_router(agent.router, prefix="/api/v1")
