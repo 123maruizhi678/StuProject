@@ -1,0 +1,19 @@
+# Python 字节码缓存
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# 虚拟环境
+.venv/
+venv/
+env/
+
+# 环境与本地数据（含密钥、日志，勿提交）
+.env
+app/logs/
+
+# 编辑器 / 系统文件
+.idea/
+.vscode/
+.DS_Store
