@@ -27,7 +27,7 @@ class Settings(BaseSettings):
     DB_HOST: str = "localhost"
     DB_PORT: int = 3306
     DB_USER: str = "root"
-    DB_PASSWORD: str = "12345"
+    DB_PASSWORD: str = "123456"
     DB_NAME: str = "education_agent"
     DB_ECHO: bool = False
 
