@@ -1,1 +1,1 @@
-print("maruizhi NB!")
+print("maruizhi NB plus!")
