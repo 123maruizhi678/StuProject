@@ -31,6 +31,11 @@ class Settings(BaseSettings):
     DB_NAME: str = "education_agent"
     DB_ECHO: bool = False
 
+    # Dify NL2SQL 工作流
+    DIFY_API_BASE: str = "http://127.0.0.1/v1"
+    DIFY_API_KEY: str = ""
+    DIFY_SQL_OUTPUT_KEY: str = "sql"
+
 
 settings = Settings()
 
