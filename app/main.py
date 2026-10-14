@@ -1,16 +1,28 @@
 """FastAPI 应用入口：初始化、中间件、路由注册、全局异常处理。"""
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.logger import get_logger, init_logger
 from app.core.response import register_exception_handlers
+from app.database import dispose_db, init_db
 
 # 最先加载日志，保证后续所有模块输出都被捕获
 init_logger()
 logger = get_logger(__name__)
 
+
+@asynccontextmanager
+async def lifespan(_: FastAPI):
+    logger.info("数据库初始化中...")
+    yield
+    logger.info("释放数据库连接池...")
+    dispose_db()
+
+
 logger.info("StuProject 启动中...")
-app = FastAPI(title="StuProject", version="1.0.0")
+app = FastAPI(title="StuProject", version="1.0.0", lifespan=lifespan)
 
 # 跨域中间件（开发阶段放开，生产按需收紧）
 app.add_middleware(
