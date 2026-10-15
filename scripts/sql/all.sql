@@ -798,7 +798,7 @@ CREATE TABLE `user_account` (
   CONSTRAINT `fk_user_employee` FOREIGN KEY (`employee_id`) REFERENCES `employee` (`employee_id`) ON DELETE RESTRICT ON UPDATE RESTRICT,
   CONSTRAINT `fk_user_customer` FOREIGN KEY (`customer_id`) REFERENCES `customer_profile` (`customer_id`) ON DELETE RESTRICT ON UPDATE RESTRICT,
   CONSTRAINT `fk_user_student` FOREIGN KEY (`student_id`) REFERENCES `student_profile` (`student_id`) ON DELETE RESTRICT ON UPDATE RESTRICT,
-  CONSTRAINT `ck_user_identity_link` CHECK ((`identity_type` = 'employee' AND `employee_id` IS NOT NULL AND `customer_id` IS NULL AND `student_id` IS NULL) OR (`identity_type` = 'customer' AND `employee_id` IS NULL AND `customer_id` IS NOT NULL AND `student_id` IS NULL) OR (`identity_type` = 'student' AND `employee_id` IS NULL AND `customer_id` IS NULL AND `student_id` IS NOT NULL))
+  CONSTRAINT `ck_user_identity_link` CHECK ((`identity_type` = 'admin' AND `employee_id` IS NULL AND `customer_id` IS NULL AND `student_id` IS NULL) OR (`identity_type` = 'employee' AND `employee_id` IS NOT NULL AND `customer_id` IS NULL AND `student_id` IS NULL) OR (`identity_type` = 'customer' AND `employee_id` IS NULL AND `customer_id` IS NOT NULL AND `student_id` IS NULL) OR (`identity_type` = 'student' AND `employee_id` IS NULL AND `customer_id` IS NULL AND `student_id` IS NOT NULL))
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='统一用户账号与身份关联表';
 
 SET FOREIGN_KEY_CHECKS = 1;

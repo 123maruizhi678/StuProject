@@ -1,22 +1,23 @@
 """FastAPI 应用入口：初始化、中间件、路由注册、全局异常处理。"""
 
 from contextlib import asynccontextmanager
-
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-
+from app.api.auth import router as auth_router
+from app.core.authorization import load_access_control
 from app.core.logger import get_logger, init_logger
 from app.core.response import register_exception_handlers
 from app.database import dispose_db
 
-# 最先加载日志，保证后续所有模块输出都被捕获
 init_logger()
 logger = get_logger(__name__)
 
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
+    """应用生命周期回调：启动时校验访问策略，关闭时释放数据库连接池。"""
     logger.info("数据库初始化中...")
+    load_access_control()
     yield
     logger.info("释放数据库连接池...")
     dispose_db()
@@ -24,8 +25,7 @@ async def lifespan(_: FastAPI):
 
 logger.info("StuProject 启动中...")
 app = FastAPI(title="StuProject", version="1.0.0", lifespan=lifespan)
-
-# 跨域中间件（开发阶段放开，生产按需收紧）
+# CORS 当前为开发配置，生产环境应按实际前端域名收紧来源、方法和请求头。
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -33,19 +33,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-# 全局异常处理器：统一收敛为 {code, message, data} 信封
 register_exception_handlers(app)
 
-from app.api.student import (
-    router as student_router,
-    internal_router as student_internal_router,
-)
-
-app.include_router(student_router)
-app.include_router(student_internal_router)
-
-# 其他组员的路由由各自模块注册
+# 路由注册（各业务模块就绪后在此 include，挂载到 /api/v1）
 # from app.api import customer, agent, enterprise, student, report
 # app.include_router(customer.router, prefix="/api/v1")
 # app.include_router(agent.router, prefix="/api/v1")
@@ -56,6 +46,7 @@ app.include_router(student_internal_router)
 
 @app.get("/")
 def root():
+    """提供公开的根路径服务状态响应。"""
     return {"code": 0, "message": "success", "data": {"service": "StuProject"}}
 
 

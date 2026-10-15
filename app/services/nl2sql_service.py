@@ -34,6 +34,7 @@ async def nl2sql_query(question: str, read_only: bool = True) -> dict:
 
     # 3. 在本地 MySQL 同步执行（放到线程池，避免阻塞事件循环）
     def _execute():
+        """在线程池内同步执行 SQL 并把结果行转换为字典列表。"""
         with engine.connect() as conn:
             result = conn.execute(text(sql))
             return [dict(row) for row in result.mappings().all()]
