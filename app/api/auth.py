@@ -1,4 +1,4 @@
-"""Authentication and frontend access-discovery endpoints."""
+"""认证 HTTP 接口：提供公开页面清单、账号登录和当前用户页面/模块访问清单。"""
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, status

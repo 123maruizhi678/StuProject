@@ -1,4 +1,4 @@
-"""Dify 工作流客户端：调用本地 NL2SQL 工作流，返回生成的 SQL。"""
+"""Dify 工作流 HTTP 客户端：调用 NL2SQL 工作流并提取配置的 SQL 输出变量。"""
 import httpx
 
 from app.config import settings

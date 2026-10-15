@@ -1,4 +1,4 @@
-"""Authentication request schemas."""
+"""认证接口 Pydantic 数据结构：定义登录请求字段及输入长度约束。"""
 from pydantic import BaseModel, Field
 
 

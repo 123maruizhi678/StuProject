@@ -1,4 +1,4 @@
-"""YAML role permissions and page/module access calculations."""
+"""访问策略加载与权限计算：读取 YAML 角色权限、筛选页面/模块，并提供路由权限依赖。"""
 from functools import lru_cache
 from pathlib import Path
 from typing import Annotated, Callable
