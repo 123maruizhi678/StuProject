@@ -1,5 +1,0 @@
-# 已有环境依赖之外，本轮认证/SQL校验/测试所需包；环境基线详见根目录 environment.yml。
-PyJWT>=2.10,<3
-pwdlib[argon2]>=0.3,<1
-sqlglot==29.0.1
-pytest>=8,<10
