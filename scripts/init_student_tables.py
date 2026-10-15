@@ -24,6 +24,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.schema import CreateIndex, CreateTable
 
 from app.database import Base, engine
+from scripts.student_sql_paths import enterprise_sql_path
 from app.models.student import STUDENT_TABLES
 from app.models.student_shared import student_leave_request
 
@@ -193,9 +194,7 @@ def existing_table_errors(inspector, table) -> list[str]:
 
 
 def public_leave_sql():
-    source = (ROOT / "scripts/sql/企业智能助手/企业智能助手_建表.sql").read_text(
-        encoding="utf-8"
-    )
+    source = enterprise_sql_path().read_text(encoding="utf-8")
     blocks = re.findall(r"CREATE TABLE[^;]+;", source, re.I)
     for block in blocks:
         if re.match(

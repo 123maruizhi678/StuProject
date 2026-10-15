@@ -15,6 +15,7 @@ from app.core.student_auth import sign_token
 from app.models import student_shared as shared
 from app.models.student_types import utcnow
 from app.models.student import STUDENT_TABLES
+from scripts.student_sql_paths import enterprise_sql_path
 
 
 @pytest.fixture(scope="session", params=["sqlite", "mysql"])
@@ -28,10 +29,7 @@ def test_engine(request):
             r"student_test_[a-z0-9_]+", engine.url.database
         ):
             raise RuntimeError("测试仅允许student_test_前缀的独立数据库")
-        sql = (
-            Path(__file__).resolve().parents[1]
-            / "scripts/sql/企业智能助手/企业智能助手_建表.sql"
-        ).read_text(encoding="utf-8")
+        sql = enterprise_sql_path().read_text(encoding="utf-8")
         blocks = re.findall(
             r"CREATE TABLE(?: IF NOT EXISTS)?\s+\x60?\w+\x60?\s*\([\s\S]*?\n\) ENGINE[^;]*;",
             sql,

@@ -13,10 +13,12 @@ from app.main import app
 from app.models.student import STUDENT_TABLES
 from app.models.student_shared import student_leave_request
 from scripts.init_student_tables import dry_run
+from scripts.student_sql_paths import student_sql_directory
 
 ROOT = Path(__file__).resolve().parents[1]
 api_dir = ROOT / "业务文档/04接口设计"
-sql_dir = ROOT / "scripts/sql/学生智能助手"
+sql_dir = student_sql_directory()
+sql_dir.mkdir(parents=True, exist_ok=True)
 api_dir.mkdir(parents=True, exist_ok=True)
 
 

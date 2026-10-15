@@ -52,7 +52,7 @@ CREATE TABLE mental_health_profile (
 	CONSTRAINT ck_profile_score CHECK (emotion_score >= 0 AND emotion_score <= 100),
 	CONSTRAINT ck_profile_risk CHECK (risk_level IN ('low','medium','high','critical')),
 	CONSTRAINT fk_profile_student FOREIGN KEY(student_id) REFERENCES student_profile (student_id)
-)COMMENT='学生心理评估历史表' CHARSET=utf8mb4 ENGINE=InnoDB COLLATE utf8mb4_0900_ai_ci;
+)ENGINE=InnoDB COMMENT='学生心理评估历史表' CHARSET=utf8mb4 COLLATE utf8mb4_0900_ai_ci;
 
 CREATE INDEX idx_profile_history ON mental_health_profile (student_id, observed_at);
 CREATE INDEX idx_profile_report ON mental_health_profile (observed_at, risk_level);
@@ -79,7 +79,7 @@ CREATE TABLE mental_warning (
 	CONSTRAINT ck_warning_version CHECK (version >= 1),
 	CONSTRAINT fk_warning_student FOREIGN KEY(student_id) REFERENCES student_profile (student_id),
 	CONSTRAINT fk_warning_employee FOREIGN KEY(follower_id) REFERENCES employee (employee_id)
-)COMMENT='学生心理预警及人工处置表' CHARSET=utf8mb4 ENGINE=InnoDB COLLATE utf8mb4_0900_ai_ci;
+)ENGINE=InnoDB COMMENT='学生心理预警及人工处置表' CHARSET=utf8mb4 COLLATE utf8mb4_0900_ai_ci;
 
 CREATE INDEX idx_warning_follower ON mental_warning (follower_id, follower_status, created_at);
 CREATE INDEX idx_warning_student ON mental_warning (student_id, created_at);
@@ -105,7 +105,7 @@ CREATE TABLE student_academic_event (
 	CONSTRAINT ck_academic_status CHECK (event_status IN ('active','cancelled')),
 	CONSTRAINT ck_academic_version CHECK (event_version >= 1),
 	CONSTRAINT fk_academic_student FOREIGN KEY(student_id) REFERENCES student_profile (student_id)
-)COMMENT='学生学业截止及考试节点镜像表' CHARSET=utf8mb4 ENGINE=InnoDB COLLATE utf8mb4_0900_ai_ci;
+)ENGINE=InnoDB COMMENT='学生学业截止及考试节点镜像表' CHARSET=utf8mb4 COLLATE utf8mb4_0900_ai_ci;
 
 CREATE INDEX idx_academic_student ON student_academic_event (student_id, event_status, due_at);
 CREATE TABLE student_academic_reminder (
@@ -126,7 +126,7 @@ CREATE TABLE student_academic_reminder (
 	CONSTRAINT ck_reminder_version CHECK (event_version >= 1),
 	CONSTRAINT ck_reminder_status CHECK (status IN ('pending','queued','sent','cancelled')),
 	CONSTRAINT ck_reminder_sent CHECK (status <> 'sent' OR sent_at IS NOT NULL)
-)COMMENT='学生学业提醒设置与执行状态表' CHARSET=utf8mb4 ENGINE=InnoDB COLLATE utf8mb4_0900_ai_ci;
+)ENGINE=InnoDB COMMENT='学生学业提醒设置与执行状态表' CHARSET=utf8mb4 COLLATE utf8mb4_0900_ai_ci;
 
 CREATE INDEX idx_reminder_due ON student_academic_reminder (status, notify_at);
 CREATE TABLE student_application_progress (
@@ -146,6 +146,6 @@ CREATE TABLE student_application_progress (
 	CONSTRAINT uk_progress_stage UNIQUE (student_id, source_system, external_application_id, stage_code),
 	CONSTRAINT ck_progress_stage CHECK (stage_code IN ('document_review','school_application','visa_process')),
 	CONSTRAINT fk_progress_student FOREIGN KEY(student_id) REFERENCES student_profile (student_id)
-)COMMENT='学生留学申请阶段最新进度镜像表' CHARSET=utf8mb4 ENGINE=InnoDB COLLATE utf8mb4_0900_ai_ci;
+)ENGINE=InnoDB COMMENT='学生留学申请阶段最新进度镜像表' CHARSET=utf8mb4 COLLATE utf8mb4_0900_ai_ci;
 
 CREATE INDEX idx_progress_student ON student_application_progress (student_id, synced_at);

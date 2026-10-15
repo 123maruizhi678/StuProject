@@ -15,6 +15,9 @@ import time
 import pymysql
 
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT))
+from scripts.student_sql_paths import enterprise_sql_path
+
 STATE_DIR = ROOT.parent / ".student-local-mysql"
 STATE_FILE = STATE_DIR / "instance.json"
 
@@ -176,9 +179,7 @@ def bootstrap(state):
         "business_notification",
         "operation_log",
     }
-    source = (ROOT / "scripts/sql/企业智能助手/企业智能助手_建表.sql").read_text(
-        encoding="utf-8"
-    )
+    source = enterprise_sql_path().read_text(encoding="utf-8")
     blocks = re.findall(
         r"CREATE TABLE(?: IF NOT EXISTS)?\s+`?(\w+)`?\s*\([\s\S]*?\n\) ENGINE[^;]*;",
         source,
