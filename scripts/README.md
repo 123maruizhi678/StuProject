@@ -45,11 +45,16 @@ D:\anaconda3\envs\SST\python.exe scripts/init_db.py
 `report_module_ddl.sql` 提供智能报告模块三张核心表（`report_config` / `report_record` / `report_metric`）的纯 SQL 建表脚本，可直接在 MySQL 中执行：
 
 ```bash
-mysql -uroot -p12345 education_agent < scripts/report_module_ddl.sql
+mysql -uroot -p12345 < scripts/report_module_ddl.sql
 ```
+
+- **要求 MySQL 8.0.16+**（脚本使用 CHECK 约束，5.7 会报错），建议 8.0 / 8.4。
+- 脚本已对齐项目统一规范：`DATETIME(3)` + UTC、`utf8mb4_0900_ai_ci`、编码键 `utf8mb4_bin`、CHECK 约束、真实外键、乐观锁 `row_version`。
+- 首次初始化使用：目标库内这三张表应尚不存在；脚本不删除已有表、不插业务数据。
 
 与 ORM 建表的关系：
 
-- `app/models/report.py` 提供相同的三张表 ORM 模型，执行 `init_db.py` 也会一并创建；
-- `report_module_ddl.sql` 便于脱离应用环境独立初始化，两者表结构保持一致；
-- 脚本末尾附录给出报告依赖的上游表（`intention_customer`、投诉工单、跟进记录）的字段补充建议，供对应模块建表时参考，报告模块不重复建表。
+- `app/models/report.py` 提供相同的三张表 ORM 模型，执行 `init_db.py` 也会一并创建，两者表结构保持一致；
+- `report_module_ddl.sql` 便于脱离应用环境独立初始化。
+
+报告依赖的上游表（`customer_profile` / `customer_followup` / `employee_daily_report` / `mental_health_profile` / `mental_warning` / `service_ticket`）由企业、学生模块建表，报告模块只读聚合，不在本脚本重复建表。投诉工单的事实源目前存在 `service_ticket`（企业）与 `after_sales_ticket`（学生草案）两套命名，需在两端统一后确定，脚本附录已标注。
