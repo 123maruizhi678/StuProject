@@ -26,6 +26,7 @@ logger = get_logger("exception")
 
 # 1. 状态码（对齐接口文档 1.4）
 class ResultCode:
+    """统一 API 响应信封使用的业务状态码常量。"""
     SUCCESS = 0
     PARAM_ERROR = 400
     UNAUTHORIZED = 401
@@ -37,6 +38,7 @@ T = TypeVar("T")
 
 
 class ResponseModel(BaseModel, Generic[T]):
+    """统一 API 响应模型，包含业务码、消息和泛型数据。"""
     code: int = ResultCode.SUCCESS
     message: str = "success"
     data: Optional[T] = None
@@ -44,6 +46,7 @@ class ResponseModel(BaseModel, Generic[T]):
 
 # 3. 便捷函数：业务层 / 路由层直接调用
 def success(data: Any = None, message: str = "success") -> dict:
+    """构造统一格式的成功响应数据。"""
     return {"code": ResultCode.SUCCESS, "message": message, "data": data}
 
 
@@ -52,17 +55,20 @@ def fail(
     message: str = "error",
     data: Any = None,
 ) -> dict:
+    """构造统一格式的失败响应数据。"""
     return {"code": code, "message": message, "data": data}
 
 
 # 4. 业务异常：service 层 raise，统一被 handler 捕获
 class BusinessException(Exception):
+    """可由业务层抛出并交给统一异常处理器处理的异常。"""
     def __init__(
         self,
         message: str = "业务异常",
         code: int = ResultCode.SERVER_ERROR,
         data: Any = None,
     ) -> None:
+        """初始化异常对象并保存业务码、消息和附加数据。"""
         self.code = code
         self.message = message
         self.data = data
@@ -71,14 +77,17 @@ class BusinessException(Exception):
 
 # 5. 全局异常处理器（在 main.py 中注册）
 def register_exception_handlers(app) -> None:
+    """向 FastAPI 注册业务异常和未处理异常处理器。"""
     @app.exception_handler(BusinessException)
     async def _biz_handler(_: Request, exc: BusinessException):
+        """将业务异常转换为统一响应信封。"""
         return JSONResponse(
             status_code=200, content=fail(exc.code, exc.message, exc.data)
         )
 
     @app.exception_handler(Exception)
     async def _all_handler(_: Request, exc: Exception):
+        """记录未处理异常并返回不泄露内部详情的通用错误。"""
         logger.exception("未捕获异常", exc_info=exc)
         return JSONResponse(
             status_code=200, content=fail(ResultCode.SERVER_ERROR, "服务器内部错误")
