@@ -1,4 +1,4 @@
-"""学生模块任务。使用数据库租约，可由独立进程周期运行，不依赖Web进程内存。"""
+"""学生后台任务：准备并投递提醒/通知，使用数据库租约、重试和业务状态复核。"""
 
 from datetime import timedelta
 from sqlalchemy import select, update, or_, and_
