@@ -1,0 +1,59 @@
+{
+  "tested_at": "2026-10-15T09:11:36.001666+00:00",
+  "database": "education_agent",
+  "test_score_id": "910007",
+  "test_assessment_code": "EIT-SMOKE-488832fea9d5",
+  "final_test_score_status": "void",
+  "checks": [
+    {
+      "check": "real-login",
+      "passed": true
+    },
+    {
+      "check": "STU-01",
+      "passed": true
+    },
+    {
+      "check": "STU-02",
+      "passed": true
+    },
+    {
+      "check": "SCO-01",
+      "passed": true
+    },
+    {
+      "check": "create-idempotent-retry",
+      "passed": true
+    },
+    {
+      "check": "SCO-02",
+      "passed": true
+    },
+    {
+      "check": "SCO-03",
+      "passed": true
+    },
+    {
+      "check": "SCO-04",
+      "passed": true
+    },
+    {
+      "check": "SCO-05",
+      "passed": true
+    },
+    {
+      "check": "three-audit-snapshots",
+      "passed": true
+    },
+    {
+      "check": "real-Dify-generated-SQL-to-real-authorized-MySQL",
+      "passed": true
+    },
+    {
+      "check": "dedicated-Dify-API",
+      "code": 503,
+      "passed": false
+    }
+  ],
+  "note": "真实模型草稿试运行与真实SQL执行段分别通过；Dify发布/API Key完成前不声称完整模型API链路通过。"
+}

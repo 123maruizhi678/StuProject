@@ -1,0 +1,29 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "found": {
+      "title": "Found",
+      "type": "boolean"
+    },
+    "answer": {
+      "maxLength": 10000,
+      "minLength": 1,
+      "title": "Answer",
+      "type": "string"
+    },
+    "source_refs": {
+      "items": {
+        "type": "string"
+      },
+      "maxItems": 30,
+      "title": "Source Refs",
+      "type": "array"
+    }
+  },
+  "required": [
+    "found",
+    "answer"
+  ],
+  "title": "KnowledgeDraft",
+  "type": "object"
+}

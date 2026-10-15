@@ -1,0 +1,75 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "status": {
+      "default": "candidate",
+      "enum": [
+        "candidate",
+        "needs_clarification"
+      ],
+      "title": "Status",
+      "type": "string"
+    },
+    "view_name": {
+      "anyOf": [
+        {
+          "pattern": "^[a-z][a-z0-9_]{0,63}$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "View Name"
+    },
+    "sql": {
+      "anyOf": [
+        {
+          "maxLength": 20000,
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Sql"
+    },
+    "parameters": {
+      "maxProperties": 50,
+      "patternProperties": {
+        "^[a-z][a-z0-9_]{0,63}$": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "title": "Parameters",
+      "type": "object"
+    },
+    "clarification": {
+      "default": "",
+      "maxLength": 1000,
+      "title": "Clarification",
+      "type": "string"
+    }
+  },
+  "title": "SQLDraft",
+  "type": "object"
+}

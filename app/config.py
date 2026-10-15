@@ -2,7 +2,8 @@
 
 from pathlib import Path
 
-from pydantic import Field, SecretStr
+from typing import Literal
+from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 # 项目根目录（StuProject），.env 置于此
@@ -30,11 +31,16 @@ class Settings(BaseSettings):
     DIFY_API_BASE: str = "http://127.0.0.1/v1"
     # 旧版 NL2SQL 通用密钥保留为兼容回退；新配置建议使用按场景密钥。
     DIFY_API_KEY: str = Field(default="", repr=False)
-    DIFY_API_TIMEOUT_SECONDS: float = 60.0
-    # NL2SQL Workflow
-    DIFY_NL2SQL_API_KEY: str = Field(default="", repr=False)
-    DIFY_NL2SQL_OUTPUT_KEY: str = ""
-    DIFY_SQL_OUTPUT_KEY: str = "sql"  # 旧版 NL2SQL 输出字段兼容项
+    DIFY_SQL_OUTPUT_KEY: str = "sql"
+    AUTH_SECRET_KEY: str = Field(default="", repr=False)
+    AUTH_TOKEN_EXPIRE_MINUTES: int = Field(default=120, ge=1)
+    ACCESS_CONTROL_FILE: Path = BASE_DIR / "app" / "access_control.yaml"
+    ENTERPRISE_COURSES_FILE: Path = BASE_DIR / "app" / "enterprise_courses.yaml"
+    # local 表示本机成绩表为测试事实源；外部只读权威模式拒绝所有本地写入。
+    ENTERPRISE_SCORE_AUTHORITY: Literal["local", "external_readonly"] = "local"
+    ENTERPRISE_STUDENT_MAINTAINER_IDS: list[int] = []
+    STUDENT_SCORE_DIFY_BASE: str = "http://localhost/v1"
+    STUDENT_SCORE_DIFY_KEY: str = Field(default="", repr=False)
 
 
 
