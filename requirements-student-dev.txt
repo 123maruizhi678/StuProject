@@ -1,0 +1,3 @@
+# 学生模块隔离测试及Windows时区数据；其余运行依赖沿用environment.yml。
+pytest==8.3.4
+tzdata==2025.2
