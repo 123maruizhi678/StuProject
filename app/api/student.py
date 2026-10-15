@@ -1,4 +1,4 @@
-"""仅学生助手路由；提供学生模块的企业协作接口。"""
+"""学生助手 HTTP 路由：提供学生自助业务，以及教师/员工侧请假、通知、预警和同步协作接口。"""
 
 from typing import Literal
 from fastapi import APIRouter, Depends, Query

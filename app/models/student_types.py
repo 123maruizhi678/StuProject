@@ -1,4 +1,4 @@
-"""学生表的 UTC 和可移植类型；MySQL 为正式数据库，SQLite 仅用于隔离测试。"""
+"""学生模块数据库类型和时间工具：兼容 MySQL 正式库与 SQLite 隔离测试。"""
 
 from datetime import datetime, timezone
 from sqlalchemy import BigInteger, Integer, DateTime, String

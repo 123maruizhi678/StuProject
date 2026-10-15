@@ -1,4 +1,4 @@
-"""Bearer-token authentication dependencies."""
+"""Bearer Token 认证依赖：解析访问令牌、查询账号并为受保护接口提供当前登录账号。"""
 from typing import Annotated
 
 from fastapi import Depends, HTTPException, status

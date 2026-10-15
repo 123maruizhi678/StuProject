@@ -1,4 +1,4 @@
-"""Login, password verification, and access-token services."""
+"""认证服务：验证 Argon2 密码哈希、查询账号、生成和解码 JWT 访问令牌。"""
 from datetime import datetime, timedelta, timezone
 
 import jwt
