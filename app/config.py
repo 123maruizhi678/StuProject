@@ -1,9 +1,8 @@
-"""配置管理：读取项目根目录 .env，环境变量可覆盖同名默认值。
-
-当前 Settings 字段：LOG_LEVEL（日志等级，默认 INFO）、LOG_DIR（日志目录，留空时使用 app/logs）、DB_HOST/DB_PORT/DB_USER/DB_PASSWORD/DB_NAME（MySQL 连接参数）、DB_ECHO（SQL 调试回显）、DIFY_API_BASE/DIFY_API_KEY/DIFY_SQL_OUTPUT_KEY（Dify NL2SQL 地址、凭据和 SQL 输出变量名）。未声明的 .env 字段会被忽略；密码和 API Key 在对象表示中隐藏。"""
+"""应用配置：从项目根目录 .env 读取日志、数据库和各业务 Dify 应用设置。"""
 
 from pathlib import Path
 
+from pydantic import Field, SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 # 项目根目录（StuProject），.env 置于此
@@ -17,21 +16,43 @@ class Settings(BaseSettings):
         extra="ignore",
     )
 
-    # 日志：LOG_LEVEL 指定等级（如 INFO），LOG_DIR 留空时采用 app/logs。
+    # 日志
     LOG_LEVEL: str = "INFO"
     LOG_DIR: str = ""
-    # DB_* 字段共同指定 MySQL 主机、端口、账号、密码、库名及 SQL 回显选项。
+    # DB_* 字段共同指定 MySQL 连接目标和认证信息。
     DB_HOST: str = "localhost"
     DB_PORT: int = 3306
     DB_USER: str = "root"
     DB_PASSWORD: str = Field(default="12345", repr=False)
     DB_NAME: str = "education_agent"
     DB_ECHO: bool = False
-    # Dify NL2SQL API 地址、访问密钥和工作流 SQL 输出字段名。
+    # Dify API 地址；同一 Dify 服务下各应用可分别使用独立 API Key。
     DIFY_API_BASE: str = "http://127.0.0.1/v1"
+    # 旧版 NL2SQL 通用密钥保留为兼容回退；新配置建议使用按场景密钥。
     DIFY_API_KEY: str = Field(default="", repr=False)
-    DIFY_SQL_OUTPUT_KEY: str = "sql"
+    DIFY_API_TIMEOUT_SECONDS: float = 60.0
+    # NL2SQL Workflow
+    DIFY_NL2SQL_API_KEY: str = Field(default="", repr=False)
+    DIFY_NL2SQL_OUTPUT_KEY: str = ""
+    DIFY_SQL_OUTPUT_KEY: str = "sql"  # 旧版 NL2SQL 输出字段兼容项
 
+
+
+class StudentLeaveDifySettings(BaseSettings):
+    """学生请假 Workflow 的专用连接配置，使用独立 API Key 和版本标识。"""
+
+    model_config = SettingsConfigDict(
+        env_file=str(BASE_DIR / ".env"),
+        env_file_encoding="utf-8",
+        extra="ignore",
+    )
+
+    STUDENT_DIFY_LEAVE_KEY: SecretStr = Field(default=SecretStr(""), repr=False)
+    STUDENT_DIFY_LEAVE_TIMEOUT: float = 60.0
+    STUDENT_DIFY_LEAVE_VERSION: str = "student-leave-v1"
+
+
+student_leave_dify_settings = StudentLeaveDifySettings()
 
 settings = Settings()
 LOG_DIR = Path(settings.LOG_DIR) if settings.LOG_DIR else (BASE_DIR / "app" / "logs")
