@@ -8,7 +8,7 @@ from app.core.authorization import load_access_control, require_permission
 from app.core.logger import get_logger, init_logger
 from app.core.response import register_exception_handlers
 from app.database import dispose_db, get_db
-from app.student_leave.api import create_router as create_student_leave_router
+from app.api.student_leave import create_router as create_student_leave_router
 
 init_logger()
 logger = get_logger(__name__)

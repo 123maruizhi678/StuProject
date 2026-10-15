@@ -2,7 +2,7 @@
 
 from pathlib import Path
 
-from pydantic import Field
+from pydantic import AnyHttpUrl, Field, SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 # 项目根目录（StuProject），.env 置于此
@@ -34,3 +34,18 @@ class Settings(BaseSettings):
 
 settings = Settings()
 LOG_DIR = Path(settings.LOG_DIR) if settings.LOG_DIR else (BASE_DIR / "app" / "logs")
+
+
+class StudentLeaveDifySettings(BaseSettings):
+    """学生请假专用工作流配置，不复用组长的NL2SQL应用Key。"""
+    model_config = SettingsConfigDict(
+        env_file=(str(BASE_DIR / ".env"), str(BASE_DIR / ".env.student.local")),
+        env_file_encoding="utf-8", extra="ignore",
+    )
+    STUDENT_DIFY_LEAVE_BASE: AnyHttpUrl = "http://127.0.0.1/v1"
+    STUDENT_DIFY_LEAVE_KEY: SecretStr = Field(default=SecretStr(""), repr=False)
+    STUDENT_DIFY_LEAVE_TIMEOUT: float = Field(default=60, gt=0, le=120)
+    STUDENT_DIFY_LEAVE_VERSION: str = Field(default="student-leave-v1", min_length=1, max_length=64)
+
+
+student_leave_dify_settings = StudentLeaveDifySettings()

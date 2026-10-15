@@ -1,4 +1,4 @@
-"""all.sql 公共表的字段投影；生产建表仍由公共 SQL/迁移负责。"""
+"""学生请假使用的公共表字段投影；生产建表仍由公共 SQL/迁移负责。"""
 from sqlalchemy import (
     BigInteger, Boolean, Column, DateTime, Integer, JSON, MetaData, String,
     Table, Text, UniqueConstraint,

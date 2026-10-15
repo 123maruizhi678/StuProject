@@ -47,10 +47,14 @@ def main():
             )}
             assert first.status_code == 200 and first.json() == retry.json()
             assert forged.status_code == 422 and list(counts.values()) == [1, 1, 1]
+            assert len(unit.workflow_requests) == 1
+            assert first.json()["data"]["ai_analysis"]["workflow_run_id"] == "mock-run-001"
             print(json.dumps({
-                "feature": "S01 学生提交请假", "transport": "uvicorn + localhost HTTP",
+                "feature": "S01 AI辅助请假提交", "transport": "uvicorn + localhost HTTP",
                 "identity": "test fixture only; group JWT not tested",
                 "database": "temporary isolated SQLite", "http_status": first.status_code,
+                "workflow": "httpx.MockTransport test double; no real LLM",
+                "real_dify_verified": False, "workflow_requests": len(unit.workflow_requests),
                 "response": first.json(), "replay_same_receipt": True,
                 "forged_student_field_status": forged.status_code, "persisted_rows": counts,
                 "notification_delivery": "queued, not sent",

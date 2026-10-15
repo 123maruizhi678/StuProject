@@ -1,4 +1,6 @@
 """S01 请求与回执；身份和审批状态不由请求体指定。"""
+from typing import Annotated
+
 from pydantic import AwareDatetime, BaseModel, ConfigDict, Field, model_validator
 
 
@@ -17,6 +19,17 @@ class LeaveInput(BaseModel):
         return self
 
 
+class DifyLeaveContent(BaseModel):
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+    summary: str = Field(min_length=1, max_length=200)
+    review_points: list[Annotated[str, Field(min_length=1, max_length=100)]] = Field(max_length=3)
+
+
+class LeaveAnalysis(DifyLeaveContent):
+    workflow_run_id: str = Field(min_length=1, max_length=128)
+    analysis_version: str = Field(min_length=1, max_length=64)
+
+
 class LeaveReceipt(BaseModel):
     apply_id: int
     approval_status: str
@@ -24,6 +37,7 @@ class LeaveReceipt(BaseModel):
     row_version: int
     assignment_pending: bool
     notification_queued: bool
+    ai_analysis: LeaveAnalysis | None = None
 
 
 class LeaveResponse(BaseModel):
