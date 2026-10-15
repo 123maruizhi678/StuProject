@@ -17,6 +17,3 @@ app/logs/
 .idea/
 .vscode/
 .DS_Store
-
-# 学生模块本地实例凭证（.env在现有仓库中已被追踪）
-.env.student.local
