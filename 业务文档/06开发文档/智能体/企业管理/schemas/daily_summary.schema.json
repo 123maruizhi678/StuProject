@@ -1,0 +1,69 @@
+{
+  "$defs": {
+    "SummaryPoint": {
+      "additionalProperties": false,
+      "properties": {
+        "text": {
+          "maxLength": 10000,
+          "minLength": 1,
+          "title": "Text",
+          "type": "string"
+        },
+        "source_ids": {
+          "items": {
+            "maxLength": 20,
+            "pattern": "^[1-9][0-9]*$",
+            "type": "string"
+          },
+          "maxItems": 200,
+          "minItems": 1,
+          "title": "Source Ids",
+          "type": "array"
+        }
+      },
+      "required": [
+        "text",
+        "source_ids"
+      ],
+      "title": "SummaryPoint",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "progress": {
+      "items": {
+        "$ref": "#/$defs/SummaryPoint"
+      },
+      "maxItems": 50,
+      "title": "Progress",
+      "type": "array"
+    },
+    "outputs": {
+      "items": {
+        "$ref": "#/$defs/SummaryPoint"
+      },
+      "maxItems": 50,
+      "title": "Outputs",
+      "type": "array"
+    },
+    "risks": {
+      "items": {
+        "$ref": "#/$defs/SummaryPoint"
+      },
+      "maxItems": 50,
+      "title": "Risks",
+      "type": "array"
+    },
+    "next_plans": {
+      "items": {
+        "$ref": "#/$defs/SummaryPoint"
+      },
+      "maxItems": 50,
+      "title": "Next Plans",
+      "type": "array"
+    }
+  },
+  "title": "SummaryDraft",
+  "type": "object"
+}

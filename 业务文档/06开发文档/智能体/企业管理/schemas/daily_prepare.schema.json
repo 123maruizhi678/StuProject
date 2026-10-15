@@ -1,0 +1,63 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "proposed_content": {
+      "maxLength": 10000,
+      "minLength": 1,
+      "title": "Proposed Content",
+      "type": "string"
+    },
+    "ai_summary": {
+      "maxLength": 3000,
+      "minLength": 1,
+      "title": "Ai Summary",
+      "type": "string"
+    },
+    "work_items": {
+      "items": {
+        "maxLength": 10000,
+        "minLength": 1,
+        "type": "string"
+      },
+      "maxItems": 50,
+      "title": "Work Items",
+      "type": "array"
+    },
+    "outputs": {
+      "items": {
+        "maxLength": 10000,
+        "minLength": 1,
+        "type": "string"
+      },
+      "maxItems": 50,
+      "title": "Outputs",
+      "type": "array"
+    },
+    "risks": {
+      "items": {
+        "maxLength": 10000,
+        "minLength": 1,
+        "type": "string"
+      },
+      "maxItems": 50,
+      "title": "Risks",
+      "type": "array"
+    },
+    "next_plans": {
+      "items": {
+        "maxLength": 10000,
+        "minLength": 1,
+        "type": "string"
+      },
+      "maxItems": 50,
+      "title": "Next Plans",
+      "type": "array"
+    }
+  },
+  "required": [
+    "proposed_content",
+    "ai_summary"
+  ],
+  "title": "DailyDraft",
+  "type": "object"
+}
