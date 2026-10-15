@@ -1,0 +1,30 @@
+-- 仅补建学生行政服务表；不修改企业表，不删除已有数据。
+-- 源自 scripts/sql/all.sql；使用前运行共享结构检查，既有同名表须单独迁移审查。
+CREATE TABLE IF NOT EXISTS student_admin_service (
+  id BIGINT NOT NULL AUTO_INCREMENT COMMENT '主键',
+  student_id BIGINT NOT NULL COMMENT '统一学生ID',
+  apply_type VARCHAR(20) NOT NULL COMMENT '申请类型 leave/academic',
+  apply_content TEXT NOT NULL COMMENT '申请理由/内容',
+  approval_status VARCHAR(20) NOT NULL DEFAULT 'pending' COMMENT '审批状态 pending/approved/rejected/cancelled',
+  edu_related_data JSON NULL COMMENT '考务关联扩展信息',
+  leave_start_at DATETIME(6) NULL COMMENT '请假开始时间（UTC）',
+  leave_end_at DATETIME(6) NULL COMMENT '请假结束时间（UTC）',
+  reviewer_id BIGINT NULL COMMENT '指定/实际审批老师ID',
+  reviewed_at DATETIME(6) NULL COMMENT '审批发生时间（UTC）',
+  approval_comment TEXT NULL COMMENT '审批意见/驳回原因',
+  request_key VARCHAR(128) CHARACTER SET ascii COLLATE ascii_bin NOT NULL COMMENT '请求幂等键',
+  request_hash CHAR(64) CHARACTER SET ascii COLLATE ascii_bin NOT NULL COMMENT '规范化请求SHA-256',
+  row_version INT NOT NULL DEFAULT 1 COMMENT '乐观锁版本',
+  created_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) COMMENT '创建时间（UTC）',
+  updated_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3) COMMENT '最后更新时间（UTC）',
+  PRIMARY KEY (id),
+  UNIQUE KEY uk_admin_request (student_id, request_key),
+  KEY idx_admin_student (student_id, created_at),
+  KEY idx_admin_review (reviewer_id, approval_status, created_at),
+  CONSTRAINT fk_admin_student FOREIGN KEY (student_id) REFERENCES `student_profile` (`student_id`),
+  CONSTRAINT ck_admin_type CHECK (apply_type IN ('leave', 'academic')),
+  CONSTRAINT ck_admin_status CHECK (approval_status IN ('pending', 'approved', 'rejected', 'cancelled')),
+  CONSTRAINT ck_admin_leave CHECK (apply_type <> 'leave' OR (leave_start_at IS NOT NULL AND leave_end_at IS NOT NULL AND leave_end_at > leave_start_at)),
+  CONSTRAINT ck_admin_decision CHECK (approval_status NOT IN ('approved', 'rejected') OR (reviewer_id IS NOT NULL AND reviewed_at IS NOT NULL)),
+  CONSTRAINT ck_admin_version CHECK (row_version >= 1)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='学生行政服务';

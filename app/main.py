@@ -9,6 +9,7 @@ from app.core.logger import get_logger, init_logger
 from app.core.response import register_exception_handlers
 from app.database import dispose_db, get_db
 from app.api.student_leave import create_router as create_student_leave_router
+from app.api.student_ticket import create_router as create_student_ticket_router
 
 init_logger()
 logger = get_logger(__name__)
@@ -36,12 +37,18 @@ app.add_middleware(
 )
 register_exception_handlers(app)
 
-# S01仅接入学生请假；登录和权限判断复用组长公共依赖。
+# 学生业务接入；登录和权限判断复用组长公共依赖。
 app.include_router(
     create_student_leave_router(
         require_permission("student.admin_service.create"), get_db
     ),
     prefix="/api/v1",
+)
+app.include_router(
+    create_student_ticket_router(
+        require_permission("service_ticket.create"),
+        require_permission("service_ticket.read_own"), get_db,
+    ), prefix="/api/v1",
 )
 
 # 路由注册（各业务模块就绪后在此 include，挂载到 /api/v1）

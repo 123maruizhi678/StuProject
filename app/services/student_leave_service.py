@@ -1,52 +1,20 @@
 """学生请假业务：可信身份、Dify分析、分派与原子写入。"""
 from datetime import datetime, timezone
-import hashlib
-import json
 
 from sqlalchemy.exc import IntegrityError
 
 from app.repositories.student_leave_repository import StudentLeaveRepository
+from app.repositories.student_schema import require_student_schema
+from app.clients.student_leave_dify import StudentLeaveDifyError
 
 
-class LeaveError(Exception):
-    def __init__(self, status, message):
-        self.status, self.message = status, message
-        super().__init__(message)
+from app.services.student_common import (StudentBusinessService, StudentBusinessError as LeaveError, digest, utc_naive)
 
 
-def digest(value):
-    encoded = json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
-    return hashlib.sha256(encoded.encode("utf-8")).hexdigest()
-
-
-def utc_naive(value):
-    return value.astimezone(timezone.utc).replace(tzinfo=None)
-
-
-class StudentLeaveService:
+class StudentLeaveService(StudentBusinessService):
     def __init__(self, db, workflow):
         self.repository = StudentLeaveRepository(db)
         self.workflow = workflow
-
-    def _student(self, account, *, lock=False):
-        if account.identity_type != "student" or not account.student_id:
-            raise LeaveError(403, "此功能仅限学生本人")
-        row = self.repository.get_student(account.student_id, lock=lock)
-        if not row or row["is_archived"] or row["status"] in (
-            "disabled", "inactive", "withdrawn", "suspended"
-        ):
-            raise LeaveError(403, "学生档案不可用")
-        return account.student_id
-
-    def _replay(self, operation_key, parameters_hash):
-        row = self.repository.find_operation(operation_key)
-        if row is None:
-            return None
-        if row["parameters_hash"] != parameters_hash:
-            raise LeaveError(409, "同一幂等键不能提交不同的请假内容")
-        if row["operation_status"] != "succeeded":
-            raise LeaveError(409, "请求正在处理，请稍后核实")
-        return row["result_reference"]
 
     def submit(self, account, request_key, payload):
         start, end = utc_naive(payload.leave_start_at), utc_naive(payload.leave_end_at)
@@ -54,15 +22,24 @@ class StudentLeaveService:
             "leave_content": payload.leave_content, "leave_type": payload.leave_type,
             "leave_start_at": start.isoformat(), "leave_end_at": end.isoformat(),
         })
+        if payload.generate_ai_summary:
+            parameters_hash = digest([parameters_hash, "generate_ai_summary"])
         operation_key = digest(["student", account.student_id, "student.leave.submit", request_key])
         repository = self.repository
         try:
+            require_student_schema(repository.db, "leave")
             student_id = self._student(account)
             receipt = self._replay(operation_key, parameters_hash)
             repository.rollback()  # 结束预检读事务；不持有数据库锁等待大模型。
             if receipt is not None:
                 return receipt
-            analysis = self.workflow.analyze_leave(student_id, payload)
+            analysis, ai_status = None, "not_requested"
+            if payload.generate_ai_summary:
+                try:
+                    analysis = self.workflow.analyze_leave(student_id, payload)
+                    ai_status = "available"
+                except StudentLeaveDifyError:
+                    ai_status = "unavailable"  # AI 增强失败，仍保留原始请假申请。
 
             # 外部调用之后重新校验档案与幂等，防止期间账号变化或并发重试。
             if self._student(account, lock=True) != student_id:
@@ -82,7 +59,8 @@ class StudentLeaveService:
             apply_id = repository.create_application(dict(
                 student_id=student_id, apply_type="leave", apply_content=payload.leave_content,
                 approval_status="pending",
-                edu_related_data={"leave_type": payload.leave_type, "ai_analysis": analysis.model_dump()},
+                edu_related_data={"leave_type": payload.leave_type, "ai_status": ai_status,
+                                  "ai_analysis": analysis.model_dump() if analysis else None},
                 leave_start_at=start, leave_end_at=end, reviewer_id=reviewer_id,
                 request_key=request_key, request_hash=parameters_hash, row_version=1,
                 created_at=now, updated_at=now,
@@ -100,12 +78,14 @@ class StudentLeaveService:
             receipt = dict(
                 apply_id=apply_id, approval_status="pending", reviewer_id=reviewer_id,
                 row_version=1, assignment_pending=reviewer_id is None,
-                notification_queued=reviewer_id is not None, ai_analysis=analysis.model_dump(),
+                notification_queued=reviewer_id is not None, ai_status=ai_status,
+                ai_analysis=analysis.model_dump() if analysis else None,
             )
             repository.complete_operation(operation_key, dict(
                 entity_id=apply_id, operation_status="succeeded", result_reference=receipt,
                 after_data={"approval_status": "pending", "reviewer_id": reviewer_id,
-                            "workflow_run_id": analysis.workflow_run_id},
+                            "ai_status": ai_status,
+                            "workflow_run_id": analysis.workflow_run_id if analysis else None},
                 updated_at=now, finished_at=now,
             ))
             repository.commit()

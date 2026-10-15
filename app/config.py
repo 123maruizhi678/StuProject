@@ -49,3 +49,22 @@ class StudentLeaveDifySettings(BaseSettings):
 
 
 student_leave_dify_settings = StudentLeaveDifySettings()
+
+
+class StudentTicketSettings(BaseSettings):
+    """学生投诉专用配置；模型密钥与NL2SQL、JWT分开。"""
+    model_config = SettingsConfigDict(
+        env_file=(str(BASE_DIR / ".env"), str(BASE_DIR / ".env.student.local")),
+        env_file_encoding="utf-8", extra="ignore",
+    )
+    STUDENT_DIFY_TICKET_BASE: AnyHttpUrl = "http://127.0.0.1/v1"
+    STUDENT_DIFY_TICKET_KEY: SecretStr = Field(default=SecretStr(""), repr=False)
+    STUDENT_DIFY_TICKET_TIMEOUT: float = Field(default=15, gt=0, le=60)
+    STUDENT_DIFY_TICKET_VERSION: str = Field(default="student-ticket-v1", min_length=1, max_length=64)
+    # 不配置时使用学生档案的服务归属部门；任何非空ID仍须检查数据库。
+    STUDENT_TICKET_DEPARTMENT_ID: int | None = Field(default=None, gt=0)
+    STUDENT_TICKET_RESPONSE_HOURS: int = Field(default=24, ge=1, le=720)
+    STUDENT_TICKET_RESOLUTION_HOURS: int = Field(default=72, ge=1, le=2160)
+
+
+student_ticket_settings = StudentTicketSettings()

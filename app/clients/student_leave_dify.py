@@ -22,7 +22,7 @@ class StudentLeaveDifyClient:
     def analyze_leave(self, student_id, payload):
         key = self.config.STUDENT_DIFY_LEAVE_KEY.get_secret_value()
         if not key:
-            raise StudentLeaveDifyError(503, "请假Dify工作流尚未配置，申请未提交")
+            raise StudentLeaveDifyError(503, "请假Dify工作流尚未配置")
         request_body = {
             "inputs": {
                 "leave_content": payload.leave_content,
@@ -44,11 +44,11 @@ class StudentLeaveDifyClient:
                 )
                 response.raise_for_status()
         except httpx.TimeoutException:
-            raise StudentLeaveDifyError(503, "请假AI分析超时，申请未提交，请稍后重试") from None
+            raise StudentLeaveDifyError(503, "请假AI分析超时") from None
         except httpx.HTTPStatusError:
-            raise StudentLeaveDifyError(502, "请假Dify工作流返回异常，申请未提交") from None
+            raise StudentLeaveDifyError(502, "请假Dify工作流返回异常") from None
         except httpx.RequestError:
-            raise StudentLeaveDifyError(503, "请假Dify工作流暂不可用，申请未提交") from None
+            raise StudentLeaveDifyError(503, "请假Dify工作流暂不可用") from None
         try:
             envelope = response.json()
             data = envelope["data"]
@@ -64,7 +64,7 @@ class StudentLeaveDifyClient:
                 analysis_version=self.config.STUDENT_DIFY_LEAVE_VERSION,
             )
         except (ValueError, TypeError, KeyError, ValidationError):
-            raise StudentLeaveDifyError(502, "请假AI结果不符合约定，申请未提交") from None
+            raise StudentLeaveDifyError(502, "请假AI结果不符合约定") from None
 
 
 def get_leave_workflow():

@@ -16,13 +16,17 @@ from app.models import student_leave as t
 @pytest.fixture
 def unit(tmp_path):
     engine = create_engine(f"sqlite:///{tmp_path / 's01.sqlite'}")
+    @event.listens_for(engine, "connect")
+    def foreign_keys(connection, _):
+        connection.execute("PRAGMA foreign_keys=ON")
     t.metadata.create_all(engine)
     sessions = sessionmaker(bind=engine)
     now = datetime.now(timezone.utc).replace(tzinfo=None)
     with sessions.begin() as db:
+        db.execute(insert(t.org_department), [dict(department_id=5, status="active")])
         db.execute(insert(t.student_profile), [
-            dict(student_id=7, status="active", is_archived=False),
-            dict(student_id=8, status="active", is_archived=False)])
+            dict(student_id=7, department_id=5, status="active", is_archived=False),
+            dict(student_id=8, department_id=5, status="active", is_archived=False)])
         db.execute(insert(t.employee), [
             dict(employee_id=11, status="active", role_codes=["teacher"]),
             dict(employee_id=12, status="active", role_codes=["advisor"]),
@@ -65,7 +69,7 @@ def unit(tmp_path):
     engine.dispose()
 
 def body():
-    return dict(leave_content="因身体不适申请请假", leave_type="sick",
+    return dict(leave_content="因身体不适申请请假", leave_type="sick", generate_ai_summary=True,
                 leave_start_at="2026-10-20T09:00:00+08:00", leave_end_at="2026-10-20T18:00:00+08:00")
 def post(unit, payload=None, key="s01-test-001"):
     return unit.client.post("/api/v1/student/leave", json=payload or body(), headers={"Idempotency-Key":key})
@@ -78,13 +82,13 @@ def test_submit_owner_teacher_notification_and_audit(unit):
     assert response.status_code == 200
     receipt = response.json()["data"]
     assert receipt == dict(apply_id=1, approval_status="pending", reviewer_id=11, row_version=1,
-                           assignment_pending=False, notification_queued=True,
+                           assignment_pending=False, notification_queued=True, ai_status="available",
                            ai_analysis={"summary": "学生因身体不适申请请假。", "review_points": ["请老师人工核实请假安排。"],
                                         "workflow_run_id": "mock-run-001", "analysis_version": "student-leave-v1"})
     with unit.sessions() as db:
         row = db.execute(select(t.student_admin_service)).mappings().one()
         assert row["student_id"] == 7 and row["apply_type"] == "leave"
-        assert row["edu_related_data"] == dict(leave_type="sick", ai_analysis=receipt["ai_analysis"])
+        assert row["edu_related_data"] == dict(leave_type="sick", ai_status="available", ai_analysis=receipt["ai_analysis"])
         assert row["leave_start_at"] == datetime(2026,10,20,1)
         notice = db.execute(select(t.business_notification)).mappings().one()
         assert notice["employee_id"] == 11 and notice["delivery_status"] == "pending"
@@ -171,21 +175,23 @@ def test_openapi(unit):
     {"workflow_run_id": "run", "data": {"status": "succeeded", "outputs": {"result": {"summary": "", "review_points": []}}}},
     {"data": {"status": "succeeded", "outputs": {"result": {"summary": "x", "review_points": []}}}},
 ])
-def test_bad_workflow_result_never_writes(unit, response):
+def test_bad_workflow_result_preserves_original(unit, response):
     unit.workflow.transport = httpx.MockTransport(lambda request: httpx.Response(200,json=response))
     reply=post(unit)
-    assert reply.status_code == 502
-    assert [count(unit,x) for x in (t.student_admin_service,t.business_notification,t.operation_log)] == [0,0,0]
+    assert reply.status_code == 200 and reply.json()["data"]["ai_status"] == "unavailable"
+    assert reply.json()["data"]["ai_analysis"] is None
+    assert [count(unit,x) for x in (t.student_admin_service,t.business_notification,t.operation_log)] == [1,1,1]
 
 
-def test_missing_workflow_configuration_cannot_silently_skip_ai(unit):
+def test_missing_workflow_configuration_reports_unavailable(unit):
     unit.workflow.config = StudentLeaveDifySettings(_env_file=None, STUDENT_DIFY_LEAVE_BASE="http://dify-test.local/v1", STUDENT_DIFY_LEAVE_VERSION="student-leave-v1",STUDENT_DIFY_LEAVE_KEY="")
     reply=post(unit)
-    assert reply.status_code == 503 and count(unit,t.student_admin_service) == 0
+    assert reply.status_code == 200 and count(unit,t.student_admin_service) == 1
+    assert reply.json()["data"]["ai_status"] == "unavailable"
 
 
 @pytest.mark.parametrize("failure", ["timeout","network","http"])
-def test_upstream_failure_is_redacted_and_no_writes(unit,failure):
+def test_upstream_failure_is_redacted_and_original_is_preserved(unit,failure):
     def fail(request):
         if failure == "timeout":
             raise httpx.ReadTimeout("private upstream details",request=request)
@@ -194,9 +200,9 @@ def test_upstream_failure_is_redacted_and_no_writes(unit,failure):
         return httpx.Response(401,json={"error":"test-only-workflow-key private upstream details"})
     unit.workflow.transport=httpx.MockTransport(fail)
     reply=post(unit)
-    assert reply.status_code == (502 if failure=="http" else 503)
+    assert reply.status_code == 200 and reply.json()["data"]["ai_status"] == "unavailable"
     assert "private upstream" not in reply.text and "test-only-workflow-key" not in reply.text
-    assert count(unit,t.student_admin_service) == count(unit,t.operation_log) == 0
+    assert count(unit,t.student_admin_service) == count(unit,t.operation_log) == 1
 
 
 def test_untrusted_request_and_identity_do_not_reach_dify(unit):
@@ -209,7 +215,7 @@ def test_untrusted_request_and_identity_do_not_reach_dify(unit):
 def test_dify_receives_only_contract_inputs_not_login_token(unit):
     assert post(unit).status_code == 200
     request=unit.workflow_requests[0]
-    assert request == {"inputs":body(),"response_mode":"blocking","user":"student-7"}
+    assert request == {"inputs":{k:v for k,v in body().items() if k != "generate_ai_summary"},"response_mode":"blocking","user":"student-7"}
     assert "student_id" not in request["inputs"] and "authorization" not in request["inputs"]
 
 
@@ -254,10 +260,10 @@ def test_workflow_dsl_has_reachable_llm_and_matching_input_output_contract():
     assert set(kinds)=={"start","llm","end"}
     assert {(e["source"],e["target"]) for e in graph["edges"]} == {
         (kinds["start"],kinds["llm"]),(kinds["llm"],kinds["end"])}
-    assert {v["variable"] for v in nodes[kinds["start"]]["variables"]}==set(body())
+    assert {v["variable"] for v in nodes[kinds["start"]]["variables"]}==(set(body()) - {"generate_ai_summary"})
     assert nodes[kinds["end"]]["outputs"]==[{"variable":"result","value_selector":[kinds["llm"],"text"]}]
     prompts="\n".join(p["text"] for p in nodes[kinds["llm"]]["prompt_template"])
-    for field in body():
+    for field in set(body()) - {"generate_ai_summary"}:
         assert "{{#"+kinds["start"]+"."+field+"#}}" in prompts
 
 
@@ -271,3 +277,11 @@ def test_student_mapping_change_during_workflow_prevents_old_owner_write(unit):
     unit.workflow.analyze_leave=analyze
     assert post(unit).status_code==403
     assert count(unit,t.student_admin_service)==count(unit,t.operation_log)==0
+
+
+def test_plain_leave_does_not_call_model(unit):
+    response=post(unit, body() | {"generate_ai_summary":False})
+    assert response.status_code==200
+    assert response.json()["data"]["ai_status"]=="not_requested"
+    assert response.json()["data"]["ai_analysis"] is None
+    assert unit.workflow_requests==[]
