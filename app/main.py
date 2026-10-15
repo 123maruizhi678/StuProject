@@ -4,6 +4,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.api.auth import router as auth_router
+from app.api.enterprise_student import router as enterprise_student_router
 from app.core.authorization import load_access_control
 from app.core.logger import get_logger, init_logger
 from app.core.response import register_exception_handlers
@@ -34,6 +35,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 register_exception_handlers(app)
+app.include_router(auth_router, prefix="/api/v1")
+app.include_router(enterprise_student_router, prefix="/api/v1")
 
 # 路由注册（各业务模块就绪后在此 include，挂载到 /api/v1）
 # from app.api import customer, agent, enterprise, student, report
@@ -59,7 +62,7 @@ def student_openapi():
         return app.openapi_schema
     schema = get_openapi(title=app.title, version=app.version, routes=app.routes)
     for path, operations in schema.get("paths", {}).items():
-        if not path.startswith(("/api/v1/student", "/api/v1/internal/student")):
+        if not path.startswith(("/api/v1/student", "/api/v1/internal/student", "/api/v1/enterprise")):
             continue
         for operation in operations.values():
             if not isinstance(operation, dict) or "responses" not in operation:
