@@ -1,11 +1,12 @@
 # 数据库建表脚本说明
 
-本目录的 `all.sql按当前方案建表.sql` 是根据总需求、原始 `all.sql` 和已确认的重复模型处理方案整理的 MySQL 建表脚本。
+本目录的 `all.sql` 是根据当前确认的数据模型整理的 MySQL 建表脚本。
 
 ## 当前模型选择
 
-- 新增 `user_account` 作为实际自然人的统一用户/登录主表，保存通用姓名、加密联系方式、登录标识及账号状态。
-- `employee`、`customer_profile`、`student_profile` 分别保留员工、客户和学生的业务资料，并通过唯一可空 `user_id` 外键关联 `user_account`；同一自然人可以同时关联不同角色档案。
+- 新增 `user_account`，只保存统一用户名、密码哈希、身份类型，以及关联员工/客户/学生业务记录所需的外键。
+- 不向 `employee`、`customer_profile`、`student_profile` 等现有业务表增加字段；用户表通过 `employee_id`、`customer_id` 或 `student_id` 单向引用业务主键。
+- `employee`、`customer_profile`、`student_profile` 继续只保存原有业务资料；用户表通过业务主键关联它们。
 - 学生主档使用 `student_profile`。
 - 学生请假/行政申请使用 `student_admin_service`。
 - 投诉与建议工单使用 `service_ticket`，处理过程记录在 `service_ticket_record`。
@@ -14,21 +15,22 @@
 
 ## 当前身份类型与关联
 
-| 身份/记录 | 对应表 | 是否关联 `user_account` |
+| 身份/记录 | 对应业务表 | 用户表关联方式 |
 |---|---|---|
-| 员工 | `employee` | 通过 `user_id` 关联；员工部门、工号、职位、在职状态仍保存在员工表。 |
-| 客户/意向客户 | `customer_profile` | 通过 `user_id` 关联；未注册或尚未完成身份合并的线索允许暂时为空。 |
-| 学生 | `student_profile` | 通过 `user_id` 关联；学号、教务/CRM编号、部门和在读状态仍保存在学生表。 |
-| 客服访客 | `chat_session.user_id` | 当前是访客字符串标识，可能匿名；不作为统一用户外键。登录/留资后可由业务逻辑关联到客户/学生档案。 |
-| 活动报名联系人 | `event_signup` | 保存报名时提交的姓名、手机号快照；并不自动创建账号。可在确认身份后关联客户档案。 |
+| 员工 | `employee` | `user_account.employee_id` 外键指向员工主键。 |
+| 客户/意向客户 | `customer_profile` | `user_account.customer_id` 外键指向客户主键。 |
+| 学生 | `student_profile` | `user_account.student_id` 外键指向学生主键。 |
+| 客服访客 | `chat_session.user_id` | 目前是匿名/访客字符串标识，不属于正式账号身份。 |
+| 活动报名联系人 | `event_signup` | 只记录活动报名时的姓名和手机号，不自动创建用户账号。 |
 
-`user_account` 是通用身份主表；各角色表仍保存各自业务字段。现有 `employee`、`student_profile` 的登录来源字段及各档案中的姓名/联系方式属于兼容/业务字段，接入统一身份后需由应用明确主数据来源并同步，后续可另行迁移清理。`user_id` 当前允许为空，便于旧资料逐步匹配；若要求所有正式员工、学生都必须绑定账号，应完成回填后再改为 `NOT NULL`。
+一个 `user_account` 记录只对应一种身份，三种业务外键中必须且只能填写一个。员工、客户、学生等现有表保持原样，不新增指向用户表的字段。若同一自然人需要多个身份，当前结构应建立多个账号记录；如果需要一个账号拥有多个身份，需将身份拆成独立的用户身份关联表后再扩展。
 
+`password_hash` 用于保存密码哈希，不能存明文密码；建议应用使用经过审查的密码哈希算法与参数。新用户账号必须绑定一条已存在的员工、客户或学生业务记录。客服匿名访客不需要账号。
 ## 环境要求
 
 - MySQL 8.0.16 或更高版本（脚本使用 `CHECK` 约束）。
 - 运行前先连接到目标数据库。脚本不会创建数据库/schema。
-- 建议在空数据库中执行。脚本不包含旧数据迁移，也不删除已有表。
+- 执行前备份目标数据库。脚本会先删除下方清单中的 30 张表（若存在），再重新创建 31 张表；这些旧表中的所有数据都会丢失。脚本不包含旧数据迁移。
 
 ## 执行方式
 
@@ -36,7 +38,7 @@
 
 ```sql
 USE your_database_name;
-SOURCE D:/path/to/all.sql按当前方案建表.sql;
+SOURCE D:/AI/StuProject/scripts/sql/all.sql;
 ```
 
 也可以使用 MySQL Workbench、DBeaver 等客户端打开 SQL 文件，在目标数据库连接中执行。
@@ -51,6 +53,10 @@ SOURCE D:/path/to/all.sql按当前方案建表.sql;
 
 `student_profile`、`student_admin_service`、`mental_health_profile`、`mental_warning`、`student_academic_event`、`student_academic_reminder`、`student_application_progress`、`student_notification`、`student_service_action`
 
+### 统一用户账号
+
+`user_account`
+
 ### 企业智能助手与组织数据
 
 `org_department`、`employee`、`customer_profile`、`customer_followup`、`employee_daily_report`、`student_staff_binding`、`student_score`、`service_ticket`、`service_ticket_record`、`knowledge_entry`、`business_notification`、`operation_log`
@@ -61,38 +67,34 @@ SOURCE D:/path/to/all.sql按当前方案建表.sql;
 
 ## 执行注意事项
 
-1. 这是新建表脚本，不是升级/迁移脚本。由于使用普通 `CREATE TABLE` 和一次 `ALTER TABLE`，重复执行会因表或字段已存在而报错。
-2. 脚本会在当前连接中暂时关闭外键检查，以处理表之间的依赖顺序，并在末尾重新开启。请完整执行；若中途失败，重新连接后再处理失败原因并重跑。
+1. 这是破坏性重建脚本，不是升级/迁移脚本。它先执行 `DROP TABLE IF EXISTS` 删除 30 张目标表，再创建 31 张表（包括 `user_account`）；重复执行会再次清空这些表中的数据。执行前必须备份并确认数据库选对。
+2. 脚本设置字符集为 `utf8mb4`、会话时区为 UTC（`+00:00`），并在建表期间关闭外键检查，末尾重新开启。请完整执行；若中途失败，先检查数据库状态和错误原因，勿直接重跑，以免再次删除数据。
 3. `student_profile` 是学生唯一主档。若从旧模型迁移数据，需将旧学生身份标识、请假记录和投诉工单迁入选定表，并更新应用及外部接口引用。本脚本本身不会迁移这些数据。
 4. 请先确认 CRM/教务学生编号、责任老师关联、审批字段等业务映射后再导入数据。`crm_student_id` 可以为空，但非空值必须唯一。
 5. 其他可选精简项（例如对话记录、报告指标、通知队列等）仍按需求文档保留在脚本中；如项目确定不实现相应功能，应先确认代码和数据依赖，再单独调整 DDL。
 
 ## 相关文件
 
-- 建表脚本：`all.sql按当前方案建表.sql`
+- 建表脚本：`all.sql`
 - 表分类及精简建议：`all.sql表分类与精简建议.md`
 
 ## 各表用途与字段说明
 
 ### `user_account`
 
-**功能：** 统一保存实际自然人的通用身份及登录信息，供员工、客户和学生等业务档案引用。它不包含业务角色；同一用户可关联多种角色档案。
+**功能：** 统一管理系统登录账号，并通过外键关联一条现有员工、客户或学生业务记录。业务身份资料仍保存在对应业务表中。
 
 | 字段名 | 类型 | 说明 |
 |---|---|---|
-| `user_id` | `BIGINT` | 统一用户主键 ID。 |
-| `full_name` | `VARCHAR(100)` | 实际用户姓名。 |
-| `phone_ciphertext` | `VARBINARY(512)` | 加密保存的手机号。 |
-| `phone_lookup_token` | `CHAR(64)` | 带密钥的手机号匹配标记，用于重复用户识别。 |
-| `email_ciphertext` | `VARBINARY(512)` | 加密保存的邮箱。 |
-| `login_provider` | `VARCHAR(32)` | 登录身份提供方；未开通登录时为空。 |
-| `login_subject` | `VARCHAR(128)` | 登录提供方中的不可变用户标识。 |
-| `status` | `VARCHAR(20)` | 用户状态：active 启用、disabled 停用、merged 已合并。 |
-| `created_at` | `DATETIME(3)` | 记录创建时间（UTC）。 |
-| `updated_at` | `DATETIME(3)` | 最近更新时间（UTC）。 |
-| `row_version` | `INT` | 并发版本号。 |
-
-
+| `user_id` | `BIGINT` | 用户账号主键。 |
+| `username` | `VARCHAR(64)` | 唯一登录用户名。 |
+| `password_hash` | `VARCHAR(255)` | 密码哈希，禁止存储明文密码。 |
+| `identity_type` | `VARCHAR(20)` | 身份类型：employee、customer 或 student。 |
+| `employee_id` | `BIGINT` | 员工身份外键；身份为 employee 时必填。 |
+| `customer_id` | `BIGINT` | 客户身份外键；身份为 customer 时必填。 |
+| `student_id` | `BIGINT` | 学生身份外键；身份为 student 时必填。 |
+| `created_at` | `DATETIME(3)` | 用户记录创建时间（UTC）。 |
+| `updated_at` | `DATETIME(3)` | 用户记录最近更新时间（UTC）。 |
 ### `course_project`
 
 **功能：** 保存客服Agent可检索和推荐的课程、留学申请及背景提升项目。
@@ -698,6 +700,9 @@ SOURCE D:/path/to/all.sql按当前方案建表.sql;
 | `calc_rule` | `TEXT` | 计算口径/规则说明 |
 | `period_type` | `VARCHAR(16)` | 周期类型：day/week/month |
 | `created_at` | `DATETIME` | 创建时间 |
+
+
+
 
 
 

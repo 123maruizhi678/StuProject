@@ -1,10 +1,24 @@
 -- Based on 总需求.txt and all.sql table classification decisions.
--- Chosen canonical models: student_profile, student_admin_service, service_ticket.
+-- Chosen canonical models: user_account credentials link to existing employee/customer/student business rows.
 -- Excluded duplicate models: student_identity, student_leave_request, after_sales_ticket.
--- Run against the intended MySQL 8.0.16+ database. Fresh-schema CREATE script;
--- it does not drop existing tables or migrate existing data.
+-- Other business tables are unchanged; user_account holds their existing primary keys as foreign keys.
+-- WARNING: This script drops and recreates every table listed below. All data in those tables will be deleted.
+-- Back up required data before running. It does not migrate existing data.
 SET NAMES utf8mb4;
+SET SESSION time_zone = '+00:00';
 SET FOREIGN_KEY_CHECKS = 0;
+DROP TABLE IF EXISTS
+  `user_account`,
+  `report_metric`, `report_record`, `report_config`,
+  `operation_log`, `business_notification`, `knowledge_entry`,
+  `service_ticket_record`, `service_ticket`, `student_score`, `student_staff_binding`,
+  `student_profile`, `employee_daily_report`, `customer_followup`, `customer_profile`,
+  `employee`, `org_department`,
+  `student_service_action`, `student_notification`, `student_application_progress`,
+  `student_academic_reminder`, `student_academic_event`, `mental_warning`,
+  `mental_health_profile`, `student_admin_service`,
+  `chat_message`, `chat_session`, `faq`, `event_signup`, `lecture_event`, `course_project`;
+
 CREATE TABLE `course_project` (
     `id`              BIGINT       NOT NULL AUTO_INCREMENT          COMMENT '主键，自增',
     `course_name`     VARCHAR(128) NOT NULL                         COMMENT '课程名称',
@@ -13,10 +27,10 @@ CREATE TABLE `course_project` (
     `description`     TEXT         NOT NULL                         COMMENT '课程简介',
     `location`        VARCHAR(128) NOT NULL DEFAULT ''              COMMENT '上课地点',
     `signup_method`   VARCHAR(128) NOT NULL DEFAULT ''              COMMENT '报名方式',
-    `status`          VARCHAR(16)  NOT NULL DEFAULT '上架'           COMMENT '状态：上架/下架',
-    `created_at`      DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-    `updated_at`      DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP
-                                          ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    `status`          VARCHAR(32)  NOT NULL DEFAULT '上架'           COMMENT '状态：上架/下架',
+    `created_at`      DATETIME(3)     NOT NULL DEFAULT CURRENT_TIMESTAMP(3) COMMENT '创建时间',
+    `updated_at`      DATETIME(3)     NOT NULL DEFAULT CURRENT_TIMESTAMP(3)
+                                          ON UPDATE CURRENT_TIMESTAMP(3) COMMENT '更新时间',
     PRIMARY KEY (`id`),
     KEY `idx_category_status` (`category`, `status`),
     KEY `idx_status_time`     (`status`,    `created_at`)
@@ -31,10 +45,10 @@ CREATE TABLE `lecture_event` (
     `signup_method` VARCHAR(128) NOT NULL DEFAULT ''                COMMENT '报名方式',
     `quota`         INT          NOT NULL DEFAULT 0                 COMMENT '名额（0 表示不限）',
     `signed_count`  INT          NOT NULL DEFAULT 0                 COMMENT '已报名人数',
-    `status`        VARCHAR(16)  NOT NULL DEFAULT '报名中'           COMMENT '状态：报名中/已满/已结束',
-    `created_at`    DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-    `updated_at`    DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP
-                                        ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    `status`        VARCHAR(32)  NOT NULL DEFAULT '报名中'           COMMENT '状态：报名中/已满/已结束',
+    `created_at`    DATETIME(3)     NOT NULL DEFAULT CURRENT_TIMESTAMP(3) COMMENT '创建时间',
+    `updated_at`    DATETIME(3)     NOT NULL DEFAULT CURRENT_TIMESTAMP(3)
+                                        ON UPDATE CURRENT_TIMESTAMP(3) COMMENT '更新时间',
     PRIMARY KEY (`id`),
     KEY `idx_status_start` (`status`, `start_time`),
     KEY `idx_start_time`   (`start_time`)
@@ -48,8 +62,8 @@ CREATE TABLE `event_signup` (
     `customer_info`  JSON         NULL                                COMMENT '客户扩展信息（意向国家、学历等）',
     `signup_time`    DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP  COMMENT '报名时间',
     `source`         VARCHAR(32)  NOT NULL DEFAULT '客服对话'          COMMENT '来源渠道',
-    `status`         VARCHAR(16)  NOT NULL DEFAULT '有效'             COMMENT '状态：有效/取消',
-    `created_at`     DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP  COMMENT '创建时间',
+    `status`         VARCHAR(32)  NOT NULL DEFAULT '有效'             COMMENT '状态：有效/取消',
+    `created_at`     DATETIME(3)     NOT NULL DEFAULT CURRENT_TIMESTAMP(3)  COMMENT '创建时间',
     PRIMARY KEY (`id`),
     UNIQUE KEY `uk_event_phone` (`event_id`, `customer_phone`) COMMENT '防重复报名',
     KEY `idx_event_status`  (`event_id`, `status`),
@@ -62,7 +76,7 @@ CREATE TABLE `faq` (
     `question`   TEXT        NOT NULL                             COMMENT '问题',
     `answer`     TEXT        NOT NULL                             COMMENT '答案',
     `category`   VARCHAR(32) NOT NULL DEFAULT ''                  COMMENT '分类',
-    `created_at` DATETIME    NOT NULL DEFAULT CURRENT_TIMESTAMP   COMMENT '创建时间',
+    `created_at` DATETIME(3)    NOT NULL DEFAULT CURRENT_TIMESTAMP(3)   COMMENT '创建时间',
     PRIMARY KEY (`id`),
     KEY `idx_category` (`category`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='FAQ 问答对表（兜底查询）';
@@ -72,9 +86,9 @@ CREATE TABLE `chat_session` (
     `session_id` VARCHAR(64)  NOT NULL                           COMMENT '会话唯一标识（UUID）',
     `user_id`    VARCHAR(64)  NOT NULL DEFAULT ''                COMMENT '访客标识（匿名或留资后）',
     `channel`    VARCHAR(32)  NOT NULL DEFAULT 'web'             COMMENT '渠道（web 等）',
-    `created_at` DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-    `updated_at` DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP
-                                       ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    `created_at` DATETIME(3)     NOT NULL DEFAULT CURRENT_TIMESTAMP(3) COMMENT '创建时间',
+    `updated_at` DATETIME(3)     NOT NULL DEFAULT CURRENT_TIMESTAMP(3)
+                                       ON UPDATE CURRENT_TIMESTAMP(3) COMMENT '更新时间',
     PRIMARY KEY (`id`),
     UNIQUE KEY `uk_session_id` (`session_id`),
     KEY `idx_user_id`    (`user_id`),
@@ -87,7 +101,7 @@ CREATE TABLE `chat_message` (
     `role`       VARCHAR(16)  NOT NULL                           COMMENT 'user / assistant',
     `intent`     VARCHAR(32)  NOT NULL DEFAULT ''                COMMENT '意图标签（由 Dify 返回）',
     `content`    TEXT         NOT NULL                           COMMENT '消息内容',
-    `created_at` DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    `created_at` DATETIME(3)     NOT NULL DEFAULT CURRENT_TIMESTAMP(3) COMMENT '创建时间',
     PRIMARY KEY (`id`),
     KEY `idx_session_time` (`session_id`, `created_at`),
     KEY `idx_intent`       (`intent`),
@@ -106,11 +120,11 @@ CREATE TABLE student_admin_service (
   reviewer_id BIGINT NULL COMMENT '指定/实际审批老师ID',
   reviewed_at DATETIME(6) NULL COMMENT '审批发生时间（UTC）',
   approval_comment TEXT NULL COMMENT '审批意见/驳回原因',
-  request_key VARCHAR(64) CHARACTER SET ascii COLLATE ascii_bin NOT NULL COMMENT '请求幂等键',
+  request_key VARCHAR(128) CHARACTER SET ascii COLLATE ascii_bin NOT NULL COMMENT '请求幂等键',
   request_hash CHAR(64) CHARACTER SET ascii COLLATE ascii_bin NOT NULL COMMENT '规范化请求SHA-256',
-  version INT NOT NULL DEFAULT 1 COMMENT '乐观锁版本',
-  created_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) COMMENT '创建时间（UTC）',
-  updated_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6) COMMENT '最后更新时间（UTC）',
+  row_version INT NOT NULL DEFAULT 1 COMMENT '乐观锁版本',
+  created_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) COMMENT '创建时间（UTC）',
+  updated_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3) COMMENT '最后更新时间（UTC）',
   PRIMARY KEY (id),
   UNIQUE KEY uk_admin_request (student_id, request_key),
   KEY idx_admin_student (student_id, created_at),
@@ -120,7 +134,7 @@ CREATE TABLE student_admin_service (
   CONSTRAINT ck_admin_status CHECK (approval_status IN ('pending', 'approved', 'rejected', 'cancelled')),
   CONSTRAINT ck_admin_leave CHECK (apply_type <> 'leave' OR (leave_start_at IS NOT NULL AND leave_end_at IS NOT NULL AND leave_end_at > leave_start_at)),
   CONSTRAINT ck_admin_decision CHECK (approval_status NOT IN ('approved', 'rejected') OR (reviewer_id IS NOT NULL AND reviewed_at IS NOT NULL)),
-  CONSTRAINT ck_admin_version CHECK (version >= 1)
+  CONSTRAINT ck_admin_version CHECK (row_version >= 1)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='学生行政服务';
 
 CREATE TABLE mental_health_profile (
@@ -134,7 +148,7 @@ CREATE TABLE mental_health_profile (
   source_event_id VARCHAR(128) CHARACTER SET ascii COLLATE ascii_bin NOT NULL COMMENT '本次源消息/事件ID',
   workflow_run_id VARCHAR(128) CHARACTER SET ascii COLLATE ascii_bin NULL COMMENT 'Dify工作流运行ID',
   analysis_version VARCHAR(64) NOT NULL COMMENT '心理分析配置版本',
-  created_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) COMMENT '创建时间（UTC）',
+  created_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) COMMENT '创建时间（UTC）',
   PRIMARY KEY (id),
   UNIQUE KEY uk_profile_source (student_id, source_event_id),
   UNIQUE KEY uk_profile_owner (id, student_id),
@@ -156,9 +170,9 @@ CREATE TABLE mental_warning (
   acknowledged_at DATETIME(6) NULL COMMENT '老师确认接手时间（UTC）',
   closed_at DATETIME(6) NULL COMMENT '人工关闭时间（UTC）',
   handling_result TEXT NULL COMMENT '人工处置结果',
-  version INT NOT NULL DEFAULT 1 COMMENT '乐观锁版本',
-  created_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) COMMENT '创建时间（UTC）',
-  updated_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6) COMMENT '最后更新时间（UTC）',
+  row_version INT NOT NULL DEFAULT 1 COMMENT '乐观锁版本',
+  created_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) COMMENT '创建时间（UTC）',
+  updated_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3) COMMENT '最后更新时间（UTC）',
   PRIMARY KEY (id),
   UNIQUE KEY uk_warning_profile (profile_id),
   KEY idx_warning_student (student_id, created_at),
@@ -168,7 +182,7 @@ CREATE TABLE mental_warning (
   CONSTRAINT ck_warning_risk CHECK (risk_level IN ('high', 'critical')),
   CONSTRAINT ck_warning_status CHECK (follower_status IN ('pending', 'processing', 'closed')),
   CONSTRAINT ck_warning_closed CHECK (follower_status <> 'closed' OR (follower_id IS NOT NULL AND acknowledged_at IS NOT NULL AND closed_at IS NOT NULL AND handling_result IS NOT NULL)),
-  CONSTRAINT ck_warning_version CHECK (version >= 1)
+  CONSTRAINT ck_warning_version CHECK (row_version >= 1)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='心理预警与处置';
 
 CREATE TABLE student_academic_event (
@@ -184,8 +198,8 @@ CREATE TABLE student_academic_event (
   event_version INT NOT NULL DEFAULT 1 COMMENT '影响提醒的节点版本',
   source_updated_at DATETIME(6) NULL COMMENT '源系统更新时间（UTC）',
   synced_at DATETIME(6) NOT NULL COMMENT '最后成功同步时间（UTC）',
-  created_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) COMMENT '创建时间（UTC）',
-  updated_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6) COMMENT '最后更新时间（UTC）',
+  created_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) COMMENT '创建时间（UTC）',
+  updated_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3) COMMENT '最后更新时间（UTC）',
   PRIMARY KEY (id),
   UNIQUE KEY uk_academic_source (student_id, source_system, external_event_id),
   UNIQUE KEY uk_academic_owner (id, student_id),
@@ -203,10 +217,10 @@ CREATE TABLE student_academic_reminder (
   lead_minutes INT NOT NULL COMMENT '提前分钟数',
   notify_at DATETIME(6) NOT NULL COMMENT '计划提醒时点（UTC）',
   event_version INT NOT NULL COMMENT '对应节点版本',
-  status VARCHAR(20) NOT NULL DEFAULT 'pending' COMMENT 'pending/queued/sent/cancelled',
-  sent_at DATETIME(6) NULL COMMENT '当前版本成功通知时间（UTC）',
-  created_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) COMMENT '创建时间（UTC）',
-  updated_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6) COMMENT '最后更新时间（UTC）',
+  status VARCHAR(32) NOT NULL DEFAULT 'pending' COMMENT 'pending/queued/sent/cancelled',
+  sent_at DATETIME(3) NULL COMMENT '当前版本成功通知时间（UTC）',
+  created_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) COMMENT '创建时间（UTC）',
+  updated_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3) COMMENT '最后更新时间（UTC）',
   PRIMARY KEY (id),
   UNIQUE KEY uk_reminder_setting (student_id, academic_event_id, lead_minutes),
   KEY idx_reminder_due (status, notify_at),
@@ -228,8 +242,8 @@ CREATE TABLE student_application_progress (
   detail VARCHAR(500) NULL COMMENT '必要进度说明',
   source_updated_at DATETIME(6) NULL COMMENT '源系统更新时间（UTC）',
   synced_at DATETIME(6) NOT NULL COMMENT '最后成功同步时间（UTC）',
-  created_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) COMMENT '创建时间（UTC）',
-  updated_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6) COMMENT '最后更新时间（UTC）',
+  created_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) COMMENT '创建时间（UTC）',
+  updated_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3) COMMENT '最后更新时间（UTC）',
   PRIMARY KEY (id),
   UNIQUE KEY uk_progress_stage (student_id, source_system, external_application_id, stage_code),
   KEY idx_progress_student (student_id, synced_at),
@@ -247,20 +261,20 @@ CREATE TABLE student_notification (
   recipient_id BIGINT NULL COMMENT '统一收件人ID',
   channel VARCHAR(20) NOT NULL DEFAULT 'in_app' COMMENT 'in_app/enterprise',
   content VARCHAR(500) NOT NULL COMMENT '最小必要通知内容',
-  status VARCHAR(20) NOT NULL DEFAULT 'pending' COMMENT 'pending/processing/sent/failed/cancelled',
-  attempts INT NOT NULL DEFAULT 0 COMMENT '尝试次数',
-  next_retry_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) COMMENT '下次可尝试时间（UTC）',
-  locked_until DATETIME(6) NULL COMMENT '处理租约截止（UTC）',
+  status VARCHAR(32) NOT NULL DEFAULT 'pending' COMMENT 'pending/processing/sent/failed/cancelled',
+  attempt_count INT NOT NULL DEFAULT 0 COMMENT '尝试次数',
+  next_retry_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) COMMENT '下次可尝试时间（UTC）',
+  lease_until DATETIME(3) NULL COMMENT '处理租约截止（UTC）',
   provider_message_id VARCHAR(128) COLLATE utf8mb4_bin NULL COMMENT '外部渠道回执ID',
   last_error VARCHAR(500) NULL COMMENT '脱敏失败摘要',
-  sent_at DATETIME(6) NULL COMMENT '实际投递成功时间（UTC）',
-  read_at DATETIME(6) NULL COMMENT '收件人阅读时间（UTC）',
-  created_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) COMMENT '创建时间（UTC）',
-  updated_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6) COMMENT '最后更新时间（UTC）',
+  sent_at DATETIME(3) NULL COMMENT '实际投递成功时间（UTC）',
+  read_at DATETIME(3) NULL COMMENT '收件人阅读时间（UTC）',
+  created_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) COMMENT '创建时间（UTC）',
+  updated_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3) COMMENT '最后更新时间（UTC）',
   PRIMARY KEY (id),
   UNIQUE KEY uk_notification_event (event_key),
   KEY idx_notification_due (status, next_retry_at),
-  KEY idx_notification_lease (status, locked_until),
+  KEY idx_notification_lease (status, lease_until),
   KEY idx_notification_inbox (recipient_type, recipient_id, status, created_at),
   KEY idx_notification_business (business_type, business_id),
   CONSTRAINT fk_notification_student FOREIGN KEY (student_id) REFERENCES `student_profile` (`student_id`),
@@ -268,7 +282,7 @@ CREATE TABLE student_notification (
   CONSTRAINT ck_stu_notification_recipient CHECK (recipient_type IN ('student', 'employee')),
   CONSTRAINT ck_notification_channel CHECK (channel IN ('in_app', 'enterprise')),
   CONSTRAINT ck_stu_notification_status CHECK (status IN ('pending', 'processing', 'sent', 'failed', 'cancelled')),
-  CONSTRAINT ck_notification_attempts CHECK (attempts >= 0),
+  CONSTRAINT ck_notification_attempt_count CHECK (attempt_count >= 0),
   CONSTRAINT ck_notification_sent CHECK (status <> 'sent' OR (recipient_id IS NOT NULL AND sent_at IS NOT NULL))
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='通知任务与收件记录';
 
@@ -285,7 +299,7 @@ CREATE TABLE student_service_action (
   note TEXT NULL COMMENT '必要操作说明/人工跟进备注',
   event_key VARCHAR(128) CHARACTER SET ascii COLLATE ascii_bin NOT NULL COMMENT '操作事件幂等键',
   trace_id VARCHAR(64) CHARACTER SET ascii COLLATE ascii_bin NOT NULL COMMENT '日志链路ID',
-  created_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) COMMENT '创建时间（UTC）',
+  created_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) COMMENT '创建时间（UTC）',
   PRIMARY KEY (id),
   UNIQUE KEY uk_action_event (event_key),
   KEY idx_action_business (business_type, business_id, created_at),
@@ -303,7 +317,7 @@ CREATE TABLE `org_department` (
   `parent_department_id` BIGINT NULL DEFAULT NULL COMMENT '上级部门 ID，关联本表；顶级部门为空。 外键（FK）关联 org_department.department_id。',
   `function_description` TEXT NULL DEFAULT NULL COMMENT '部门职能与职责说明。',
   `employee_id` BIGINT NULL DEFAULT NULL COMMENT '部门主管员工 ID，关联 employee。 外键（FK）关联 employee.employee_id。',
-  `status` VARCHAR(20) COLLATE utf8mb4_bin NOT NULL DEFAULT 'active' COMMENT '部门状态：active 启用、disabled 停用。',
+  `status` VARCHAR(32) COLLATE utf8mb4_bin NOT NULL DEFAULT 'active' COMMENT '部门状态：active 启用、disabled 停用。',
   `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) COMMENT '记录创建时间，UTC；连接必须设置 time_zone 为 +00:00',
   `updated_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3) COMMENT '记录最近更新时间，UTC',
   `row_version` INT NOT NULL DEFAULT 1 COMMENT '并发版本号；每次业务修改由硬编码后端递增',
@@ -327,7 +341,7 @@ CREATE TABLE `employee` (
   `role_codes` JSON NOT NULL COMMENT '受控角色代码数组；权限由后端固定配置解释。',
   `work_phone_ciphertext` VARBINARY(512) NULL DEFAULT NULL COMMENT '加密保存的工作联系电话。',
   `work_email` VARCHAR(254) NULL DEFAULT NULL COMMENT '工作邮箱。',
-  `status` VARCHAR(20) COLLATE utf8mb4_bin NOT NULL DEFAULT 'active' COMMENT '员工状态：active 启用、disabled 停用、left 离职。',
+  `status` VARCHAR(32) COLLATE utf8mb4_bin NOT NULL DEFAULT 'active' COMMENT '员工状态：active 启用、disabled 停用、left 离职。',
   `joined_date` DATE NOT NULL COMMENT '入职日期。',
   `left_date` DATE NULL DEFAULT NULL COMMENT '离职日期，未离职时为空。',
   `external_employee_id` VARCHAR(128) COLLATE utf8mb4_bin NULL DEFAULT NULL COMMENT '权威通讯录中的员工 ID。',
@@ -358,7 +372,7 @@ CREATE TABLE `customer_profile` (
   `source_reference` VARCHAR(128) NULL DEFAULT NULL COMMENT '来源留资或研判任务引用。',
   `employee_id` BIGINT NULL DEFAULT NULL COMMENT '当前顾问员工 ID，未分派时为空。 外键（FK）关联 employee.employee_id。',
   `department_id` BIGINT NOT NULL COMMENT '当前客户管理部门 ID。 外键（FK）关联 org_department.department_id。',
-  `status` VARCHAR(20) COLLATE utf8mb4_bin NOT NULL DEFAULT 'new' COMMENT '客户状态：new、contacting、qualified、signed、lost。',
+  `status` VARCHAR(32) COLLATE utf8mb4_bin NOT NULL DEFAULT 'new' COMMENT '客户状态：new、contacting、qualified、signed、lost。',
   `status_changed_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) COMMENT '当前客户状态开始生效的时间。',
   `lost_reason` TEXT NULL DEFAULT NULL COMMENT '流失原因，状态变为 lost 时必须填写。',
   `last_followup_at` DATETIME(3) NULL DEFAULT NULL COMMENT '最近一次有效跟进时间，由业务服务维护。',
@@ -415,7 +429,7 @@ CREATE TABLE `employee_daily_report` (
   `department_id_at_submit` BIGINT NOT NULL COMMENT '最近提交时的部门快照。 外键（FK）关联 org_department.department_id。',
   `submitted_content` TEXT NOT NULL COMMENT '最近一次员工确认提交的正式内容，必须填写。',
   `ai_summary` TEXT NULL DEFAULT NULL COMMENT '与最近提交内容对应的辅助摘要。',
-  `status` VARCHAR(20) COLLATE utf8mb4_bin NOT NULL DEFAULT 'submitted' COMMENT '日报状态：submitted 已提交、void 已作废。',
+  `status` VARCHAR(32) COLLATE utf8mb4_bin NOT NULL DEFAULT 'submitted' COMMENT '日报状态：submitted 已提交、void 已作废。',
   `submitted_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) COMMENT '最近正式提交时间。',
   `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) COMMENT '记录创建时间，UTC；连接必须设置 time_zone 为 +00:00',
   `updated_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3) COMMENT '记录最近更新时间，UTC',
@@ -434,11 +448,12 @@ CREATE TABLE `student_profile` (
   `student_id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '学生主键 ID，是成绩、请假、投诉及学生员工关系使用的内部标识。 主键（PK）。',
   `student_no` VARCHAR(32) NOT NULL COMMENT '学生唯一业务编号。',
   `full_name` VARCHAR(100) NOT NULL COMMENT '学生姓名，允许重名。',
+  `phone_ciphertext` VARBINARY(512) NULL DEFAULT NULL COMMENT '加密保存的学生手机号。',
   `customer_id` BIGINT NULL DEFAULT NULL COMMENT '关联客户 ID，不自动授予客户账号访问学生数据的权限。 外键（FK）关联 customer_profile.customer_id。',
   `department_id` BIGINT NOT NULL COMMENT '学生教务或服务归属部门 ID。 外键（FK）关联 org_department.department_id。',
   `login_provider` VARCHAR(32) COLLATE utf8mb4_bin NULL DEFAULT NULL COMMENT '学生登录来源，尚未开通账号时为空。',
   `login_subject` VARCHAR(128) COLLATE utf8mb4_bin NULL DEFAULT NULL COMMENT '学生登录身份键，与登录来源同时填写。',
-  `status` VARCHAR(20) COLLATE utf8mb4_bin NOT NULL COMMENT '学生服务或在读状态。',
+  `status` VARCHAR(32) COLLATE utf8mb4_bin NOT NULL COMMENT '学生服务或在读状态。',
   `external_student_id` VARCHAR(128) COLLATE utf8mb4_bin NULL DEFAULT NULL COMMENT '教务系统中的学生 ID。',
   `is_archived` BOOLEAN NOT NULL DEFAULT 0 COMMENT '是否已归档，默认 false；归档不删除已有成绩、请假和投诉关联。',
   `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) COMMENT '记录创建时间，UTC；连接必须设置 time_zone 为 +00:00',
@@ -466,7 +481,7 @@ CREATE TABLE `student_staff_binding` (
   `is_primary` BOOLEAN NOT NULL DEFAULT 0 COMMENT '是否为此业务关系的主要负责人。',
   `valid_from` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) COMMENT '关系开始生效时间。',
   `valid_to` DATETIME(3) NULL DEFAULT NULL COMMENT '关系失效时间，临时代理需要截止时间。',
-  `status` VARCHAR(20) COLLATE utf8mb4_bin NOT NULL DEFAULT 'active' COMMENT '关系状态：active 有效、disabled 停用。',
+  `status` VARCHAR(32) COLLATE utf8mb4_bin NOT NULL DEFAULT 'active' COMMENT '关系状态：active 有效、disabled 停用。',
   `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) COMMENT '记录创建时间，UTC；连接必须设置 time_zone 为 +00:00',
   `updated_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3) COMMENT '记录最近更新时间，UTC',
   `row_version` INT NOT NULL DEFAULT 1 COMMENT '并发版本号；每次业务修改由硬编码后端递增',
@@ -492,7 +507,7 @@ CREATE TABLE `student_score` (
   `score_value` DECIMAL(8,2) NOT NULL COMMENT '学生实际得分，统一采用数值制，必须填写。',
   `max_score` DECIMAL(8,2) NOT NULL COMMENT '本次考核满分，必须填写且大于零。',
   `employee_id` BIGINT NOT NULL COMMENT '最近录入或更正成绩的员工 ID。 外键（FK）关联 employee.employee_id。',
-  `status` VARCHAR(20) COLLATE utf8mb4_bin NOT NULL DEFAULT 'valid' COMMENT '成绩状态：valid 有效、void 作废。',
+  `status` VARCHAR(32) COLLATE utf8mb4_bin NOT NULL DEFAULT 'valid' COMMENT '成绩状态：valid 有效、void 作废。',
   `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) COMMENT '记录创建时间，UTC；连接必须设置 time_zone 为 +00:00',
   `updated_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3) COMMENT '记录最近更新时间，UTC',
   `row_version` INT NOT NULL DEFAULT 1 COMMENT '并发版本号；每次业务修改由硬编码后端递增',
@@ -588,7 +603,7 @@ CREATE TABLE `knowledge_entry` (
   `employee_id` BIGINT NOT NULL COMMENT '知识维护员工 ID。 外键（FK）关联 employee.employee_id。',
   `access_department_id` BIGINT NULL DEFAULT NULL COMMENT '限定访问部门；为空表示全体员工可见。 外键（FK）关联 org_department.department_id。',
   `version_no` INT NOT NULL DEFAULT 1 COMMENT '当前内容版本号，内容变更时递增。',
-  `status` VARCHAR(20) COLLATE utf8mb4_bin NOT NULL DEFAULT 'draft' COMMENT 'draft 草稿、published 已发布、disabled 停用。',
+  `status` VARCHAR(32) COLLATE utf8mb4_bin NOT NULL DEFAULT 'draft' COMMENT 'draft 草稿、published 已发布、disabled 停用。',
   `reviewer_employee_id` BIGINT NULL DEFAULT NULL COMMENT '审核该版本的员工 ID。 外键（FK）关联 employee.employee_id。',
   `reviewed_at` DATETIME(3) NULL DEFAULT NULL COMMENT '审核完成时间。',
   `effective_from` DATETIME(3) NULL DEFAULT NULL COMMENT '已发布知识开始生效的时间。',
@@ -661,8 +676,8 @@ CREATE TABLE `operation_log` (
   `action_code` VARCHAR(64) COLLATE utf8mb4_bin NOT NULL COMMENT '预先定义的业务动作编码。',
   `entity_type` VARCHAR(32) COLLATE utf8mb4_bin NOT NULL COMMENT '被操作业务实体类型。',
   `entity_id` BIGINT NULL DEFAULT NULL COMMENT '关联对象 ID，新建未完成或失败时可为空。',
-  `request_key` VARCHAR(128) COLLATE utf8mb4_bin NOT NULL COMMENT '逻辑业务请求幂等键，同一提交重试保持不变。',
-  `parameters_hash` CHAR(64) COLLATE utf8mb4_bin NOT NULL COMMENT '规范化业务参数摘要，用于识别相同幂等键下的参数冲突。',
+  `request_key` VARCHAR(128) CHARACTER SET ascii COLLATE ascii_bin NOT NULL COMMENT '逻辑业务请求幂等键，同一提交重试保持不变。',
+  `parameters_hash` CHAR(64) CHARACTER SET ascii COLLATE ascii_bin NOT NULL COMMENT '规范化业务参数摘要，用于识别相同幂等键下的参数冲突。',
   `before_data` JSON NULL DEFAULT NULL COMMENT '变更前必要业务快照，敏感字段按规则保护。',
   `after_data` JSON NULL DEFAULT NULL COMMENT '变更后必要业务快照，保留审批及修订结果。',
   `change_reason` TEXT NULL DEFAULT NULL COMMENT '人工更正、移交、驳回、删除等业务原因。',
@@ -689,57 +704,112 @@ CREATE TABLE `operation_log` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='业务操作记录表';
 
 CREATE TABLE `report_config` (
-  `id`            BIGINT       NOT NULL AUTO_INCREMENT COMMENT '主键',
-  `report_code`   VARCHAR(64)  NOT NULL COMMENT '报告代码：customer_overview/daily_report/weekly_report/mental_weekly/complaint_weekly',
-  `report_name`   VARCHAR(128) NOT NULL COMMENT '报告名称',
-  `report_period` VARCHAR(16)  NOT NULL DEFAULT 'week' COMMENT '报告周期：day/week/month',
-  `cron_expr`     VARCHAR(64)  DEFAULT NULL COMMENT '定时表达式（cron，按东八区）',
-  `enabled`       TINYINT(1)   NOT NULL DEFAULT 1 COMMENT '是否启用：1启用 0停用',
-  `created_at`    DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-  `updated_at`    DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `uk_report_code` (`report_code`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='报告配置表';
+  `report_config_id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '报告配置主键 ID。 主键（PK）。',
+  `report_code` VARCHAR(64) COLLATE utf8mb4_bin NOT NULL COMMENT '报告代码（五类枚举，见 CHECK）。',
+  `report_name` VARCHAR(128) NOT NULL COMMENT '报告名称。',
+  `report_period` VARCHAR(16) COLLATE utf8mb4_bin NOT NULL DEFAULT 'week' COMMENT '报告周期：day/week/month。',
+  `cron_expr` VARCHAR(64) DEFAULT NULL COMMENT '定时表达式（cron，按东八区配置）。',
+  `enabled` BOOLEAN NOT NULL DEFAULT 1 COMMENT '是否启用：1 启用、0 停用。',
+  `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) COMMENT '记录创建时间，UTC。',
+  `updated_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3) COMMENT '记录最近更新时间，UTC。',
+  `row_version` INT NOT NULL DEFAULT 1 COMMENT '并发版本号，每次业务修改递增。',
+  PRIMARY KEY (`report_config_id`),
+  UNIQUE KEY `uq_report_config_code` (`report_code`),
+  CONSTRAINT `ck_report_config_code` CHECK (`report_code` IN ('customer_overview','daily_report','weekly_report','mental_weekly','complaint_weekly')),
+  CONSTRAINT `ck_report_config_period` CHECK (`report_period` IN ('day','week','month')),
+  CONSTRAINT `ck_report_config_enabled` CHECK (`enabled` IN (0,1)),
+  CONSTRAINT `ck_report_config_row_version` CHECK (`row_version` >= 1)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='报告配置表';
+
+INSERT INTO `report_config` (`report_code`, `report_name`, `report_period`, `cron_expr`, `enabled`) VALUES
+('customer_overview', '全域客户经营分析报告', 'week',  '0 0 9 * * 5', 1),
+('daily_report',     '员工日报汇总报告（日）', 'day',  '0 30 18 * * *', 1),
+('weekly_report',    '员工日报汇总报告（周）', 'week', '0 0 9 * * 5', 1),
+('mental_weekly',    '学生心理健康周报',       'week', '0 0 9 * * 5', 1),
+('complaint_weekly', '投诉处理周报',           'week', '0 0 9 * * 5', 1);
 
 CREATE TABLE `report_record` (
-  `id`                  BIGINT       NOT NULL AUTO_INCREMENT COMMENT '主键',
-  `report_config_id`    BIGINT       NOT NULL COMMENT '报告配置ID',
-  `report_code`         VARCHAR(64)  NOT NULL COMMENT '报告代码',
-  `idempotency_key`     VARCHAR(128) NOT NULL COMMENT '幂等键：report_code+时间窗+版本',
-  `start_time`          DATETIME     NOT NULL COMMENT '统计起始时间（UTC）',
-  `end_time`            DATETIME     NOT NULL COMMENT '统计截止时间（UTC）',
-  `timezone`            VARCHAR(32)  NOT NULL DEFAULT 'UTC' COMMENT '统计时区',
-  `data_snapshot_at`    DATETIME     DEFAULT NULL COMMENT '数据快照时间',
-  `version`             VARCHAR(32)  NOT NULL DEFAULT 'v1' COMMENT '生成版本',
-  `source_record_count` INT          NOT NULL DEFAULT 0 COMMENT '来源记录数',
-  `report_content`      LONGTEXT     DEFAULT NULL COMMENT '报告正文（结构化文本）',
-  `metric_json`         JSON         DEFAULT NULL COMMENT '可复算指标快照（JSON）',
-  `status`              VARCHAR(16)  NOT NULL DEFAULT 'pending' COMMENT '状态：pending/running/success/failed',
-  `fail_reason`         TEXT         DEFAULT NULL COMMENT '失败原因',
-  `generated_at`        DATETIME     DEFAULT NULL COMMENT '生成完成时间',
-  `created_at`          DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `uk_idempotency_key` (`idempotency_key`),
-  KEY `idx_report_code_time` (`report_code`, `start_time`, `end_time`),
-  KEY `idx_status` (`status`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='报告生成记录表';
+  `report_record_id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '报告生成记录主键 ID。 主键（PK）。',
+  `report_config_id` BIGINT NOT NULL COMMENT '报告配置 ID。 外键关联 report_config.report_config_id。',
+  `report_code` VARCHAR(64) COLLATE utf8mb4_bin NOT NULL COMMENT '报告代码（冗余，便于按类型检索）。',
+  `idempotency_key` VARCHAR(128) COLLATE utf8mb4_bin NOT NULL COMMENT '幂等键：report_code+时间窗+版本。',
+  `start_time` DATETIME(3) NOT NULL COMMENT '统计起始时间（UTC）。',
+  `end_time` DATETIME(3) NOT NULL COMMENT '统计截止时间（UTC），必须晚于起始。',
+  `timezone` VARCHAR(32) NOT NULL DEFAULT 'UTC' COMMENT '统计口径时区。',
+  `data_snapshot_at` DATETIME(3) DEFAULT NULL COMMENT '数据快照时间，用于指标可复算。',
+  `report_version` VARCHAR(32) COLLATE utf8mb4_bin NOT NULL DEFAULT 'v1' COMMENT '报告生成版本，参与幂等键。',
+  `source_record_count` INT NOT NULL DEFAULT 0 COMMENT '来源记录数，用于追溯与识别数据不足。',
+  `report_content` LONGTEXT DEFAULT NULL COMMENT '报告正文（AI 生成的结构化文本）。',
+  `metric_json` JSON DEFAULT NULL COMMENT '可复算指标快照（JSON）。',
+  `status` VARCHAR(32) COLLATE utf8mb4_bin NOT NULL DEFAULT 'pending' COMMENT '状态：pending/running/success/failed。',
+  `fail_reason` TEXT DEFAULT NULL COMMENT '失败原因。',
+  `generated_at` DATETIME(3) DEFAULT NULL COMMENT '生成完成时间（UTC）。',
+  `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) COMMENT '记录创建时间，UTC。',
+  `updated_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3) COMMENT '记录最近更新时间，UTC。',
+  `row_version` INT NOT NULL DEFAULT 1 COMMENT '并发版本号。',
+  PRIMARY KEY (`report_record_id`),
+  UNIQUE KEY `uq_report_record_idempotency` (`idempotency_key`),
+  KEY `idx_report_record_config` (`report_config_id`),
+  KEY `idx_report_record_code_time` (`report_code`, `start_time`, `end_time`),
+  KEY `idx_report_record_status` (`status`),
+  CONSTRAINT `fk_report_record_config_id` FOREIGN KEY (`report_config_id`) REFERENCES `report_config` (`report_config_id`) ON DELETE RESTRICT ON UPDATE RESTRICT,
+  CONSTRAINT `ck_report_record_period` CHECK (`end_time` > `start_time`),
+  CONSTRAINT `ck_report_record_status` CHECK (`status` IN ('pending','running','success','failed')),
+  CONSTRAINT `ck_report_record_count` CHECK (`source_record_count` >= 0),
+  CONSTRAINT `ck_report_record_row_version` CHECK (`row_version` >= 1)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='报告生成记录表';
 
 CREATE TABLE `report_metric` (
-  `id`               BIGINT        NOT NULL AUTO_INCREMENT COMMENT '主键',
-  `report_record_id` BIGINT        NOT NULL COMMENT '报告记录ID',
-  `metric_code`      VARCHAR(64)   NOT NULL COMMENT '指标代码',
-  `metric_name`      VARCHAR(128)  NOT NULL COMMENT '指标名称',
-  `metric_value`     DECIMAL(20,4) DEFAULT NULL COMMENT '指标数值（数值型）',
-  `metric_text`      TEXT          DEFAULT NULL COMMENT '指标文本值（非数值型）',
-  `metric_unit`      VARCHAR(32)   DEFAULT NULL COMMENT '单位',
-  `calc_rule`        TEXT          DEFAULT NULL COMMENT '计算口径/规则说明',
-  `period_type`      VARCHAR(16)   DEFAULT NULL COMMENT '周期类型：day/week/month',
-  `created_at`       DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-  PRIMARY KEY (`id`),
-  KEY `idx_report_record_id` (`report_record_id`),
-  KEY `idx_metric_code` (`metric_code`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='报告指标明细表';
+  `report_metric_id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '报告指标明细主键 ID。 主键（PK）。',
+  `report_record_id` BIGINT NOT NULL COMMENT '所属报告记录 ID。 外键关联 report_record.report_record_id。',
+  `metric_code` VARCHAR(64) COLLATE utf8mb4_bin NOT NULL COMMENT '指标代码。',
+  `metric_name` VARCHAR(128) NOT NULL COMMENT '指标名称。',
+  `metric_value` DECIMAL(20,4) DEFAULT NULL COMMENT '指标数值（数值型指标）。',
+  `metric_text` TEXT DEFAULT NULL COMMENT '指标文本值（非数值型指标）。',
+  `metric_unit` VARCHAR(32) DEFAULT NULL COMMENT '单位。',
+  `calc_rule` TEXT DEFAULT NULL COMMENT '计算口径/规则说明，用于指标复算。',
+  `period_type` VARCHAR(16) COLLATE utf8mb4_bin DEFAULT NULL COMMENT '周期类型：day/week/month。',
+  `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) COMMENT '记录创建时间，UTC。',
+  PRIMARY KEY (`report_metric_id`),
+  KEY `idx_report_metric_record` (`report_record_id`),
+  KEY `idx_report_metric_code` (`metric_code`),
+  CONSTRAINT `fk_report_metric_record_id` FOREIGN KEY (`report_record_id`) REFERENCES `report_record` (`report_record_id`) ON DELETE RESTRICT ON UPDATE RESTRICT,
+  CONSTRAINT `ck_report_metric_value` CHECK (`metric_value` IS NOT NULL OR `metric_text` IS NOT NULL),
+  CONSTRAINT `ck_report_metric_period` CHECK (`period_type` IS NULL OR `period_type` IN ('day','week','month'))
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='报告指标明细表';
 -- student_profile is the canonical student table. Map the legacy CRM identifier here.
 ALTER TABLE `student_profile` ADD COLUMN `crm_student_id` VARCHAR(128) COLLATE utf8mb4_bin NULL DEFAULT NULL COMMENT 'CRM系统中的学生ID' AFTER `external_student_id`, ADD UNIQUE KEY `uq_student_crm` (`crm_student_id`);
 
+CREATE TABLE `user_account` (
+  `user_id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '统一用户主键 ID。',
+  `username` VARCHAR(64) COLLATE utf8mb4_bin NOT NULL COMMENT '登录用户名，唯一。',
+  `password_hash` VARCHAR(255) COLLATE utf8mb4_bin NOT NULL COMMENT '密码哈希，不得存储明文密码。',
+  `identity_type` VARCHAR(20) COLLATE utf8mb4_bin NOT NULL COMMENT '用户身份：employee 员工、customer 客户、student 学生。',
+  `employee_id` BIGINT NULL DEFAULT NULL COMMENT '对应员工表 employee.employee_id；非员工身份时为空。',
+  `customer_id` BIGINT NULL DEFAULT NULL COMMENT '对应客户表 customer_profile.customer_id；非客户身份时为空。',
+  `student_id` BIGINT NULL DEFAULT NULL COMMENT '对应学生表 student_profile.student_id；非学生身份时为空。',
+  `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) COMMENT '用户记录创建时间（UTC）。',
+  `updated_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3) COMMENT '用户记录最近更新时间（UTC）。',
+  PRIMARY KEY (`user_id`),
+  UNIQUE KEY `uq_user_username` (`username`),
+  UNIQUE KEY `uq_user_employee` (`employee_id`),
+  UNIQUE KEY `uq_user_customer` (`customer_id`),
+  UNIQUE KEY `uq_user_student` (`student_id`),
+  CONSTRAINT `fk_user_employee` FOREIGN KEY (`employee_id`) REFERENCES `employee` (`employee_id`) ON DELETE RESTRICT ON UPDATE RESTRICT,
+  CONSTRAINT `fk_user_customer` FOREIGN KEY (`customer_id`) REFERENCES `customer_profile` (`customer_id`) ON DELETE RESTRICT ON UPDATE RESTRICT,
+  CONSTRAINT `fk_user_student` FOREIGN KEY (`student_id`) REFERENCES `student_profile` (`student_id`) ON DELETE RESTRICT ON UPDATE RESTRICT,
+  CONSTRAINT `ck_user_identity_link` CHECK ((`identity_type` = 'employee' AND `employee_id` IS NOT NULL AND `customer_id` IS NULL AND `student_id` IS NULL) OR (`identity_type` = 'customer' AND `employee_id` IS NULL AND `customer_id` IS NOT NULL AND `student_id` IS NULL) OR (`identity_type` = 'student' AND `employee_id` IS NULL AND `customer_id` IS NULL AND `student_id` IS NOT NULL))
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='统一用户账号与身份关联表';
+
 SET FOREIGN_KEY_CHECKS = 1;
+
+
+
+
+
+
+
+
+
+
+
