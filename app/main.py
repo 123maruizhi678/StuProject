@@ -36,12 +36,13 @@ app.add_middleware(
 register_exception_handlers(app)
 
 # 路由注册（各业务模块就绪后在此 include，挂载到 /api/v1）
-# from app.api import customer, agent, enterprise, student, report
+# from app.api import customer, agent, enterprise, student
 # app.include_router(customer.router, prefix="/api/v1")
 # app.include_router(agent.router, prefix="/api/v1")
 # app.include_router(enterprise.router, prefix="/api/v1")
 # app.include_router(student.router, prefix="/api/v1")
-# app.include_router(report.router, prefix="/api/v1")
+from app.api import report
+app.include_router(report.router, prefix="/api/v1")
 
 
 @app.get("/")

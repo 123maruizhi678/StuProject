@@ -30,6 +30,10 @@ class Settings(BaseSettings):
     DIFY_API_BASE: str = "http://127.0.0.1/v1"
     DIFY_API_KEY: str = Field(default="", repr=False)
     DIFY_SQL_OUTPUT_KEY: str = "sql"
+    # 鉴权：访问策略文件路径、JWT 签名密钥与令牌有效期（分钟）。
+    ACCESS_CONTROL_FILE: Path = BASE_DIR / "app" / "access_control.yaml"
+    AUTH_SECRET_KEY: str = Field(default="", repr=False)
+    AUTH_TOKEN_EXPIRE_MINUTES: int = 1440
 
 
 settings = Settings()
