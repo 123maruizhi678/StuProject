@@ -174,13 +174,13 @@ def main():
     with zipfile.ZipFile(
         api_dir / "学生助手_企业侧交接.zip", "w", zipfile.ZIP_DEFLATED
     ) as archive:
-        for name in (
-            "学生助手_数据表与接口简要说明.md",
-            "学生助手_企业侧对接.md",
-            "学生助手_企业侧_OpenAPI.json",
-            "学生助手_企业侧_Postman.json",
+        for source in (
+            ROOT / "业务文档/06开发文档/接口方案/学生助手_数据表与接口简要说明.md",
+            api_dir / "学生助手_企业侧对接.md",
+            api_dir / "学生助手_企业侧_OpenAPI.json",
+            api_dir / "学生助手_企业侧_Postman.json",
         ):
-            archive.write(api_dir / name, arcname=name)
+            archive.write(source, arcname=source.name)
     print(
         json.dumps(
             {
