@@ -17,6 +17,8 @@
 from typing import Any, Generic, Optional, TypeVar
 
 from fastapi import Request
+from fastapi.exceptions import RequestValidationError
+from starlette.exceptions import HTTPException as StarletteHTTPException
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
@@ -30,6 +32,9 @@ class ResultCode:
     SUCCESS = 0
     PARAM_ERROR = 400
     UNAUTHORIZED = 401
+    FORBIDDEN = 403
+    NOT_FOUND = 404
+    CONFLICT = 409
     SERVER_ERROR = 500
 
 
@@ -78,6 +83,22 @@ class BusinessException(Exception):
 # 5. 全局异常处理器（在 main.py 中注册）
 def register_exception_handlers(app) -> None:
     """向 FastAPI 注册业务异常和未处理异常处理器。"""
+    @app.exception_handler(RequestValidationError)
+    async def _validation_handler(request: Request, exc: RequestValidationError):
+        if request.url.path.startswith("/api/v1/enterprise"):
+            # 不回显输入正文（可能包含敏感字段）。
+            return JSONResponse(status_code=200, content=fail(400, "请求参数不符合接口约定", [
+                {"loc": list(e["loc"]), "message": e["msg"]} for e in exc.errors()]))
+        from fastapi.exception_handlers import request_validation_exception_handler
+        return await request_validation_exception_handler(request, exc)
+
+    @app.exception_handler(StarletteHTTPException)
+    async def _http_handler(request: Request, exc: StarletteHTTPException):
+        if request.url.path.startswith("/api/v1/enterprise"):
+            return JSONResponse(status_code=200, content=fail(exc.status_code, str(exc.detail)), headers=exc.headers)
+        from fastapi.exception_handlers import http_exception_handler
+        return await http_exception_handler(request, exc)
+
     @app.exception_handler(BusinessException)
     async def _biz_handler(_: Request, exc: BusinessException):
         """将业务异常转换为统一响应信封。"""
