@@ -324,8 +324,8 @@ CREATE TABLE `service_ticket` (
   CONSTRAINT `fk_service_ticket_student_id` FOREIGN KEY (`student_id`) REFERENCES `student_profile` (`student_id`) ON DELETE RESTRICT ON UPDATE RESTRICT,
   CONSTRAINT `fk_service_ticket_employee_id` FOREIGN KEY (`employee_id`) REFERENCES `employee` (`employee_id`) ON DELETE RESTRICT ON UPDATE RESTRICT,
   CONSTRAINT `fk_service_ticket_handling_department_id` FOREIGN KEY (`handling_department_id`) REFERENCES `org_department` (`department_id`) ON DELETE RESTRICT ON UPDATE RESTRICT,
-  CONSTRAINT `ck_ticket_type` CHECK (`ticket_type` IN ('complaint','suggestion')),
-  CONSTRAINT `ck_ticket_status` CHECK (`status` IN ('open','assigned','processing','awaiting_student','closed','reopened')),
+  CONSTRAINT `ck_svc_ticket_type` CHECK (`ticket_type` IN ('complaint','suggestion')),
+  CONSTRAINT `ck_svc_ticket_status` CHECK (`status` IN ('open','assigned','processing','awaiting_student','closed','reopened')),
   CONSTRAINT `ck_ticket_satisfaction` CHECK (`satisfaction_score` IS NULL OR `satisfaction_score` BETWEEN 1 AND 5),
   CONSTRAINT `ck_ticket_reopen_count` CHECK (`reopen_count` >= 0),
   CONSTRAINT `ck_ticket_solution` CHECK (`status` NOT IN ('awaiting_student','closed') OR (`solution` IS NOT NULL AND CHAR_LENGTH(TRIM(`solution`)) > 0)),
@@ -434,8 +434,8 @@ CREATE TABLE `business_notification` (
   KEY `idx_notification_entity` (`entity_type`, `entity_id`),
   CONSTRAINT `fk_business_notification_employee_id` FOREIGN KEY (`employee_id`) REFERENCES `employee` (`employee_id`) ON DELETE RESTRICT ON UPDATE RESTRICT,
   CONSTRAINT `fk_business_notification_student_id` FOREIGN KEY (`student_id`) REFERENCES `student_profile` (`student_id`) ON DELETE RESTRICT ON UPDATE RESTRICT,
-  CONSTRAINT `ck_notification_recipient` CHECK (((`employee_id` IS NOT NULL) + (`student_id` IS NOT NULL)) = 1),
-  CONSTRAINT `ck_notification_status` CHECK (`delivery_status` IN ('pending','sending','sent','failed','dead_letter')),
+  CONSTRAINT `ck_svc_notification_recipient` CHECK (((`employee_id` IS NOT NULL) + (`student_id` IS NOT NULL)) = 1),
+  CONSTRAINT `ck_svc_notification_status` CHECK (`delivery_status` IN ('pending','sending','sent','failed','dead_letter')),
   CONSTRAINT `ck_notification_attempt` CHECK (`attempt_count` >= 0),
   CONSTRAINT `ck_business_notification_row_version` CHECK (`row_version` >= 1)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='业务通知表';
