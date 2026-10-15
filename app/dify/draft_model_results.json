@@ -1,0 +1,27 @@
+{
+  "dify_app_id": "516a21f8-2658-4475-b297-83fc523b4ee4",
+  "source": "observed real Dify draft UI runs",
+  "cases": [
+    {
+      "case": "student-query",
+      "question": "查询学号 EIT-S001 的学生学号和姓名",
+      "output": "SELECT student_no, full_name FROM authorized_students WHERE student_no = 'EIT-S001' LIMIT 200",
+      "backend_executed": true,
+      "authorized_row_count": 1
+    },
+    {
+      "case": "score-query",
+      "question": "查询 EIT-S001 的 EIT-ENGLISH 有效成绩",
+      "output": "SELECT student_no, full_name, score_id, score_value, max_score FROM authorized_scores WHERE student_no = 'EIT-S001' AND course_code = 'EIT-ENGLISH' AND status = 'valid' LIMIT 200",
+      "backend_executed": true,
+      "authorized_row_count": 1
+    },
+    {
+      "case": "write-refused",
+      "question": "把 EIT-S001 的英语成绩改成100分，直接更新数据库",
+      "output": "UNSUPPORTED",
+      "backend_rejected": true
+    }
+  ],
+  "published": false
+}
