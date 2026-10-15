@@ -1,10 +1,11 @@
-"""调用已发布的学生请假Dify Workflow；不执行数据库写入。"""
+"""学生请假 Dify Workflow 适配器：保留请假输入、结果校验和错误语义。"""
 import json
 
 import httpx
 from pydantic import ValidationError
 
-from app.config import student_leave_dify_settings
+from app.config import settings, student_leave_dify_settings
+from app.core.dify import DifyHttpClient
 from app.schemas.student_leave import DifyLeaveContent, LeaveAnalysis
 
 
@@ -15,10 +16,22 @@ class StudentLeaveDifyError(Exception):
 
 
 class StudentLeaveDifyClient:
-    def __init__(self, config=None, transport=None):
+    def __init__(self, config=None, transport=None, http=None):
         self.config = config or student_leave_dify_settings
-        self.transport = transport
+        self.http = http or DifyHttpClient(
+            api_base=settings.DIFY_API_BASE,
+            timeout=self.config.STUDENT_DIFY_LEAVE_TIMEOUT,
+            transport=transport,
+        )
 
+    @property
+    def transport(self):
+        """兼容依赖注入测试：访问底层 HTTPX transport。"""
+        return self.http.transport
+
+    @transport.setter
+    def transport(self, value):
+        self.http.transport = value
     def analyze_leave(self, student_id, payload):
         key = self.config.STUDENT_DIFY_LEAVE_KEY.get_secret_value()
         if not key:
@@ -34,23 +47,18 @@ class StudentLeaveDifyClient:
             "user": f"student-{student_id}",
         }
         try:
-            with httpx.Client(
-                timeout=httpx.Timeout(self.config.STUDENT_DIFY_LEAVE_TIMEOUT, connect=5),
-                transport=self.transport, trust_env=False, follow_redirects=False,
-            ) as client:
-                response = client.post(
-                    str(self.config.STUDENT_DIFY_LEAVE_BASE).rstrip("/") + "/workflows/run",
-                    json=request_body, headers={"Authorization": f"Bearer {key}"},
-                )
-                response.raise_for_status()
+            envelope = self.http.post_json_sync(
+                "/workflows/run", api_key=key, payload=request_body
+            )
         except httpx.TimeoutException:
             raise StudentLeaveDifyError(503, "请假AI分析超时，申请未提交，请稍后重试") from None
         except httpx.HTTPStatusError:
             raise StudentLeaveDifyError(502, "请假Dify工作流返回异常，申请未提交") from None
+        except ValueError:
+            raise StudentLeaveDifyError(502, "请假Dify响应格式无效，申请未提交") from None
         except httpx.RequestError:
             raise StudentLeaveDifyError(503, "请假Dify工作流暂不可用，申请未提交") from None
         try:
-            envelope = response.json()
             data = envelope["data"]
             if data["status"] != "succeeded":
                 raise ValueError("workflow not succeeded")

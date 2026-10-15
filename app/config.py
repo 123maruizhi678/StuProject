@@ -2,7 +2,7 @@
 
 from pathlib import Path
 
-from pydantic import AnyHttpUrl, Field, SecretStr
+from pydantic import Field, SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 # 项目根目录（StuProject），.env 置于此
@@ -34,15 +34,25 @@ class Settings(BaseSettings):
     # NL2SQL Workflow
     DIFY_NL2SQL_API_KEY: str = Field(default="", repr=False)
     DIFY_NL2SQL_OUTPUT_KEY: str = ""
-    # 客户研判 Workflow
-    DIFY_CUSTOMER_API_KEY: str = Field(default="", repr=False)
-    DIFY_CUSTOMER_OUTPUT_KEY: str = "result"
-    # 报告摘要 Workflow
-    DIFY_REPORT_API_KEY: str = Field(default="", repr=False)
-    DIFY_REPORT_OUTPUT_KEY: str = "summary"
-    # 对话型 Dify 应用
-    DIFY_CHAT_API_KEY: str = Field(default="", repr=False)
+    DIFY_SQL_OUTPUT_KEY: str = "sql"  # 旧版 NL2SQL 输出字段兼容项
 
+
+
+class StudentLeaveDifySettings(BaseSettings):
+    """学生请假 Workflow 的专用连接配置，使用独立 API Key 和版本标识。"""
+
+    model_config = SettingsConfigDict(
+        env_file=str(BASE_DIR / ".env"),
+        env_file_encoding="utf-8",
+        extra="ignore",
+    )
+
+    STUDENT_DIFY_LEAVE_KEY: SecretStr = Field(default=SecretStr(""), repr=False)
+    STUDENT_DIFY_LEAVE_TIMEOUT: float = 60.0
+    STUDENT_DIFY_LEAVE_VERSION: str = "student-leave-v1"
+
+
+student_leave_dify_settings = StudentLeaveDifySettings()
 
 settings = Settings()
 LOG_DIR = Path(settings.LOG_DIR) if settings.LOG_DIR else (BASE_DIR / "app" / "logs")
