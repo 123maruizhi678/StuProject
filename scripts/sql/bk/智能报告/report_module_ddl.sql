@@ -8,8 +8,8 @@
 --   1. 本脚本为智能报告模块三张核心表（report_config / report_record / report_metric）。
 --   2. 已对齐项目统一规范：DATETIME(3)+UTC、utf8mb4_0900_ai_ci、编码/身份键 utf8mb4_bin、
 --      CHECK 约束、真实外键、乐观锁 row_version。
---   3. 首次初始化使用：目标库内这三张表应尚不存在；本脚本不删除已有库/表、不插业务数据、
---      不创建数据库用户或配置密码。
+--   3. 首次初始化使用：目标库内这三张表应尚不存在；本脚本不删除已有库/表、不创建数据库用户或
+--      配置密码；仅写入 report_config 五类报告配置种子数据（非业务数据）。
 --   4. 报告依赖的上游表（customer_profile / customer_followup / employee_daily_report /
 --      mental_health_profile / mental_warning / service_ticket）由企业、学生模块建表，
 --      报告模块只读聚合，不在本脚本重复建表（见文末附录）。
@@ -119,15 +119,16 @@ CREATE TABLE `report_metric` (
 --    - 意向/成交/流失客户：企业模块 customer_profile（status 含 new/contacting/qualified/signed/lost，
 --      lost_reason、status_changed_at、last_followup_at 均已具备）。
 --    - 客户跟进/转化路径：企业模块 customer_followup（followup_at/channel/content/summary）。
---    - 研判参考：客户研判模块 customer_judgement（如有）。
+--    - 研判参考：客户研判模块 customer_judgement（scripts/sql/all.sql 尚未落地该表，
+--      待客户研判模块补建后再接入；当前报告不预设其字段）。
 -- 2) 员工日报汇总报告（日/周）：
 --    - 企业模块 employee_daily_report（report_date/submitted_content/ai_summary/status/department_id_at_submit）。
 -- 3) 学生心理健康周报：
 --    - 学生模块 mental_health_profile（emotion_tag/emotion_score/risk_level/observed_at，一行一次评估）。
 --    - 学生模块 mental_warning（risk_level/follower_status/follower_id/acknowledged_at/closed_at）。
 -- 4) 投诉处理周报：
---    - 【待统一】企业模块 V2.2 用 service_ticket 作为企业端+学生端共享统一工单；
---      学生模块 V1.0 草案用 after_sales_ticket 作为统一工单。两张表职能重叠，
---      投诉周报的数据来源须在两端统一后确定，报告模块不预设唯一事实源。
---    - 两表均已含投诉分类、首次响应/解决/关闭时间、满意度等周报所需字段。
+--    - 统一工单事实源采用 service_ticket（scripts/sql/all.sql 已选定为企业端+学生端共用统一工单，
+--      after_sales_ticket 为已排除的重复模型，不在统一建表脚本中重复建表）。
+--    - service_ticket 已含投诉分类（ticket_type/category_code）、首次响应（first_response_at）、
+--      解决/关闭（resolved_at/closed_at）、满意度（satisfaction_score）等周报所需字段。
 -- ============================================================================
