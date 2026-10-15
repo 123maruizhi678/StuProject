@@ -1,4 +1,7 @@
-"""Dify 工作流 HTTP 客户端：调用 NL2SQL 工作流并提取配置的 SQL 输出变量。"""
+"""Dify 通用 HTTP 传输层：只负责 JSON POST、Bearer 鉴权、超时和 HTTP 响应。"""
+
+from typing import Any
+
 import httpx
 
 from app.config import settings
@@ -43,4 +46,5 @@ async def call_nl2sql(question: str, user: str = "stuproject", *, api_base: str 
             raise ValueError(
                 f"Dify 输出缺少 SQL 变量 '{settings.DIFY_SQL_OUTPUT_KEY}'"
             )
-        return sql.strip()
+            response.raise_for_status()
+            return self._json_object(response)
