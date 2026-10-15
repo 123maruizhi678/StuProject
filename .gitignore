@@ -17,3 +17,5 @@ app/logs/
 .idea/
 .vscode/
 .DS_Store
+app/core/__pycache__/
+app/__pycache__/
