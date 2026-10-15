@@ -5,7 +5,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.api.auth import router as auth_router
 from app.api.enterprise_student import router as enterprise_student_router
-from app.core.authorization import load_access_control
+from app.core.authorization import load_access_control, require_permission
 from app.core.logger import get_logger, init_logger
 from app.core.response import register_exception_handlers
 from app.database import dispose_db, get_db

@@ -3,7 +3,7 @@
 from pathlib import Path
 
 from typing import Literal
-from pydantic import Field
+from pydantic import Field, SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 # 项目根目录（StuProject），.env 置于此
@@ -32,6 +32,12 @@ class Settings(BaseSettings):
     # 旧版 NL2SQL 通用密钥保留为兼容回退；新配置建议使用按场景密钥。
     DIFY_API_KEY: str = Field(default="", repr=False)
     DIFY_SQL_OUTPUT_KEY: str = "sql"
+    # Dify HTTP 请求超时秒数（NL2SQL / 报告工作流共用）。
+    DIFY_API_TIMEOUT_SECONDS: float = 60.0
+    # 报告生成工作流专用配置；地址为空时回退 DIFY_API_BASE。
+    REPORT_DIFY_API_BASE: str = ""
+    REPORT_DIFY_API_KEY: str = Field(default="", repr=False)
+    REPORT_DIFY_OUTPUT_KEY: str = "report_text"
     AUTH_SECRET_KEY: str = Field(default="", repr=False)
     AUTH_TOKEN_EXPIRE_MINUTES: int = Field(default=120, ge=1)
     ACCESS_CONTROL_FILE: Path = BASE_DIR / "app" / "access_control.yaml"
