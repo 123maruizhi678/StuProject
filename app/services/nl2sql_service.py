@@ -1,30 +1,22 @@
-"""NL2SQL 通用工具：自然语言 → Dify 工作流 → SQL → 本地 MySQL 执行。
+"""NL2SQL 业务服务：通过通用 Dify Workflow 客户端生成并执行查询。"""
 
-对外提供 nl2sql_query()，任意函数/路由均可调用。返回统一格式：
-    {"code": 0, "message": "success", "data": {"sql": ..., "rows": [...]}}
-"""
 from fastapi.concurrency import run_in_threadpool
 from sqlalchemy import text
 
-from app.core.dify import call_nl2sql
+from app.core.dify import run_workflow
 from app.core.response import ResultCode, fail, success
 from app.database import engine
 
 
 async def nl2sql_query(question: str, read_only: bool = True) -> dict:
-    """通用入口：自然语言问题转为 SQL 并在本地库执行，返回统一信封。
-
-    Args:
-        question: 自然语言问题
-        read_only: 为 True 时仅允许 SELECT，防止破坏性语句
-    """
-    # 1. 调用 Dify 取得 SQL
+    """自然语言转 SQL 并执行，返回统一信封中的 SQL 和结果行。"""
+    # 1. 选择 nl2sql 场景配置，运行对应 Dify Workflow 并提取 sql 输出。
     try:
-        sql = await call_nl2sql(question)
+        sql = await run_workflow("nl2sql", {"question": question})
     except Exception as e:
         return fail(ResultCode.SERVER_ERROR, f"Dify 调用失败: {e}")
 
-    # 2. 安全校验：只读模式下仅允许 SELECT
+    # 2. 现有只读保护为 SELECT 前缀检查；这不是完整 SQL 安全解析。
     if read_only and not sql.strip().lower().startswith("select"):
         return fail(
             ResultCode.PARAM_ERROR,
@@ -32,9 +24,8 @@ async def nl2sql_query(question: str, read_only: bool = True) -> dict:
             data={"sql": sql},
         )
 
-    # 3. 在本地 MySQL 同步执行（放到线程池，避免阻塞事件循环）
+    # 3. 在线程池同步访问数据库，避免阻塞异步事件循环。
     def _execute():
-        """在线程池内同步执行 SQL 并把结果行转换为字典列表。"""
         with engine.connect() as conn:
             result = conn.execute(text(sql))
             return [dict(row) for row in result.mappings().all()]
