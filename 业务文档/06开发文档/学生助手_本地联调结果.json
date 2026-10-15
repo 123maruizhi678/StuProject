@@ -1,0 +1,25 @@
+{
+  "date": "2026-10-15T03:16:15.958122+00:00",
+  "api": "http://127.0.0.1:8010",
+  "database": "127.0.0.1:3307/education_agent",
+  "data_scope": "local_demo_only",
+  "apply_id": 1,
+  "checks": [
+    "HTTP submit",
+    "idempotent replay",
+    "employee detail",
+    "employee approval",
+    "student result",
+    "approved-withdraw conflict",
+    "result notification",
+    "student denied enterprise endpoint"
+  ],
+  "dify_live": "not_configured",
+  "tasks": {
+    "reminders_queued": 0,
+    "sent": 1,
+    "failed": 0,
+    "skipped": 1
+  },
+  "passed": true
+}
