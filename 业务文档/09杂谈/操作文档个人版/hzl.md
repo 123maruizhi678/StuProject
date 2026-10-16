@@ -40,7 +40,7 @@
 
 | 数据库表 | 功能作用 | 主要数据 |
 | --- | --- | --- |
-| `course_project` | 课程项目数据源 | 名称、类别、适用人群、时间地点、报名方式和状态 |
+| `course_project` | 课程项目数据源 | 名称、类别、适用人群、简介、地点、报名方式和状态 |
 | `lecture_event` | 讲座活动数据源 | 名称、类型、时间地点、名额、已报名人数和状态 |
 | `event_signup` | 活动报名记录 | 活动 ID、姓名、手机号、扩展信息、报名时间及有效/取消状态 |
 | `faq` | 数据库标准问答及兜底 | 问题、答案和分类 |
@@ -48,6 +48,116 @@
 | `chat_message` | 客服对话历史 | 会话 ID、用户/助手角色、意图标签及消息内容 |
 
 按源总览的报名约定，以活动 ID、手机号及有效状态进行状态式判重，不使用活动 ID 与手机号的永久组合唯一约束，以便取消后重新报名。实际约束、并发保护和业务实现仍应对照当前统一 DDL 与服务代码核验。
+
+### 4. 六张业务表的完整字段
+
+以下字段仅摘录自《客服Agent实现方案.md》第四章，保留字段名称、类型、可空性、默认值、说明及索引/外键约束；未读取其他文件，也未据此核验数据库或代码。默认值中的“—”表示方案未列出默认值，两个单引号表示空字符串，NULL 表示空值。原有用途概述为业务说明，实际字段清单以下表为准。
+#### 4.1 课程项目表 `course_project`
+
+存课程/项目（留学申请、背景提升、语言培训三大类），课程推荐分支的数据源。
+
+| 字段 | 类型 | 可空 | 默认值 | 说明 |
+|:---|:---|:---:|:---|:---|
+| id | BIGINT | 否 | 自增 | 主键 |
+| course_name | VARCHAR(128) | 否 | — | 课程名称 |
+| category | VARCHAR(32) | 否 | — | 类别：留学申请/背景提升/语言培训 |
+| target_audience | VARCHAR(128) | 否 | '' | 适用人群（学历/意向国家等） |
+| description | TEXT | 否 | — | 课程简介 |
+| location | VARCHAR(128) | 否 | '' | 上课地点 |
+| signup_method | VARCHAR(128) | 否 | '' | 报名方式 |
+| status | VARCHAR(32) | 否 | '上架' | 状态：上架/下架（仅上架对访客可见） |
+| created_at | DATETIME(3) | 否 | 当前时间 | 创建时间 |
+| updated_at | DATETIME(3) | 否 | 当前时间，更新时自动刷新 | 更新时间 |
+
+- 索引：`idx_category_status (category, status)`、`idx_status_time (status, created_at)`——支撑按类别筛选 + 仅取上架的查询。
+
+#### 4.2 讲座活动表 `lecture_event`
+
+存近期讲座/分享会/见面会；`quota` 名额上限，`signed_count` 实时已报名人数（报名成功由接口 +1），`status` 控制能否报名。
+
+| 字段 | 类型 | 可空 | 默认值 | 说明 |
+|:---|:---|:---:|:---|:---|
+| id | BIGINT | 否 | 自增 | 主键 |
+| event_name | VARCHAR(128) | 否 | — | 活动名称 |
+| event_type | VARCHAR(16) | 否 | — | 线上/线下 |
+| start_time | DATETIME | 否 | — | 开始时间 |
+| location | VARCHAR(128) | 否 | '' | 地点 |
+| signup_method | VARCHAR(128) | 否 | '' | 报名方式 |
+| quota | INT | 否 | 0 | 名额（0 表示不限） |
+| signed_count | INT | 否 | 0 | 已报名人数 |
+| status | VARCHAR(32) | 否 | '报名中' | 状态：报名中/已满/已结束 |
+| created_at | DATETIME(3) | 否 | 当前时间 | 创建时间 |
+| updated_at | DATETIME(3) | 否 | 当前时间，更新时自动刷新 | 更新时间 |
+
+- 索引：`idx_status_start (status, start_time)`——支撑「报名中 + 按时间排序」的列表查询；`idx_start_time (start_time)`。
+
+#### 4.3 活动报名表 `event_signup`
+
+访客在对话中完成报名的落库记录，是「报名闭环」的凭证。
+
+| 字段 | 类型 | 可空 | 默认值 | 说明 |
+|:---|:---|:---:|:---|:---|
+| id | BIGINT | 否 | 自增 | 主键 |
+| event_id | BIGINT | 否 | — | 活动ID（外键 → `lecture_event.id`） |
+| customer_name | VARCHAR(64) | 否 | — | 客户姓名 |
+| customer_phone | VARCHAR(32) | 否 | — | 客户手机号（判重依据） |
+| customer_info | JSON | 是 | NULL | 客户扩展信息（意向国家、学历等） |
+| signup_time | DATETIME | 否 | 当前时间 | 报名时间 |
+| source | VARCHAR(32) | 否 | '客服对话' | 来源渠道 |
+| status | VARCHAR(32) | 否 | '有效' | 状态：有效/取消 |
+| created_at | DATETIME(3) | 否 | 当前时间 | 创建时间 |
+
+- 外键：`fk_signup_event (event_id) → lecture_event(id)`。
+- 索引：`idx_event_status (event_id, status)`、`idx_signup_time (signup_time)`。
+- **去重策略（重要，已变更）**：**不建 `(event_id, customer_phone)` 唯一约束**，改为**状态式去重**——仅当存在 `status=有效` 的报名记录时才拒绝；用户取消报名（`status=取消`）后可重新报名。早期方案用数据库唯一约束，会导致「取消后再报名」撞索引，故废弃。
+
+#### 4.4 FAQ 问答对表 `faq`
+
+存申请流程、费用、退费等高频问题标准答案，供 FAQ 兜底查询（知识库未覆盖时兜底）。
+
+| 字段 | 类型 | 可空 | 默认值 | 说明 |
+|:---|:---|:---:|:---|:---|
+| id | BIGINT | 否 | 自增 | 主键 |
+| question | TEXT | 否 | — | 问题 |
+| answer | TEXT | 否 | — | 答案 |
+| category | VARCHAR(32) | 否 | '' | 分类 |
+| created_at | DATETIME(3) | 否 | 当前时间 | 创建时间 |
+
+- 索引：`idx_category (category)`。
+
+#### 4.5 客服会话表 `chat_session`
+
+一个访客一次进店咨询 = 一条会话；`session_id`（UUID）是贯穿多轮对话的主线，前端首访不带、之后带回即可续上同一会话。
+
+| 字段 | 类型 | 可空 | 默认值 | 说明 |
+|:---|:---|:---:|:---|:---|
+| id | BIGINT | 否 | 自增 | 主键 |
+| session_id | VARCHAR(64) | 否 | — | 会话唯一标识（UUID），**唯一索引 `uk_session_id`** |
+| user_id | VARCHAR(64) | 否 | '' | 访客标识（匿名或留资后） |
+| channel | VARCHAR(32) | 否 | 'web' | 渠道（web 等） |
+| created_at | DATETIME(3) | 否 | 当前时间 | 创建时间 |
+| updated_at | DATETIME(3) | 否 | 当前时间，更新时自动刷新 | 更新时间 |
+
+- 索引：`uk_session_id (session_id)` 唯一索引、`idx_user_id (user_id)`、`idx_updated_at (updated_at)`。
+
+#### 4.6 客服消息表 `chat_message`
+
+会话内每一条消息，`intent` 记录 Dify 识别的意图，用于审计、意图分布统计与对话追溯。
+
+| 字段 | 类型 | 可空 | 默认值 | 说明 |
+|:---|:---|:---:|:---|:---|
+| id | BIGINT | 否 | 自增 | 主键 |
+| session_id | VARCHAR(64) | 否 | — | 关联会话（外键 → `chat_session.session_id`） |
+| role | VARCHAR(16) | 否 | — | user / assistant |
+| intent | VARCHAR(32) | 否 | '' | 意图标签（由 Dify 返回；兜底时为空） |
+| content | TEXT | 否 | — | 消息内容 |
+| created_at | DATETIME(3) | 否 | 当前时间 | 创建时间 |
+
+- 外键：`fk_message_session (session_id) → chat_session(session_id)`。
+- 索引：`idx_session_time (session_id, created_at)`——按会话取历史消息；`idx_intent (intent)`——意图统计。
+- **实现注意**：ORM 未声明外键关系，插入时必须保证父行（`chat_session`）先落库——`_ensure_session` 新建会话后立即 `flush`，否则同事务内 INSERT 顺序不定会触发外键违例。
+
+方案另说明：knowledge_vector 知识库向量数据存储在 Dify 侧，后端本期不建该表；方案未提供其字段定义，本文不补写。
 
 ## 二、用户角色和接口访问规则
 
@@ -227,3 +337,4 @@ D:/AI/StuProject/
 | `业务文档/03开发设计/客服Agent-Dify-Chatflow搭建方案.md` | 工作流节点、输入输出契约及后端对接说明，源总览所列关联文档 |
 
 目录和文件清单用于定位职责，不含实现代码。客服模块维护自己的场景业务和 Dify 应用，公共模块提供数据库会话、日志、响应及 HTTP 传输组件；模型生成话术，后端作为业务落库入口，前端根据动作请求真实业务数据。
+
