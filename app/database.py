@@ -14,6 +14,7 @@
 from collections.abc import Generator
 
 from sqlalchemy import create_engine
+from sqlalchemy.engine import URL
 from sqlalchemy.orm import DeclarativeBase, Session, sessionmaker
 
 from app.config import settings
@@ -24,10 +25,8 @@ class Base(DeclarativeBase):
 
 
 # 本地 MySQL 连接串（pymysql 同步驱动，charset 统一 utf8mb4）
-DATABASE_URL = (
-    f"mysql+pymysql://{settings.DB_USER}:{settings.DB_PASSWORD}"
-    f"@{settings.DB_HOST}:{settings.DB_PORT}/{settings.DB_NAME}?charset=utf8mb4"
-)
+DATABASE_URL = URL.create("mysql+pymysql", username=settings.DB_USER, password=settings.DB_PASSWORD,
+    host=settings.DB_HOST, port=settings.DB_PORT, database=settings.DB_NAME, query={"charset": "utf8mb4"})
 
 # 同步引擎：连接池 + 健康检查，避免失效连接
 engine = create_engine(
@@ -36,6 +35,7 @@ engine = create_engine(
     pool_pre_ping=True,
     pool_size=10,
     max_overflow=20,
+    connect_args={"init_command": "SET time_zone = '+00:00'"},
 )
 
 # 会话工厂

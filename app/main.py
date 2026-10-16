@@ -4,10 +4,12 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.api.auth import router as auth_router
-from app.core.authorization import load_access_control
+from app.api.enterprise_student import router as enterprise_student_router
+from app.core.authorization import load_access_control, require_permission
 from app.core.logger import get_logger, init_logger
 from app.core.response import register_exception_handlers
-from app.database import dispose_db
+from app.database import dispose_db, get_db
+from app.api.student_leave import create_router as create_student_leave_router
 
 init_logger()
 logger = get_logger(__name__)
@@ -34,14 +36,25 @@ app.add_middleware(
     allow_headers=["*"],
 )
 register_exception_handlers(app)
+app.include_router(auth_router, prefix="/api/v1")
+app.include_router(enterprise_student_router, prefix="/api/v1")
+
+# S01仅接入学生请假；登录和权限判断复用组长公共依赖。
+app.include_router(
+    create_student_leave_router(
+        require_permission("student.admin_service.create"), get_db
+    ),
+    prefix="/api/v1",
+)
 
 # 路由注册（各业务模块就绪后在此 include，挂载到 /api/v1）
-# from app.api import customer, agent, enterprise, student, report
+# from app.api import customer, agent, enterprise, student
 # app.include_router(customer.router, prefix="/api/v1")
 # app.include_router(agent.router, prefix="/api/v1")
 # app.include_router(enterprise.router, prefix="/api/v1")
 # app.include_router(student.router, prefix="/api/v1")
-# app.include_router(report.router, prefix="/api/v1")
+from app.api import report
+app.include_router(report.router, prefix="/api/v1")
 
 
 @app.get("/")
@@ -59,10 +72,12 @@ def student_openapi():
         return app.openapi_schema
     schema = get_openapi(title=app.title, version=app.version, routes=app.routes)
     for path, operations in schema.get("paths", {}).items():
-        if not path.startswith(("/api/v1/student", "/api/v1/internal/student")):
+        if not path.startswith(("/api/v1/student", "/api/v1/internal/student", "/api/v1/enterprise")):
             continue
         for operation in operations.values():
             if not isinstance(operation, dict) or "responses" not in operation:
+                continue
+            if operation.get("x-response-convention") == "http-status":
                 continue
             operation["responses"].pop("422", None)
             operation["responses"]["200"] = {
