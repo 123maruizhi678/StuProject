@@ -186,51 +186,14 @@ POST /api/v1/agent/chat
 
 ## 六、数据表清单（6 张）
 
-客服Agent 共有 **6 张表**，分两类：**业务数据表**（课程/活动/报名/FAQ，来自 `scripts/sql/agent_seed.sql` 维护）和**对话流水表**（会话/消息，由接口运行时自动写入）。
-
-### 6.1 各表用途
-
-| 表 | 用途（存什么、干什么用） | 谁写入 | 关键字段 |
-|---|---|---|---|
-| `course_project` | **课程项目表**：存所有课程/项目（留学申请、背景提升、语言培训三大类），供课程推荐分支查询展示；只有“上架”状态的课程会对访客可见 | 运营/顾问在后台维护（种子数据在 `agent_seed.sql`） | 课程名称、类别、适用人群、简介、地点、报名方式、状态（上架/下架） |
-| `lecture_event` | **讲座活动表**：存近期线上/线下讲座、分享会、见面会；`quota` 是名额上限，`signed_count` 实时已报名人数（报名成功 +1），`status` 控制能否报名 | 运营/顾问维护；`signed_count` 由报名接口自动更新 | 活动名称、类型（线上/线下）、开始时间、地点、报名方式、名额、已报名人数、状态（报名中/已满/已结束） |
-| `event_signup` | **活动报名表**：访客在对话中完成活动报名的落库记录，是“报名闭环”的凭证；按手机号做状态式防重 | 仅 `POST /agent/events/signup` 写入 | 活动ID、客户姓名、手机号、扩展信息（JSON）、报名时间、来源、状态（有效/取消） |
-| `faq` | **FAQ 问答对表**：存申请流程、费用、退费等高频问题的标准答案，供 FAQ 兜底查询（知识库未覆盖时兜底） | 运营/顾问维护 | 问题、答案、分类 |
-| `chat_session` | **客服会话表**：一个访客一次进店咨询 = 一条会话，`session_id`（UUID）是贯穿多轮对话的主线；前端不传则由后端生成并回传，下次带上来即续上同一会话 | `POST /agent/chat` 自动创建 | session_id、访客标识、渠道、创建/更新时间 |
-| `chat_message` | **客服消息表**：会话内每一条消息（user/assistant 各一条），`intent` 记录 Dify 识别的意图，用于审计、统计意图分布、事后追溯对话 | `POST /agent/chat` 自动写入（每轮 2 条） | 会话ID、角色、意图标签、内容、时间 |
-
-### 6.2 接口 × 连表关系
-
-| 接口 | 读哪些表 | 写哪些表 |
+| 表 | 说明 | 关键字段 |
 |---|---|---|
-| `POST /agent/chat` | `chat_session`（按 session_id 查是否已存在） | `chat_session`（新会话）、`chat_message`（user + assistant 两条） |
-| `GET /agent/events` | `lecture_event`（按开始时间排序，可按状态筛选） | — |
-| `GET /agent/events/{event_id}` | `lecture_event`（主键查一条） | — |
-| `POST /agent/events/signup` | `lecture_event`（`FOR UPDATE` 行锁读取，校验状态/名额/防重） | `event_signup`（插入报名记录）、`lecture_event`（`signed_count + 1`） |
-| `GET /agent/courses` | `course_project`（仅“上架”，可按类别筛选） | — |
-| `GET /agent/faq` | `faq`（问题关键词模糊匹配） | — |
-
-一张图看懂（**R = 读，W = 写**）：
-
-```
-POST /agent/chat ──── R chat_session（查会话是否已存在）
-                    ├─ W chat_session（新访客首次对话时创建）
-                    └─ W chat_message ×2（user 消息 + assistant 消息）
-
-GET  /agent/events ────────── R lecture_event（列表 + 状态筛选）
-GET  /agent/events/{id} ───── R lecture_event（主键查一条）
-POST /agent/events/signup ─── R lecture_event（FOR UPDATE 行锁）
-                           ├─ W event_signup（插入报名记录）
-                           └─ W lecture_event（signed_count + 1）
-GET  /agent/courses ───────── R course_project（仅上架 + 类别筛选）
-GET  /agent/faq ───────────── R faq（关键词模糊匹配）
-```
-
-要点：
-
-- **唯一的写库组合在报名接口**：`event_signup` 插一条 + `lecture_event` 计数 +1，同一事务，失败一起回滚；
-- **对话接口只碰两张流水表**，不碰任何业务数据表；Dify 侧完全不连库；
-- **6 张表全部有接口覆盖**，没有孤立表。
+| `course_project` | 课程项目 | 课程名称、类别、适用人群、时间地点、报名方式、状态 |
+| `lecture_event` | 讲座活动 | 活动名称、类型、开始时间、地点、名额、已报名人数、状态 |
+| `event_signup` | 活动报名 | 活动ID、客户姓名、手机号、扩展信息、报名时间、状态（有效/取消） |
+| `faq` | FAQ 问答对 | 问题、答案、分类 |
+| `chat_session` | 客服会话 | session_id（UUID）、访客标识、渠道 |
+| `chat_message` | 客服消息 | 会话ID、角色（user/assistant）、意图标签、内容 |
 
 > 去重策略：报名为**状态式去重**（`status=有效` 判重），不建 `(event_id, customer_phone)` 数据库唯一约束——保证用户取消报名后可以重新报名。
 
