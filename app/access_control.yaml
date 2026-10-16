@@ -8,7 +8,7 @@ roles:
   customer:
     permissions: [dashboard.customer, course_project.read, event_signup.create, service_ticket.create, service_ticket.read_own]
   student:
-    permissions: [dashboard.student, student.profile.read_own, student.admin_service.create, student.admin_service.read_own, student.notification.read_own]
+    permissions: [dashboard.student, student.profile.read_own, student.admin_service.create, student.admin_service.read_own, student.notification.read_own, service_ticket.create, service_ticket.read_own]
 # Page IDs and routes are metadata for a future frontend; these do not create pages.
 pages:
   home: {title: Home, route: /, public: true}

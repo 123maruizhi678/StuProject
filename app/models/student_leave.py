@@ -1,15 +1,22 @@
 """学生请假使用的公共表字段投影；生产建表仍由公共 SQL/迁移负责。"""
 from sqlalchemy import (
     BigInteger, Boolean, Column, DateTime, Integer, JSON, MetaData, String,
-    Table, Text, UniqueConstraint,
+    Table, Text, UniqueConstraint, ForeignKey,
 )
 
 metadata = MetaData()
 identifier = BigInteger().with_variant(Integer, "sqlite")
 
+org_department = Table(
+    "org_department", metadata,
+    Column("department_id", identifier, primary_key=True),
+    Column("status", String(32), nullable=False),
+)
+
 student_profile = Table(
     "student_profile", metadata,
     Column("student_id", identifier, primary_key=True),
+    Column("department_id", identifier, ForeignKey("org_department.department_id"), nullable=False),
     Column("status", String(32), nullable=False),
     Column("is_archived", Boolean, nullable=False),
 )
@@ -22,8 +29,8 @@ employee = Table(
 student_staff_binding = Table(
     "student_staff_binding", metadata,
     Column("binding_id", identifier, primary_key=True),
-    Column("student_id", identifier, nullable=False),
-    Column("employee_id", identifier, nullable=False),
+    Column("student_id", identifier, ForeignKey("student_profile.student_id"), nullable=False),
+    Column("employee_id", identifier, ForeignKey("employee.employee_id"), nullable=False),
     Column("relation_type", String(32), nullable=False),
     Column("is_primary", Boolean, nullable=False),
     Column("status", String(32), nullable=False),
@@ -33,13 +40,13 @@ student_staff_binding = Table(
 student_admin_service = Table(
     "student_admin_service", metadata,
     Column("id", identifier, primary_key=True, autoincrement=True),
-    Column("student_id", identifier, nullable=False),
+    Column("student_id", identifier, ForeignKey("student_profile.student_id"), nullable=False),
     Column("apply_type", String(20), nullable=False),
     Column("apply_content", Text, nullable=False),
     Column("approval_status", String(20), nullable=False),
     Column("edu_related_data", JSON),
-    Column("leave_start_at", DateTime, nullable=False),
-    Column("leave_end_at", DateTime, nullable=False),
+    Column("leave_start_at", DateTime),
+    Column("leave_end_at", DateTime),
     Column("reviewer_id", identifier),
     Column("request_key", String(128), nullable=False),
     Column("request_hash", String(64), nullable=False),
@@ -54,8 +61,8 @@ business_notification = Table(
     Column("entity_type", String(32), nullable=False),
     Column("entity_id", identifier, nullable=False),
     Column("event_code", String(64), nullable=False),
-    Column("employee_id", identifier),
-    Column("student_id", identifier),
+    Column("employee_id", identifier, ForeignKey("employee.employee_id")),
+    Column("student_id", identifier, ForeignKey("student_profile.student_id")),
     Column("channel", String(20), nullable=False),
     Column("title", String(200), nullable=False),
     Column("content", Text, nullable=False),
@@ -70,8 +77,8 @@ operation_log = Table(
     "operation_log", metadata,
     Column("operation_log_id", identifier, primary_key=True, autoincrement=True),
     Column("operation_key", String(64), nullable=False, unique=True),
-    Column("student_id", identifier),
-    Column("employee_id", identifier),
+    Column("student_id", identifier, ForeignKey("student_profile.student_id")),
+    Column("employee_id", identifier, ForeignKey("employee.employee_id")),
     Column("service_code", String(64)),
     Column("action_code", String(64), nullable=False),
     Column("entity_type", String(32), nullable=False),

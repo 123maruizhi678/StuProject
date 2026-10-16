@@ -1,5 +1,5 @@
 """S01 请求与回执；身份和审批状态不由请求体指定。"""
-from typing import Annotated
+from typing import Annotated, Literal
 
 from pydantic import AwareDatetime, BaseModel, ConfigDict, Field, model_validator
 
@@ -11,6 +11,7 @@ class LeaveInput(BaseModel):
     leave_type: str = Field(default="personal", min_length=1, max_length=32)
     leave_start_at: AwareDatetime
     leave_end_at: AwareDatetime
+    generate_ai_summary: bool = False
 
     @model_validator(mode="after")
     def validate_period(self):
@@ -38,6 +39,13 @@ class LeaveReceipt(BaseModel):
     assignment_pending: bool
     notification_queued: bool
     ai_analysis: LeaveAnalysis | None = None
+    ai_status: Literal["not_requested", "available", "unavailable"] = "not_requested"
+
+    @model_validator(mode="after")
+    def legacy_analysis_status(self):
+        if "ai_status" not in self.model_fields_set and self.ai_analysis is not None:
+            self.ai_status = "available"
+        return self
 
 
 class LeaveResponse(BaseModel):

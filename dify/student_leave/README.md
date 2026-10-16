@@ -1,6 +1,6 @@
 # 学生助手 S01 AI辅助请假提交工作流
 
-本目录交付学生请假专用Dify Workflow DSL。功能是把学生填写的请假理由整理成摘要和老师需要人工核实的关注点，再由Python提交待审批申请。
+本目录保留可选的请假摘要工作流。S01默认不调用模型，直接按固定后端规则提交；仅请求generate_ai_summary=true时尝试生成摘要，失败仍保存原文。带模型调用的主要交付改为dify/student_ticket中的投诉摘要。
 
 当前交付状态：代码、DSL及本地协议测试已完成；目标Dify实例导入、发布、模型供应商配置和真实模型联调待完成。本地测试的模型结果来自明确的测试替身，不能视为大模型实际输出。
 
@@ -28,7 +28,7 @@
     STUDENT_DIFY_LEAVE_TIMEOUT=60
     STUDENT_DIFY_LEAVE_VERSION=student-leave-v1
 
-.env和.env.student.local由app/config.py中的StudentLeaveDifySettings读取；未配置专用Key时接口返回503，不跳过模型后直接写库。不要把真实Key写进DSL、日报或Git。
+.env和.env.student.local由app/config.py中的StudentLeaveDifySettings读取。未请求AI时ai_status=not_requested；请求AI且缺少Key时ai_status=unavailable、ai_analysis=null，但仍可提交申请。不要把真实Key写进DSL、日报或Git。
 
 ## 后端调用契约
 
@@ -42,7 +42,7 @@ app/clients/student_leave_dify.py中的StudentLeaveDifyClient.analyze_leave调�
 
 只接受data.status=succeeded。result可以是JSON字符串或对象，必须符合DifyLeaveContent；workflow_run_id取顶层值或data.id。后端附加analysis_version，并在edu_related_data.ai_analysis及成功回执中保存。
 
-模型输出错误或工作流失败返回502；未配置、超时或网络不可用返回503。以上情况都不新增申请、通知或操作记录。正式请求的登录Token不会转发给Dify。
+模型错误、未配置、超时或网络不可用由业务层降级，回执ai_status=unavailable，申请保持pending并保存原文。共享表结构或数据库不可用才阻止提交。正式请求的登录Token不会转发给Dify。
 
 ## 最小验证
 
@@ -53,7 +53,7 @@ app/clients/student_leave_dify.py中的StudentLeaveDifyClient.analyze_leave调�
 
 第二条启动临时本机HTTP服务，但Dify使用httpx.MockTransport替身，输出会标明real_dify_verified=false；结束后服务和临时SQLite测试库自动清理。
 
-完成实际导入、发布和专用Key配置后，再用组长提供的真实学生登录身份调用POST /api/v1/student/leave，并核对Dify运行日志、workflow_run_id和MySQL数据，才能记录“真实模型联调通过”。本轮没有执行这项验收。
+完成实际导入、发布和专用Key配置后，再用组长提供的真实学生登录身份调用POST /api/v1/student/leave并明确传generate_ai_summary=true，核对Dify运行日志、workflow_run_id和MySQL数据，才能记录“真实模型联调通过”。本轮没有执行这项验收。
 
 ## 参考协议
 
