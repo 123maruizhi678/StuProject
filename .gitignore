@@ -18,3 +18,8 @@ app/logs/
 .DS_Store
 app/core/__pycache__/
 app/__pycache__/
+
+# Local credentials; keep the placeholder template versioned.
+.env
+.env.*
+!.env.example
