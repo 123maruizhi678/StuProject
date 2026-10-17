@@ -74,6 +74,7 @@ class StudentLeaveDifySettings(BaseSettings):
         extra="ignore",
     )
 
+    STUDENT_DIFY_LEAVE_BASE: str = "http://127.0.0.1/v1"
     STUDENT_DIFY_LEAVE_KEY: SecretStr = Field(default=SecretStr(""), repr=False)
     STUDENT_DIFY_LEAVE_TIMEOUT: float = 60.0
     STUDENT_DIFY_LEAVE_VERSION: str = "student-leave-v1"
