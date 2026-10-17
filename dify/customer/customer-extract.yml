@@ -1,0 +1,163 @@
+app:
+  description: 从来源文本抽取客户关键字段，辅助研判规则裁决
+  icon: 🤖
+  icon_background: '#FFEAD5'
+  mode: workflow
+  name: 客户信息抽取
+  use_icon_as_answer_icon: false
+dependencies:
+- current_identifier: null
+  type: marketplace
+  value:
+    marketplace_plugin_unique_identifier: langgenius/deepseek:0.0.24@9e12eef09973667f0eaf4f082af883167e1de88740b22e71e71488d020c3778a
+    version: null
+kind: app
+version: 0.5.0
+workflow:
+  conversation_variables: []
+  environment_variables: []
+  features:
+    file_upload:
+      enabled: false
+    opening_statement: ''
+    retriever_resource:
+      enabled: false
+    sensitive_word_avoidance:
+      enabled: false
+    speech_to_text:
+      enabled: false
+    suggested_questions: []
+    suggested_questions_after_answer:
+      enabled: false
+    text_to_speech:
+      enabled: false
+      language: ''
+      voice: ''
+  graph:
+    edges:
+    - data:
+        sourceType: start
+        targetType: llm
+      id: e1
+      source: start
+      sourceHandle: source
+      target: llm
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        sourceType: llm
+        targetType: code
+      id: e2
+      source: llm
+      sourceHandle: source
+      target: code
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        sourceType: code
+        targetType: end
+      id: e3
+      source: code
+      sourceHandle: source
+      target: end
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    nodes:
+    - data:
+        title: 开始
+        type: start
+        variables:
+        - label: text
+          type: paragraph
+          variable: text
+        - label: field_schema
+          type: paragraph
+          variable: field_schema
+        - label: contract_version
+          type: text-input
+          variable: contract_version
+      id: start
+      position:
+        x: 0
+        y: 0
+    - data:
+        context:
+          enabled: false
+          variable_selector: []
+        memory: null
+        model:
+          completion_params:
+            temperature: 0.1
+          mode: chat
+          name: deepseek-flash
+          provider: langgenius/deepseek/deepseek
+        prompt_template:
+        - role: system
+          text: '你是客户信息字段抽取器。从来源文本中抽取字段，严格按 field_schema 定义输出 JSON 对象。
+
+
+            要求：
+
+            1. 只输出一个合法 JSON 对象，键为 field_schema 中定义的字段名；未提及或无法确定的字段不要臆造。
+
+            2. 不要输出 JSON 以外的任何文字、注释或 Markdown 代码块标记。
+
+            3. 契约版本：{{#start.contract_version#}}
+
+
+            字段 schema：
+
+            {{#start.field_schema#}}'
+        - role: user
+          text: '来源文本：
+
+            {{#start.text#}}'
+        selected: false
+        title: 字段抽取
+        type: llm
+        variables: []
+        vision:
+          enabled: false
+      id: llm
+      position:
+        x: 240
+        y: 0
+    - data:
+        code: "import json\nimport re\n\ndef main(llm_text: str) -> dict:\n    s =\
+          \ llm_text or \"\"\n    s = re.sub(r\"<think>.*?</think>\", \"\", s, flags=re.DOTALL)\n\
+          \    s = re.sub(r\"<!--.*?-->\", \"\", s, flags=re.DOTALL)\n    data = {}\n\
+          \    try:\n        start = s.index(\"{\")\n        end = s.rindex(\"}\"\
+          ) + 1\n        parsed = json.loads(s[start:end])\n        if isinstance(parsed,\
+          \ dict):\n            data = parsed\n    except Exception:\n        pass\n\
+          \    return {\"fields\": data}\n"
+        code_language: python3
+        outputs:
+          fields:
+            type: object
+        title: 解析字段
+        type: code
+        variables:
+        - value_selector:
+          - llm
+          - text
+          variable: llm_text
+      id: code
+      position:
+        x: 480
+        y: 0
+    - data:
+        outputs:
+        - value_selector:
+          - code
+          - fields
+          variable: fields
+        title: 结束
+        type: end
+      id: end
+      position:
+        x: 720
+        y: 0
+  rag_pipeline_variables: []
