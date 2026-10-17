@@ -1,4 +1,6 @@
 /* 智能报告页面样式（report 模块页面资源） */
+.table-scroll { overflow-x: auto; }
+.top-actions a { text-decoration: none; }
 :root {
   --bg: #0b1020;
   --bg-soft: #121a30;

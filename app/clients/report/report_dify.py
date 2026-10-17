@@ -18,7 +18,7 @@ from typing import Any
 import httpx
 
 from app.config import settings
-from app.core.dify import DifyHttpClient
+from app.core.common.dify import DifyHttpClient
 
 # 默认调用用户标识；调度与人工来源由调用方显式传入可信标识。
 DEFAULT_CALL_USER = "report-service"

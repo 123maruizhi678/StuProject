@@ -1,5 +1,5 @@
 import {api,tokenStore} from './api.js';
-import {esc,icon,empty,mountDialog,busy,toast,dateText,loginUrl} from '../system.js';
+import {esc,icon,empty,mountDialog,busy,toast,dateText,loginUrl} from '../common/student-shell.js';
 
 const names={pending:'待审批',approved:'已批准',rejected:'已驳回',cancelled:'已取消',personal:'事假',sick:'病假',open:'待受理',assigned:'已分派',processing:'处理中',awaiting_student:'待你确认',closed:'已关闭',reopened:'重新跟进',sent:'已送达',queued:'待送达',active:'有效',inactive:'已停用',valid:'有效',complaint:'投诉',suggestion:'建议',application:'申请',visa:'签证',teaching:'教学',service:'服务',other:'其他',exam:'考试',ddl:'截止日期',document_review:'文书审核',school_application:'院校申请',visa_process:'签证办理',submitted:'已提交',student_reply:'学生补充',confirm:'确认解决',reopen:'重新跟进',rating:'满意度评价'};
 export const label=value=>names[value]||String(value??'—');

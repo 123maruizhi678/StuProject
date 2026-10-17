@@ -19,7 +19,7 @@
     <div class="top-actions">
       <span class="badge" id="identityBadge" hidden></span>
       <button class="btn sm" id="themeBtn" title="切换深浅色">🌓</button>
-      <button class="btn sm ghost" id="logoutBtn" hidden>退出</button>
+      <a class="btn sm ghost" href="/account" target="_top">账号与权限</a>
     </div>
   </header>
 
@@ -28,11 +28,7 @@
     <section class="card" id="loginCard">
       <h2>登录</h2>
       <p class="hint">报告仅向平台管理员与部门主管开放；请使用统一账号登录。</p>
-      <div class="form-row">
-        <input id="username" type="text" placeholder="用户名" autocomplete="username">
-        <input id="password" type="password" placeholder="密码" autocomplete="current-password">
-        <button class="btn" id="loginBtn">登录</button>
-      </div>
+      <a class="btn" href="/login?next=%2F%23module%2Freport" target="_top">前往统一登录</a>
       <p class="error" id="loginError" hidden></p>
     </section>
 
@@ -61,14 +57,14 @@
             <button class="btn sm primary" id="generateBtn">生成报告</button>
           </div>
         </div>
-        <table class="table">
+        <div class="table-scroll"><table class="table">
           <thead>
             <tr>
               <th>ID</th><th>报告</th><th>类型</th><th>统计窗口（UTC）</th><th>状态</th><th>完成时间</th><th></th>
             </tr>
           </thead>
           <tbody id="reportRows"></tbody>
-        </table>
+        </table></div>
         <div class="pager">
           <button class="btn sm ghost" id="prevPage">上一页</button>
           <span id="pageInfo"></span>
@@ -119,6 +115,6 @@
 
   <div class="toast-wrap" id="toasts"></div>
 
-  <script src="/static/js/report/report.js"></script>
+  <script type="module" src="/static/js/report/report.js"></script>
 </body>
 </html>

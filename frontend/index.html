@@ -2,15 +2,41 @@
 <html lang="zh-CN">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="theme-color" content="#080e1a">
-  <meta name="description" content="星桥智能服务平台，连接学习、服务与每一个重要节点。">
-  <title>系统总览 · 星桥 NEXUS</title>
-  <link rel="stylesheet" href="/static/css/system.css">
-  <script type="module" src="/static/js/portal.js"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title>统一工作台 · 智教服务</title>
+  <link rel="stylesheet" href="/static/css/common/style.css">
+  <script type="module" src="/static/js/common/app.js"></script>
 </head>
-<body data-module="portal">
-  <div id="app"></div>
-  <noscript><p style="padding:32px;color:#e9f0fb">请启用 JavaScript 后使用本系统。</p></noscript>
+<body class="workspace-page">
+  <aside class="sidebar" id="sidebar">
+    <a class="brand" href="/"><span class="brand-mark" aria-hidden="true">N</span><span>智教工作台<small>EDU NEXUS</small></span></a>
+    <div class="sidebar-caption">WORKSPACE</div>
+    <nav aria-label="工作空间"><a class="nav-item active" href="#workspace" data-view="workspace"><span aria-hidden="true">▦</span>工作台概览<span class="nav-index">01</span></a><a class="nav-item" href="#access" data-view="access"><span aria-hidden="true">◇</span>我的访问权限<span class="nav-index">02</span></a></nav>
+    <div class="sidebar-caption module-caption">BUSINESS MODULES <span id="nav-module-count">06</span></div>
+    <nav id="module-navigation" aria-label="业务模块"></nav>
+    <div class="sidebar-bottom"><span class="signal"></span><span>一个入口 · 协同工作</span><small>EDU NEXUS / WORKSPACE</small></div>
+  </aside>
+  <div class="workspace-main">
+    <header class="topbar"><button class="icon-button mobile-menu" id="menu-toggle" aria-label="展开导航" aria-expanded="false">☰</button><div class="breadcrumb">工作空间 <span>/</span> <strong id="breadcrumb-current">概览</strong></div><div class="topbar-right"><span class="connection" id="connection-status" role="status"><i></i>正在连接</span><span class="topbar-divider"></span><a class="login-link" id="login-link" href="/login">登录账号 <span aria-hidden="true">↗</span></a><button class="identity-button" id="identity-button" hidden><span class="avatar" id="avatar">U</span><span id="identity-label">当前账号</span><span aria-hidden="true">⌄</span></button></div></header>
+    <main class="workspace-content">
+      <div class="alert-banner" id="workspace-alert" role="status" hidden></div>
+      <section id="workspace-view">
+        <div class="hero"><div><p class="eyebrow">YOUR CONNECTED WORKSPACE <span class="eyebrow-line"></span></p><h1>每项工作，从这里连接<span class="accent">。</span></h1><p id="welcome-copy">欢迎来到智教工作台。登录后，发现属于你的业务空间。</p></div><div class="hero-coordinate" aria-hidden="true"><span>EDU / NEXUS</span><div class="coordinate-cross">＋</div><span>CONNECT TO POSSIBILITY</span></div></div>
+        <div class="overview-strip"><div class="overview-item"><span>当前身份</span><strong id="overview-identity">访客</strong><small id="overview-account">公开访问模式</small></div><div class="overview-item"><span>已授权业务模块</span><strong id="overview-modules">—<em> / 06</em></strong><small>由当前账号权限决定</small></div><div class="overview-item"><span>可访问页面</span><strong id="overview-pages">—</strong><small>与后台访问清单同步</small></div><div class="overview-item sync-overview"><span>权限同步</span><strong class="sync-time" id="sync-time">等待连接</strong><button class="text-button" id="refresh-access">重新同步 <span aria-hidden="true">↻</span></button></div></div>
+        <div class="section-heading"><div><p class="eyebrow">MODULE DIRECTORY</p><h2>业务空间 <span id="module-count">06</span></h2></div><span class="section-note"><i></i>按账号权限开放 · 各模块独立接入</span></div>
+        <div class="module-grid" id="module-grid" aria-live="polite"></div>
+        <section class="access-callout"><span class="callout-icon" aria-hidden="true">◇</span><div><h3>你的工作空间，与你的身份同步</h3><p id="access-callout-copy">登录统一账号后，系统将为你展示可访问的页面和模块。</p></div><a class="secondary-button" id="access-callout-action" href="/login">前往登录 <span aria-hidden="true">↗</span></a></section>
+      </section>
+      <section id="access-view" hidden>
+        <div class="hero compact"><div><p class="eyebrow">IDENTITY &amp; ACCESS</p><h1>我的访问权限<span class="accent">。</span></h1><p>访问清单来自当前账号的真实身份。各业务接口仍会独立校验操作权限。</p></div></div>
+        <div class="account-summary"><div><span class="field-caption">当前身份</span><strong id="account-identity">访客</strong></div><div><span class="field-caption">账号 ID</span><strong id="account-id">未登录</strong></div><div><span class="field-caption">会话有效期至</span><strong id="account-expiry">—</strong></div><button class="secondary-button" id="logout-button" hidden>退出登录 ↗</button></div>
+        <section class="permission-panel"><div class="section-heading"><h2>操作权限</h2><span class="section-note" id="permission-total">0 项</span></div><div class="permission-tags" id="permission-tags"></div></section>
+        <section class="permission-panel"><div class="section-heading"><h2>可访问页面</h2><span class="section-note">页面元数据，实际页面按交付状态接入</span></div><div class="page-list" id="page-list"></div></section>
+      </section>
+      <section id="module-view" hidden><div class="module-toolbar"><button class="text-button" id="back-workspace">← 返回工作台</button><h1 id="module-title">业务模块</h1><a class="text-link" id="module-new-window" target="_blank" rel="noopener">独立窗口 ↗</a></div><iframe id="module-frame" title="业务模块" referrerpolicy="same-origin"></iframe></section>
+      <footer class="workspace-footer"><span>智教服务 · 统一工作空间</span><span>IDENTITY / ACCESS / CONNECTION <i></i></span></footer>
+    </main>
+  </div>
 </body>
 </html>

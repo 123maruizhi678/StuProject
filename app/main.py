@@ -3,8 +3,11 @@
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.api.auth import router as auth_router
-from app.core.authorization import load_access_control, require_permission
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
+from app.config import BASE_DIR
+from app.api.common.auth import router as auth_router
+from app.core.common.authorization import load_access_control, require_permission
 from app.core.common.logger import get_logger, init_logger
 from app.core.common.response import register_exception_handlers, success
 from app.database import dispose_db, get_db
@@ -13,9 +16,9 @@ init_logger()
 logger = get_logger(__name__)
 
 # 仍停留在历史扁平布局、尚未迁入按业务模块分包结构的模块（目录架构归位中）。
-# 智能报告已迁入 app/api/report 包，不在此列。
+# 客服和智能报告已迁入各技术层的 agent/report 包，不在此列。
+# 此集合只跟踪目录迁移，不代表其中模块均未启用。
 MIGRATION_PENDING_MODULES = {
-    "agent",
     "customer",
     "enterprise",
     "enterprise_student",
@@ -47,6 +50,11 @@ app.add_middleware(
 register_exception_handlers(app)
 app.include_router(auth_router, prefix="/api/v1")
 
+# 客服六接口允许匿名访问；业务数据读写由客服服务负责。
+from app.api.agent import router as agent_router
+
+app.include_router(agent_router, prefix="/api/v1")
+
 # enterprise_student 仍为历史扁平模块且尚未就绪：缺失时不阻塞应用装配，
 # 迁移归位后随 MIGRATION_PENDING_MODULES 收敛移除本兼容分支。
 try:
@@ -72,9 +80,8 @@ except ModuleNotFoundError as exc:
     logger.warning("student_leave 路由暂未挂载（迁移中）：%s", exc.name)
 
 # 路由注册（各业务模块就绪后在此 include，挂载到 /api/v1）
-# from app.api import customer, agent, enterprise, student
+# from app.api import customer, enterprise, student
 # app.include_router(customer.router, prefix="/api/v1")
-# app.include_router(agent.router, prefix="/api/v1")
 # app.include_router(enterprise.router, prefix="/api/v1")
 # app.include_router(student.router, prefix="/api/v1")
 
@@ -83,11 +90,32 @@ from app.api.report import router as report_router
 
 app.include_router(report_router, prefix="/api/v1")
 
+FRONTEND_DIR = BASE_DIR / "frontend"
+app.mount("/static", StaticFiles(directory=FRONTEND_DIR), name="static")
 
-@app.get("/")
+
+@app.get("/health")
 def root():
     """提供公开的根路径服务状态响应。"""
     return success({"service": "StuProject"})
+
+
+@app.get("/", include_in_schema=False)
+@app.get("/account", include_in_schema=False)
+def workspace_page():
+    """统一主入口；页面可见性不替代各业务接口的认证与权限校验。"""
+    return FileResponse(FRONTEND_DIR / "index.html")
+
+
+@app.get("/login", include_in_schema=False)
+def login_page():
+    return FileResponse(FRONTEND_DIR / "common" / "login.html")
+
+
+@app.get("/student-assistant", include_in_schema=False)
+def student_workspace_page():
+    """兼容学生模块原独立入口；业务接口仍单独校验权限。"""
+    return FileResponse(FRONTEND_DIR / "student" / "student-assistant.html")
 
 
 # 学生路由沿用小组HTTP 200 + code信封；仅修正这些路由的OpenAPI描述。

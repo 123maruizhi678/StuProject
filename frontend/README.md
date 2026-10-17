@@ -1,65 +1,79 @@
-# 前端页面与协作约定
+# 前端模块与接入说明
 
-原生 HTML + CSS + JavaScript ES Modules，无 npm 安装或打包步骤。
-从项目根目录启动 `python scripts/student/run_student_app.py --port 8010`，浏览器访问 `http://127.0.0.1:8010/`。
-须经 HTTP 服务访问，不支持直接双击 HTML（页面使用统一 `/static/` 资源路径及同源 API）。
+本目录已合并下载目录的前端与项目原有公共入口、学生多页面版本。使用原生 HTML、CSS、JavaScript ES Modules，无 npm 构建步骤。下载目录保持原样。
 
-## 分工入口
+## 启动与入口
 
-| 模块 | 独立页面 | 业务脚本 | 当前范围 |
-|---|---|---|---|
-| 系统总览 | `index.html` | `js/portal.js` | 模块导航 |
-| 学生智能助手 | `student/student-assistant.html`，服务地址 `/student-assistant` | `js/student/` | 本次完整实现的模块 |
-| 企业管理 | `enterprise/index.html` | 目前由 `js/portal.js` 提供接入页 | 对应成员继续实现业务 |
-| 客户研判 | `research/index.html` | 目前由 `js/portal.js` 提供接入页 | 对应成员继续实现业务 |
-| 智能报告 | `report/index.html` | 目前由 `js/portal.js` 提供接入页 | 对应成员继续实现业务 |
+在项目根目录运行：
 
-各模块保留独立目录。其他成员开发时，为其页面指定独立 JS 文件，复用 `css/system.css` 的样式和 `js/system.js` 的导航、图标、对话框等组件即可。
-不要把其他模块的业务逻辑加入 `js/student/`，也不要在学生目录中新增共享后端模型。
-模块接入页标注“服务准备中”，没有伪造的办理按钮、业绩数据或接口。
+```powershell
+conda run -n SST python -m uvicorn app.main:app --reload
+```
 
-## 学生模块页面与接口
+通过 `http://127.0.0.1:8000/` 进入统一权限工作台。`/login` 是统一登录页，`/account` 查看本人权限，`/health` 返回服务状态。业务页面均在 `/static/` 下，不支持直接双击 HTML。
 
-| 页面 / 独立业务脚本 | 功能 | 接口（均在 `/api/v1` 下） |
-|---|---|---|
-| `student/login.html` / `login.js` | 登录、回到目标页面 | `POST /auth/login`、`GET /auth/me/access` |
-| `student/student-assistant.html` / `overview.js` | 学生工作台、真实业务计数、近期学业节点 | 课程、请假、提醒、通知、学业查询 |
-| `student/chat.html` / `chat.js` | 智能咨询、本人查询、办理预览与再次确认 | `POST /student/chat`、`POST /student/actions/confirm` |
-| `student/academics.html` / `academics.js` | 课程、成绩、考试/截止日期，设置提醒 | `GET /student/courses`、`/scores`、`/academic`，`POST /student/reminders` |
-| `student/leave.html` / `leave.js` | 提交、按审批状态筛选、撤回请假 | `GET/POST /student/leave`、`DELETE /student/leave/{apply_id}` |
-| `student/tickets.html` / `tickets.js` | 投诉建议、详情、分页沟通、补充、确认、重开、评价 | `/student/complaint`、`/student/tickets` 及详情、records、reply、confirm、rating |
-| `student/reminders.html` / `reminders.js` | 提醒列表与取消 | `GET /student/reminders`、`DELETE /student/reminders/{id}` |
-| `student/progress.html` / `progress.js` | 申请阶段、来源更新时间 | `GET /student/progress` |
-| `student/care.html` / `care.js` | 情绪辅助记录与支持提示 | `POST /student/mental/monitor` |
-| `student/notifications.html` / `notifications.js` | 全部/已读/未读、详情和标记已读 | `/student/notifications` 及详情、read |
+## 模块划分
 
-`student-assistant.js` 仅负责学生页面装配，`ui.js` 负责列表分页、状态、表单和确认对话框，`api.js` 负责统一信封、Bearer 和幂等键。
-每个 HTML 可单独进入；学生侧统一导航由 `system.js` 的 `studentPages` 声明，系统模块由 `modules` 声明。
+| 模块 | 主页面 | 脚本 / 样式 | 当前接入范围 |
+| --- | --- | --- | --- |
+| 公共入口 | `index.html`、`common/login.html` | `js/common/`、`css/common/style.css` | 登录、会话、权限导航、iframe 装载 |
+| 客服 Agent | `agent/agent.html` | `js/agent/`、`css/agent/` | 对话、活动与报名、课程、FAQ；后端六接口已挂载 |
+| 客户研判 | `customer/customer.html` | `js/customer/`、`css/common/business.css` | 文本/文件研判、画像规则、记录页面；服务待联调 |
+| 企业智能助手 | `enterprise/enterprise.html` | `js/enterprise/`、`css/common/business.css` | 客户、日报、NL2SQL、指令、组织、新人指引、成绩、投诉页面；服务待联调 |
+| 学生智能助手 | `student/student-assistant.html` | `js/student/`、`css/student/student.css` | 保留新加入的学生多页面；服务待联调 |
+| 智能报告 | `report/report.html` | `js/report/`、`css/report/` | 列表、详情、异步生成、配置；后端五接口已挂载 |
+| 数据看板 | `dashboard/dashboard.html` | `js/dashboard/`、`css/common/business.css` | 指标、客户趋势、工单图表页面；服务待联调 |
 
-## 接口与数据规则
+统一登记文件为 `js/common/modules.js`。`delivered` 表示页面已交付，`apiReady` 表示当前后端接口已对接，两者分别维护。已授权但接口未就绪的模块显示“待联调”，保留子页面与标签浏览、禁用业务表单，并在请求层阻止历史接口调用；不生成虚构业务数据。
 
-- 复用 `js/common/api.js` 导出的 tokenStore，保持与公共登录同一 sessionStorage 凭据；没有在前端存储 Dify Key、数据库凭据或签名密钥。
-- 学生请求读取 HTTP 状态和业务 code，展示受控的业务错误信息，401 时清除过期凭据。
-- 写操作自动携带 Idempotency-Key。未确认结果的失败保留原请求键，相同内容重试不换键；成功后才清除。
-- 所有撤回、确认、补充、评价、提醒设置/取消携带接口要求的版本或更新时间，页面不指定学生身份。
-- 设置提醒时读取全部分页提醒，核对已有设置的更新时间，避免只看前100条造成冲突。
-- 数据源错误展示错误状态，空数据展示空状态，未登录展示登录提示；无默认业务假数据或本地伪造的“办理成功”。
-- 进度页只高亮当前记录所属阶段，不推断其他阶段已完成。
-- 聊天中的申请/工单先显示完整参数，学生确认后才调用确认接口。取消不调用办理接口；未知结果不自动重发。
-- 系统与模块页面同源部署。拆分部署前需要后端允许相应来源、Idempotency-Key、PUT、DELETE。
+当前后端只装配客服、报告和公共认证接口。学生完整服务路由尚未合入；旧请假路由也因客户端缺失而暂未挂载。不要仅修改 `apiReady` 就声称完成接口联调，须先核对真实路由、字段、身份及动作权限。
 
-## 清理与保留
+客户研判目前未配置 `customer_research` 的公共页面/模块权限，因此工作台保持未授权；本轮没有新增或放宽角色权限。报告前端遵循公共接口返回的动作集合，部门主管角色还需后端将其报告权限同步到公共访问清单，前端不按员工身份猜测授权。
 
-旧的单页学生界面和其脚本已重写，旧学生样式文件已移除。系统首页改为模块总览。
-公共 `common/`、`css/common/`、`js/common/` 的原有登录页面和代码保留，没有修改，便于组长继续维护。
-旧 `/login`、`/account` 仍使用公共页面；新版页面的登录入口指向独立的科技风登录页，使用相同后端认证。
+## 学生页面
 
-验证范围应分别记录：静态导航/响应式、真实隔离库的页面联调、真实环境端到端。后端数据或凭据未就绪时，不代表前端已经完成真实库业务验收。
+`STUDENT_PAGES` 与模块登记共同维护在 `js/common/modules.js`；`js/common/student-shell.js` 复用此清单提供学生侧导航、图标和对话框。
 
-## 本次验证与交付边界
+| 页面 | 功能 |
+| --- | --- |
+| `student/student-assistant.html` | 学习工作台与服务入口 |
+| `student/chat.html` | 智能咨询、办理预览与再次确认 |
+| `student/academics.html` | 课程、成绩、考试与截止日期 |
+| `student/leave.html` | 请假申请、查询与撤回 |
+| `student/tickets.html` | 投诉建议、沟通、确认与评价 |
+| `student/reminders.html` | 学业提醒与取消 |
+| `student/progress.html` | 文书、院校与签证进度 |
+| `student/care.html` | 情绪辅助记录 |
+| `student/notifications.html` | 站内通知与已读状态 |
+| `student/preview.html` | 下载目录原学生界面，供核对旧功能与字段，不作为正式入口 |
 
-- JavaScript 语法/导入、HTML 资源路径、桌面及移动布局已检查；后端测试 112 项通过。
-- 页面操作已在隔离 SQLite 测试库联调，覆盖登录、请假提交/撤回、工单确认、提醒设置/取消、通知已读及聊天办理确认。
-- 隔离预览使用模型替身，未调用真实 Dify；重复欢迎语属于测试模型行为，不能用于验收真实助手的意图识别与请假多轮对话。
-- 真实环境仍需配置有效的认证密钥、数据库及业务数据源，并验证真实 Dify 对话和办理全流程。
-- 测试账号、隔离测试服务、截图、环境文件及公共 common 代码不包含在本次前端提交中。
+新学生界面作为主入口，下载目录旧实现拆入 `js/student/student.js` 并由 `student/preview.html` 保留。旧页面里的固定学生名单已移除，等待真实本人身份和授权名单；不以写死 ID 模拟真实学生。
+
+兼容入口：`/student-assistant` 返回学生主页面；`student/login.html` 转到统一登录；`enterprise/index.html`、`research/index.html`、`report/index.html` 分别转到各自正式模块页。原重复的 `js/system.js`、`js/portal.js`、`css/system.css` 已整合到公共导航、学生样式与入口转接脚本。
+
+## 公共请求与身份
+
+- 所有模块复用 `js/common/api.js`，统一处理 HTTP 状态、`code/message/data` 信封、超时、401 和 403，支持 JSON、FormData 与幂等请求头。
+- 统一登录只向 `/api/v1/auth/login` 提交用户名密码，使用 `/auth/me/access` 获取真实权限；访客清单来自 `/auth/public-access`。
+- Token 和有效期仅存储于同源 `sessionStorage`；`tokenStore` 是对同一会话的兼容读取，不建立第二套认证。
+- 报告已移除 `report-token` / `report-me` 本地缓存及独立登录表单；旧本地缓存不会再被读取。
+- 同标签页工作台与 iframe 通过公共身份事件同步退出和失效；接口权限始终由后端逐接口校验。
+- 报告失败重试及学生办理适配器保留相同内容的幂等键；结果未确认时不自动重发。
+- 报告时间输入明确按北京时间 `+08:00` 提交，不受浏览器本地时区影响。
+
+## 共享资源与维护
+
+`css/common/business.css` 保留下载版本的独立业务页面视觉组件；仅由对应业务文档加载，不覆盖公共工作台或学生样式。`js/common/charts.js` 是共享 SVG 图表库，`effects.js` 是可选动效，`ui.js` 是旧业务页面通用 DOM 组件。各业务样式均通过独立 iframe 文档隔离。
+
+新增模块功能应放在自身 `js/<module>/`、`css/<module>/` 和页面目录；不要再次集中到公共 `app.js`。旧单页内的重复客服/报告实现由独立模块取代，旧 `/meta` 探测和重复顶层 API 客户端不再加载。
+
+## 验证
+
+```powershell
+node --test tests/common/test_frontend.mjs
+python -B -m unittest discover -s tests/common -p "test_*.py"
+```
+
+前端回归覆盖统一认证、权限与返回地址、模块入口与静态依赖、公共上传请求、报告幂等重试和北京时间转换。浏览器联调使用虚构接口响应，不写真实数据库、不调用真实 Dify；这与真实业务环境端到端验收分别记录。
+
+本次整合验证：39 项公共 Python 回归、14 项前端契约回归、32 个 JavaScript 文件语法检查通过；本地 Edge 浏览器隔离联调覆盖公开客服、报告登录和重试、模块权限、业务标签切换、学生服务页面、旧入口跳转及 390px 手机布局。浏览器回归脚本为 `tests/common/test_frontend_browser.mjs`，可通过 `PLAYWRIGHT_MODULE` 和 `BROWSER_EXECUTABLE` 指定本机已有的 Playwright 与浏览器。

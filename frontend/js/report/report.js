@@ -1,3 +1,6 @@
+import { API, readSession } from "../common/api.js";
+import { requestReport as request, createReportGenerator, toBeijingIso } from "./report-api.js";
+
 /* 智能报告页面脚本：登录、列表、详情、生成与配置管理。
  * 复用 /api/v1/report 五接口；统一 {code,message,data} 信封；
  * 生成请求必须携带 Idempotency-Key（8—128 位可见 ASCII，重试复用）。
@@ -5,9 +8,9 @@
 (function () {
   "use strict";
 
-  var BASE = "/api/v1";
-  var TOKEN_KEY = "report-token";
-  var ME_KEY = "report-me";
+  var access = null;
+  var authRevision = 0;
+  var generator = createReportGenerator();
   var page = 1;
   var pageSize = 20;
   var total = 0;
@@ -25,41 +28,6 @@
     setTimeout(function () { item.remove(); }, 3600);
   }
 
-  function token() { return localStorage.getItem(TOKEN_KEY) || ""; }
-
-  function request(method, path, body, headers) {
-    var opts = { method: method, headers: {} };
-    if (token()) opts.headers["Authorization"] = "Bearer " + token();
-    if (body !== undefined && body !== null) {
-      opts.headers["Content-Type"] = "application/json";
-      opts.body = JSON.stringify(body);
-    }
-    Object.keys(headers || {}).forEach(function (key) { opts.headers[key] = headers[key]; });
-    return fetch(BASE + path, opts).then(function (resp) {
-      return resp.json().catch(function () {
-        throw new Error("服务返回异常（HTTP " + resp.status + "）");
-      }).then(function (json) {
-        if (json.code !== 0) {
-          var error = new Error(json.message || "请求失败");
-          error.code = json.code;
-          throw error;
-        }
-        return json.data;
-      });
-    });
-  }
-
-  function newIdempotencyKey() {
-    var bytes = new Uint8Array(12);
-    (window.crypto || {}).getRandomValues
-      ? window.crypto.getRandomValues(bytes)
-      : bytes.forEach(function (_, i) { bytes[i] = Math.floor(Math.random() * 256); });
-    var text = Array.from(bytes, function (b) {
-      return ("0" + b.toString(16)).slice(-2);
-    }).join("");
-    return "report-" + text; // 8—128 位可见 ASCII
-  }
-
   function formatTime(value) {
     if (!value) return "—";
     return String(value).replace("T", " ").replace(/\.\d+Z?$/, "Z").slice(0, 19) + "Z";
@@ -71,22 +39,23 @@
 
   /* ---------- 登录 / 身份 ---------- */
 
-  function login(username, password) {
-    return request("POST", "/auth/login", { username: username, password: password })
-      .then(function (data) {
-        localStorage.setItem(TOKEN_KEY, data.access_token);
-        return request("GET", "/auth/me/access");
-      })
-      .then(function (access) {
-        localStorage.setItem(ME_KEY, JSON.stringify(access));
-        return access;
-      });
+  async function syncIdentity() {
+    var current = ++authRevision;
+    access = null;
+    refreshIdentity();
+    if (!readSession()) return;
+    try {
+      var identity = await API.myAccess();
+      if (current !== authRevision || !readSession()) return;
+      access = identity;
+      refreshIdentity();
+      if (hasPermission("report.read")) loadList();
+    } catch (error) {
+      if (current === authRevision) $("#loginError").textContent = error.message;
+    }
   }
 
-  function currentAccess() {
-    try { return JSON.parse(localStorage.getItem(ME_KEY) || "null"); }
-    catch (e) { return null; }
-  }
+  function currentAccess() { return access; }
 
   function hasPermission(permission) {
     var access = currentAccess();
@@ -96,19 +65,25 @@
   function refreshIdentity() {
     var access = currentAccess();
     var badge = $("#identityBadge");
-    var logout = $("#logoutBtn");
-    if (!access) {
+    if (!access || !hasPermission("report.read")) {
       badge.hidden = true;
-      logout.hidden = true;
       $("#loginCard").hidden = false;
+      $("#loginError").hidden = false;
       $("#workspace").hidden = true;
+      $("#reportRows").replaceChildren();
+      $("#configList").replaceChildren();
+      $("#detailContent").replaceChildren();
+      $("#detailMetrics").replaceChildren();
+      $("#detailMeta").replaceChildren();
+      $("#detailCard").hidden = true;
+      $("#generateCard").hidden = true;
+      $("#loginError").textContent = access ? "当前账号没有报告读取权限，请返回工作台查看授权。" : "";
       return;
     }
     badge.hidden = false;
     badge.textContent = (access.identity_type === "admin" ? "平台管理员" : "员工") + " · " +
       (access.permissions || []).filter(function (p) { return p.indexOf("report.") === 0; })
         .map(function (p) { return p.replace("report.", ""); }).join(" / ");
-    logout.hidden = false;
     $("#loginCard").hidden = true;
     $("#workspace").hidden = false;
     $("#generateBtn").hidden = !hasPermission("report.generate");
@@ -292,12 +267,19 @@
         error.textContent = "开始与截止时间必须成对提供。";
         return;
       }
-      body.start_time = toBeijingIso(start);
-      body.end_time = toBeijingIso(end);
+      try {
+        body.start_time = toBeijingIso(start);
+        body.end_time = toBeijingIso(end);
+        if (Date.parse(body.start_time) >= Date.parse(body.end_time)) throw new Error("截止时间必须晚于开始时间。");
+      } catch (validation) {
+        error.hidden = false;
+        error.textContent = validation.message;
+        return;
+      }
     }
     var button = $("#genSubmit");
     button.disabled = true;
-    request("POST", "/report/generate", body, { "Idempotency-Key": newIdempotencyKey() })
+    generator.generate(body)
       .then(function (data) {
         toast("已受理：报告 #" + data.report_record_id + "（" + statusLabel(data.status) + "）", "success");
         $("#generateCard").hidden = true;
@@ -309,13 +291,6 @@
         error.textContent = err.message;
       })
       .then(function () { button.disabled = false; });
-  }
-
-  function toBeijingIso(localValue) {
-    // datetime-local 输入按浏览器本地时区解释，转为带 +08:00 偏移的 ISO 文本。
-    var date = new Date(localValue + ":00");
-    var shifted = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
-    return shifted.toISOString().slice(0, 19) + "+08:00";
   }
 
   /* ---------- 配置 ---------- */
@@ -376,40 +351,18 @@
   /* ---------- 主题与事件 ---------- */
 
   function initTheme() {
-    var saved = localStorage.getItem("report-theme") || "dark";
+    var saved = localStorage.getItem("stuproject.theme") || "dark";
     document.documentElement.dataset.theme = saved;
     $("#themeBtn").textContent = saved === "dark" ? "🌙" : "☀️";
     $("#themeBtn").addEventListener("click", function () {
       var next = document.documentElement.dataset.theme === "dark" ? "light" : "dark";
       document.documentElement.dataset.theme = next;
-      localStorage.setItem("report-theme", next);
+      localStorage.setItem("stuproject.theme", next);
       $("#themeBtn").textContent = next === "dark" ? "🌙" : "☀️";
     });
   }
 
   function initEvents() {
-    $("#loginBtn").addEventListener("click", function () {
-      var error = $("#loginError");
-      error.hidden = true;
-      login($("#username").value.trim(), $("#password").value)
-        .then(function () {
-          toast("登录成功", "success");
-          refreshIdentity();
-          page = 1;
-          return loadList();
-        })
-        .catch(function (err) {
-          error.hidden = false;
-          error.textContent = err.message;
-        });
-    });
-
-    $("#logoutBtn").addEventListener("click", function () {
-      localStorage.removeItem(TOKEN_KEY);
-      localStorage.removeItem(ME_KEY);
-      refreshIdentity();
-    });
-
     $("#refreshBtn").addEventListener("click", loadList);
     $("#prevPage").addEventListener("click", function () { if (page > 1) { page -= 1; loadList(); } });
     $("#nextPage").addEventListener("click", function () {
@@ -427,17 +380,21 @@
 
     $("#detailClose").addEventListener("click", function () { $("#detailCard").hidden = true; });
 
-    $("#password").addEventListener("keydown", function (event) {
-      if (event.key === "Enter") $("#loginBtn").click();
-    });
   }
+
+  window.addEventListener("auth:expired", function () {
+    ++authRevision;
+    access = null;
+    generator.reset();
+    refreshIdentity();
+    $("#loginError").textContent = "登录已失效，请重新登录。";
+  });
+  window.addEventListener("auth:changed", function () { generator.reset(); syncIdentity(); });
+  window.addEventListener("pageshow", function (event) { if (event.persisted) syncIdentity(); });
 
   document.addEventListener("DOMContentLoaded", function () {
     initTheme();
     initEvents();
-    refreshIdentity();
-    if (token() && currentAccess()) {
-      loadList();
-    }
+    syncIdentity();
   });
 })();
