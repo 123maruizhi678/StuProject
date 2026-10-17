@@ -1,44 +1,46 @@
-/* 统一 API 客户端：处理统一响应 {code, message, data} */
-const API = (() => {
-  const BASE = "/api/v1";
+// 公共后端请求：同时检查实际HTTP状态与业务信封，不向浏览器提供服务密钥。
+const TOKEN_KEY = "stuproject.common.access_token";
+export const tokenStore = {
+  get: () => sessionStorage.getItem(TOKEN_KEY),
+  set: (token) => sessionStorage.setItem(TOKEN_KEY, token),
+  clear: () => sessionStorage.removeItem(TOKEN_KEY),
+};
 
-  async function request(method, path, body, isForm = false, key) {
-    const opts = { method, headers: {} };
-    const token=sessionStorage.getItem('stu.access');
-    if(token) opts.headers.Authorization='Bearer '+token;
-    if(key) opts.headers['Idempotency-Key']=key;
-    if (isForm) {
-      opts.body = body; // FormData
-    } else if (body !== undefined && body !== null) {
-      opts.headers["Content-Type"] = "application/json";
-      opts.body = JSON.stringify(body);
-    }
-    let resp;
-    try {
-      resp = await fetch(BASE + path, opts);
-    } catch (e) {
-      throw new Error("网络连接失败，请确认服务已启动");
-    }
-    let json;
-    try {
-      json = await resp.json();
-    } catch (e) {
-      throw new Error(`服务返回异常（HTTP ${resp.status}）`);
-    }
-    if (!resp.ok || json.code !== 0) {
-      const err = new Error(json.message || "请求失败");
-      err.code = json.code || resp.status;
-      if(err.code===401)sessionStorage.removeItem("stu.access");
-      throw err;
-    }
-    return json.data;
+export class ApiError extends Error {
+  constructor(message, code) { super(message); this.code = code; }
+}
+
+export async function request(path, {method = "GET", body, authenticated = false, idempotencyKey} = {}) {
+  const headers = {"Accept": "application/json"};
+  if (body !== undefined) headers["Content-Type"] = "application/json";
+  if (authenticated) {
+    const token = tokenStore.get();
+    if (!token) throw new ApiError("请先登录。", 401);
+    headers.Authorization = "Bearer " + token;
   }
-
-  return {
-    request,
-    get: (p) => request("GET", p),
-    post: (p, b) => request("POST", p, b),
-    put: (p, b) => request("PUT", p, b),
-    upload: (p, formData) => request("POST", p, formData, true),
-  };
-})();
+  if (idempotencyKey) headers["Idempotency-Key"] = idempotencyKey;
+  let response;
+  try {
+    response = await fetch("/api/v1" + path, {
+      method, headers, credentials: "omit", cache: "no-store",
+      body: body === undefined ? undefined : JSON.stringify(body),
+    });
+  } catch {
+    throw new ApiError("暂时无法连接服务，请稍后重试。", 0);
+  }
+  let envelope;
+  try { envelope = await response.json(); }
+  catch { throw new ApiError("服务返回异常，请稍后重试。", response.status); }
+  if (!response.ok || envelope.code !== 0) {
+    const code = envelope.code || response.status;
+    if (code === 401 && authenticated) tokenStore.clear();
+    const messages = {
+      400: "请检查用户名和密码的填写格式。",
+      401: authenticated ? "登录已失效，请重新登录。" : "用户名或密码不正确。",
+      403: "当前账号或关联资料暂不可用，请联系管理员。",
+      503: "登录服务暂不可用，请稍后重试。",
+    };
+    throw new ApiError(messages[code] || "请求失败，请稍后重试。", code);
+  }
+  return envelope.data;
+}

@@ -2,7 +2,7 @@ from datetime import datetime, timedelta, timezone
 from sqlalchemy import select, insert, update, func
 from app.models import common as t
 from app.core.student.student_auth import Principal
-from app.core.common.authorization import employee_permissions
+from app.core.student.student_permissions import employee_permissions
 
 
 def post(unit,path,body,key='student-test-0001'):

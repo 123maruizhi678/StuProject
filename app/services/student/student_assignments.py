@@ -65,7 +65,7 @@ class StudentAssignments(StudentService):
             if not target or target['status']!='active' or 'teacher' not in (target['role_codes'] or []) or target['department_id']!=student['department_id']:
                 raise BusinessException('目标老师无有效同部门权限',403)
             if kind!='leave':
-                from app.core.common.authorization import employee_permissions
+                from app.core.student.student_permissions import employee_permissions
                 if 'student.warning.handle' not in employee_permissions(self.db,body.employee_id):
                     raise BusinessException('目标人员缺少心理处置专属权限',403)
             binding = self.db.execute(select(t.student_staff_binding).where(t.student_staff_binding.c.student_id==student['student_id'],t.student_staff_binding.c.employee_id==body.employee_id,t.student_staff_binding.c.relation_type=='class_teacher',or_(kind!='leave',t.student_staff_binding.c.is_primary.is_(True)),t.student_staff_binding.c.status=='active',t.student_staff_binding.c.valid_from<=utcnow(),or_(t.student_staff_binding.c.valid_to.is_(None),t.student_staff_binding.c.valid_to>utcnow())).with_for_update()).first()

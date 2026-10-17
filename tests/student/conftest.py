@@ -28,7 +28,7 @@ def unit(tmp_path, monkeypatch):
     @event.listens_for(engine, 'connect')
     def json_type(conn, _):
         conn.create_function('JSON_TYPE',1,lambda x:'ARRAY' if isinstance(__import__('json').loads(x),list) else 'OBJECT')
-    tables = [getattr(t,n) for n in t.__all__ if n!='UserAccount'] + list(STUDENT_TABLES) + [sessions,turns]
+    tables = [t.UserAccount.__table__] + [getattr(t,n) for n in t.__all__ if n!='UserAccount'] + list(STUDENT_TABLES) + [sessions,turns]
     Base.metadata.create_all(engine,tables=tables)
     factory=sessionmaker(bind=engine,expire_on_commit=False)
     now=datetime.now(timezone.utc).replace(tzinfo=None)

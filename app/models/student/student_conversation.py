@@ -1,7 +1,8 @@
 """学生会话及轮次占位，共用唯一元数据。"""
 from sqlalchemy import Table, Column, String, Integer, DateTime, JSON, Text, ForeignKey, ForeignKeyConstraint, UniqueConstraint
 from app.database import Base
-from app.models.common.student_profile import identifier
+from sqlalchemy import BigInteger, Integer
+identifier = BigInteger().with_variant(Integer, "sqlite")
 sid_type = String(64, collation='utf8mb4_bin').with_variant(String(64, collation='BINARY'), 'sqlite')
 sessions = Table('student_assistant_session', Base.metadata,
     Column('session_id',sid_type,primary_key=True),

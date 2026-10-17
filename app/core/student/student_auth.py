@@ -108,7 +108,7 @@ def get_principal(request: Request, account=Depends(get_current_account), db=Dep
         raise BusinessException('账号未关联有效业务档案', 403)
     permissions=permissions_for(account.identity_type)
     if account.identity_type == "employee":
-        from app.core.common.authorization import employee_permissions
+        from app.core.student.student_permissions import employee_permissions
         permissions=employee_permissions(db, account.employee_id)
     required=ENDPOINT_PERMISSIONS.get(request.scope['endpoint'].__name__)
     if not required or required not in permissions:

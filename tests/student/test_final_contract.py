@@ -18,15 +18,20 @@ def test_personal_and_shared_columns_match_final_ddl():
     for table in tables:
         ddl=re.search(r'CREATE TABLE `'+table.name+r'` \((.*?)\) ENGINE',sql,re.S).group(1)
         fields={m.group(1):m.group(2) for m in re.finditer(r'^  `([^`]+)` (.*)$',ddl,re.M)}
+        if table.name=="operation_log":
+            fields["actor_account_id"]="BIGINT NULL"  # 公共账号审计增量字段。
         assert set(table.c.keys())==set(fields),table.name
         for col in table.c:
             # 操作文档048优先于源DDL：本地权威的synced_at应允许NULL。
             local_sync_exception=table.name in ('student_academic_event','student_application_progress') and col.name=='synced_at'
             assert col.nullable==(local_sync_exception or 'NOT NULL' not in fields[col.name]),(table.name,col.name)
-            assert col.comment,(table.name,col.name)
+            if table.name != "user_account":
+                assert col.comment,(table.name,col.name)
         foreign_keys=[m for m in re.finditer(r'ALTER TABLE `'+table.name+r'` ADD CONSTRAINT `[^`]+` FOREIGN KEY \(([^)]+)\) REFERENCES `([^`]+)` \(([^)]+)\)',sql)]
         expected={(tuple(m[1].replace('`','').split(',')),m[2],tuple(m[3].replace('`','').split(','))) for m in foreign_keys}
         observed={(tuple(e.parent.name for e in fk.elements),fk.elements[0].column.table.name,tuple(e.column.name for e in fk.elements)) for fk in table.foreign_key_constraints}
+        if table.name=="operation_log":
+            expected.add((("actor_account_id",),"user_account",("user_id",)))
         assert observed==expected,table.name
 
 

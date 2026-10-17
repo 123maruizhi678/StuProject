@@ -305,7 +305,7 @@ class StudentService:
             ):
                 self.employee(actor)
             elif actor.actor_type == "employee":
-                from app.core.common.authorization import employee_permissions
+                from app.core.student.student_permissions import employee_permissions
                 if not employee_permissions(self.db, actor.actor_id):
                     raise BusinessException("员工权限已失效",403)
             elif action in ("academic.sync", "progress.sync"):
