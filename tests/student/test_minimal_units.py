@@ -30,8 +30,8 @@ def test_leave_submit_replay_and_unique_shared_mapping(unit):
     with unit.sessions() as db:
         for table in (t.student_admin_service,t.operation_log,t.business_notification):
             assert db.scalar(select(func.count()).select_from(table))==1
-        from app.models import student_leave
-        assert student_leave.student_profile is t.student_profile
+        from app.database import Base
+        assert Base.metadata.tables["student_profile"] is t.student_profile
 
 
 def test_leave_approval_uses_real_columns_and_operator(unit):

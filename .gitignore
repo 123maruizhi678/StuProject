@@ -26,4 +26,4 @@ app/__pycache__/
 !.env.sample
 
 # 本地权威课程与真实选课关系，不提交学生名单
-app/student_courses.json
+scripts/student/student_courses.json

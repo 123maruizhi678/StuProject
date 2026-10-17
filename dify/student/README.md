@@ -1,8 +1,8 @@
 # 学生统一 Workflow
 
-唯一部署资产：student_assistant.yml。七类意图复用一个应用；legacy/ 为历史最小单元参考，不注册第二个学生智能体。
+唯一部署资产：student_assistant.yml。七类意图复用一个应用；请假与反馈均复用此应用，不另行部署旧版请假智能体。
 
-代码按 开发文档/操作文档.md 的附录B及051—062最终约定实现。新入口位于 app/api/student、app/services/student；公共身份/传输位于 common，旧导入仅保留转发。
+代码按 开发文档/操作文档.md 的附录B及051—062最终约定实现。新入口位于 app/api/student、app/services/student；公共身份/传输位于 common，学生业务按各层 student 包组织。
 
 ## 配置与启动
 
@@ -17,7 +17,7 @@
 
 SQL scripts/sql/student/20261017_student_tables.sql 为7张学生表的最终DDL，仅适用于对应表缺失且公共依赖已具备的场景；已有表必须先按最终DDL核对并迁移。发现旧 student_leave_request 或旧通知表时停止自动切换，按主键映射、状态映射及真实审批审计迁移，不能覆盖新增业务。
 
-课程和本人选课来源为受控本地文件，格式参见 app/student_courses.example.json；真实 app/student_courses.json 被Git忽略。文件不存在返回503，不从成绩或招生项目猜选课。
+课程和本人选课来源为受控本地文件，格式参见 scripts/student/student_courses.example.json；真实 scripts/student/student_courses.json 被Git忽略。文件不存在返回503，不从成绩或招生项目猜选课。
 
 本地教务/CRM维护分别为 PUT /api/v1/internal/student/academic/{student_id}、PUT /api/v1/internal/student/progress/{student_id}；人员授权、学生关系与版本在固定服务核验。前者须academic及有效学生绑定，后者须负责顾问或本部门主管。外部同步默认关闭，不作为本地维护前置；启用时必须配置独立服务凭据、允许来源及学生范围。
 

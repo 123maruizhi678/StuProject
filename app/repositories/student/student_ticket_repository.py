@@ -1,8 +1,8 @@
 """本人工单固定查询和写入；任何模型文本均作为数据参数处理。"""
 from sqlalchemy import insert, select
 
-from app.models import student_leave as shared
-from app.models import student_ticket as t
+from app.models import common as shared
+from app.models import common as t
 from app.repositories.student.student_leave_repository import StudentLeaveRepository
 
 

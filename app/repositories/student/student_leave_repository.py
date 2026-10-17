@@ -1,7 +1,7 @@
 """学生请假读写；只使用固定SQLAlchemy表和参数。"""
 from sqlalchemy import insert, or_, select, update
 
-from app.models import student_leave as t
+from app.models import common as t
 
 
 class StudentLeaveRepository:

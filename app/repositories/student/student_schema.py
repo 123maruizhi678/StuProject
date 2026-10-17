@@ -2,8 +2,7 @@
 from sqlalchemy import Boolean, DateTime, Date, Numeric, LargeBinary, Integer, JSON, String, inspect
 from sqlalchemy.exc import SQLAlchemyError
 
-from app.models import student_leave as shared
-from app.models import student_ticket  # 注册共享字段投影
+from app.models import common as shared
 
 
 class StudentSchemaError(Exception):

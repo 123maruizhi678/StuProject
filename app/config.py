@@ -32,7 +32,7 @@ class Settings(BaseSettings):
     STUDENT_SYNC_ENABLED: bool = False
     STUDENT_SYNC_ALLOWED_SOURCES: list[str] = []
     STUDENT_SYNC_ALLOWED_STUDENT_IDS: list[int] = []
-    STUDENT_COURSES_FILE: Path = BASE_DIR / "app" / "student_courses.json"
+    STUDENT_COURSES_FILE: Path = BASE_DIR / "scripts" / "student" / "student_courses.json"
     STUDENT_LEAVE_ASSIGNMENT_SCOPES: dict[int, list[int]] = {}
     STUDENT_WARNING_ASSIGNER_IDS: list[int] = []
     STUDENT_WARNING_ASSIGNMENT_SCOPES: dict[int, list[int]] = {}
