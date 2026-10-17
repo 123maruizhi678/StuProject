@@ -92,7 +92,7 @@ def register_exception_handlers(app) -> None:
     """向 FastAPI 注册业务异常和未处理异常处理器。"""
     @app.exception_handler(RequestValidationError)
     async def _validation_handler(request: Request, exc: RequestValidationError):
-        if request.url.path.startswith(_ENVELOPE_PATH_PREFIXES):
+        if request.url.path.startswith(_ENVELOPE_PATH_PREFIXES) or request.url.path == "/api/v1/auth/register":
             # 不回显输入正文（可能包含敏感字段）。
             return JSONResponse(status_code=200, content=fail(400, "请求参数不符合接口约定", [
                 {"loc": list(e["loc"]), "message": e["msg"]} for e in exc.errors()]))

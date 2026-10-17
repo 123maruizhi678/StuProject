@@ -1,0 +1,21 @@
+# 企业新增及本地运行依赖；其余模块仍沿用根environment.yml。
+fastapi>=0.115,<1
+uvicorn>=0.30,<1
+SQLAlchemy>=2.0,<2.1
+PyMySQL>=1.1,<2
+pydantic>=2.10,<3
+pydantic-settings>=2.7,<3
+python-dotenv>=1.0,<2
+python-multipart>=0.0.20,<1
+PyJWT>=2.10,<3
+pwdlib[argon2]>=0.3,<1
+cryptography>=44
+httpx>=0.28,<1
+requests>=2.32,<3
+PyYAML>=6.0,<7
+sqlglot==29.0.1
+faster-whisper==1.2.1
+av==19.0.1
+ctranslate2==4.8.3
+onnxruntime==1.31.0
+huggingface-hub>=1,<3

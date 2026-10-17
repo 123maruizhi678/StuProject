@@ -1,5 +1,5 @@
 """service_ticket_record 的唯一共享映射；字段依据 scripts/sql/all.sql，不在启动时建表。"""
-from sqlalchemy import CheckConstraint, Column, DateTime, ForeignKeyConstraint, Index, Integer, String, Table, Text, UniqueConstraint, text
+from sqlalchemy import CheckConstraint, Column, DateTime, ForeignKeyConstraint, Index, Integer, JSON, String, Table, Text, UniqueConstraint, text
 from sqlalchemy.dialects import mysql
 
 from app.database import Base
@@ -19,6 +19,7 @@ service_ticket_record = Table(
     Column('cycle_no', Integer, nullable=False, server_default=text('1')),
     Column('record_key', String(160).with_variant(mysql.VARCHAR(160, collation="utf8mb4_bin"), "mysql"), nullable=False),
     Column('created_at', DateTime().with_variant(mysql.DATETIME(fsp=3), "mysql"), nullable=False, default=utc_now, server_default=utc_timestamp()),
+    Column('sla_snapshot', JSON, nullable=True, comment='每轮时限策略与处理事件快照；见企业增量迁移'),
     UniqueConstraint('record_key', name='uq_ticket_record_key'),
     Index('idx_ticket_record_time', 'ticket_id', 'created_at', 'ticket_record_id'),
     Index('idx_ticket_record_employee', 'employee_id'),

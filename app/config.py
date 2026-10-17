@@ -55,6 +55,25 @@ class Settings(BaseSettings):
     STUDENT_SCORE_DIFY_BASE: str = "http://localhost/v1"
     STUDENT_SCORE_DIFY_KEY: str = Field(default="", repr=False)
 
+    # Enterprise module configuration; uses the sole root .env.
+    ENTERPRISE_EXTRACT_DIFY_API_KEY: str = Field(default="", repr=False)
+    ENTERPRISE_NL2SQL_DIFY_API_KEY: str = Field(default="", repr=False)
+    ENTERPRISE_KNOWLEDGE_DIFY_API_KEY: str = Field(default="", repr=False)
+    ENTERPRISE_SUMMARY_DIFY_API_KEY: str = Field(default="", repr=False)
+    ENTERPRISE_DIFY_CONTRACT_VERSION: str = "enterprise-v1"
+    ENTERPRISE_CONFIRM_SECRET: str = Field(default="", repr=False)
+    ENTERPRISE_PHONE_ENCRYPTION_KEY: str = Field(default="", repr=False)
+    ENTERPRISE_PHONE_LOOKUP_SECRET: str = Field(default="", repr=False)
+    ENTERPRISE_READ_DB_USER: str = ""
+    ENTERPRISE_READ_DB_PASSWORD: str = Field(default="", repr=False)
+    ENTERPRISE_QUERY_TIMEOUT_MS: int = Field(default=3000, ge=100, le=10000)
+    ASR_MODEL_PATH: str = ""
+    ASR_BACKEND: Literal['faster_whisper'] = 'faster_whisper'
+    ASR_MODEL_SIZE: str = "small"
+    ASR_DEVICE: str = "cpu"
+    ASR_COMPUTE_TYPE: str = "int8"
+    ENTERPRISE_TASK_INTERVAL_SECONDS: int = Field(default=300,ge=1,le=3600)
+
 
 
 class StudentLeaveDifySettings(BaseSettings):
