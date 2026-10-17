@@ -2,9 +2,9 @@ version: 1
 # Backend API authorization remains mandatory; frontend visibility is not security.
 roles:
   admin:
-    permissions: [admin.dashboard]
+    permissions: [admin.dashboard, report.generate, report.read, report.config.read, report.config.write]
   employee:
-    permissions: [dashboard.employee, student.profile.read, student.admin_service.review, service_ticket.read, service_ticket.handle, report.read]
+    permissions: [dashboard.employee, student.profile.read, student.admin_service.review, service_ticket.read, service_ticket.handle]
   customer:
     permissions: [dashboard.customer, course_project.read, event_signup.create, service_ticket.create, service_ticket.read_own]
   student:
@@ -21,6 +21,7 @@ pages:
   student_dashboard: {title: Student dashboard, route: /student, requires_auth: true, permission: dashboard.student}
   student_profile: {title: Student profile, route: /student/profile, requires_auth: true, permission_any: [student.profile.read, student.profile.read_own]}
   service_tickets: {title: Service tickets, route: /tickets, requires_auth: true, permission_any: [service_ticket.read, service_ticket.read_own, service_ticket.handle]}
+  report: {title: 智能报告, route: /report, requires_auth: true, permission_any: [report.generate, report.read, report.config.read, report.config.write]}
 modules:
   admin_workspace: {title: Administration, required_any: [admin.dashboard], pages: [admin_dashboard]}
   employee_workspace: {title: Employee workspace, required_any: [dashboard.employee], pages: [employee_dashboard]}
@@ -30,3 +31,7 @@ modules:
     title: Ticket center
     required_any: [service_ticket.create, service_ticket.read_own, service_ticket.handle]
     pages: [service_tickets]
+  report_center:
+    title: 智能报告
+    required_any: [report.generate, report.read, report.config.read, report.config.write]
+    pages: [report]

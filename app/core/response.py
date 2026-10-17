@@ -81,11 +81,17 @@ class BusinessException(Exception):
 
 
 # 5. 全局异常处理器（在 main.py 中注册）
+# 采用 HTTP 200 + {code,message,data} 应用信封的业务路径前缀（035 报告契约
+# 与企业/学生一致）：400 参数、401 身份、403 权限、404 对象、409 冲突、
+# 500 内部错误统一收敛为信封；网络、代理等非应用异常仍可能是非 200。
+_ENVELOPE_PATH_PREFIXES = ("/api/v1/enterprise", "/api/v1/report")
+
+
 def register_exception_handlers(app) -> None:
     """向 FastAPI 注册业务异常和未处理异常处理器。"""
     @app.exception_handler(RequestValidationError)
     async def _validation_handler(request: Request, exc: RequestValidationError):
-        if request.url.path.startswith("/api/v1/enterprise"):
+        if request.url.path.startswith(_ENVELOPE_PATH_PREFIXES):
             # 不回显输入正文（可能包含敏感字段）。
             return JSONResponse(status_code=200, content=fail(400, "请求参数不符合接口约定", [
                 {"loc": list(e["loc"]), "message": e["msg"]} for e in exc.errors()]))
@@ -94,7 +100,7 @@ def register_exception_handlers(app) -> None:
 
     @app.exception_handler(StarletteHTTPException)
     async def _http_handler(request: Request, exc: StarletteHTTPException):
-        if request.url.path.startswith("/api/v1/enterprise"):
+        if request.url.path.startswith(_ENVELOPE_PATH_PREFIXES):
             return JSONResponse(status_code=200, content=fail(exc.status_code, str(exc.detail)), headers=exc.headers)
         from fastapi.exception_handlers import http_exception_handler
         return await http_exception_handler(request, exc)
