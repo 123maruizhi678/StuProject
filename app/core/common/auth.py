@@ -34,6 +34,9 @@ def get_current_account(
     if account is None:
         raise unauthorized
 
+    from app.core.common.account_state import ensure_account_active
+    ensure_account_active(db, account)
+
     # Load lazily to avoid a module import cycle with permission dependencies.
     from app.core.common.authorization import load_access_control
 
