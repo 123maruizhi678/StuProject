@@ -23,3 +23,6 @@ app/__pycache__/
 .env
 .env.*
 !.env.example
+
+# 公开无密钥模板；真实凭据仅通过环境变量注入。
+!.env.sample

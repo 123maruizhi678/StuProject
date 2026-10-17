@@ -6,7 +6,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 
 class Settings(BaseSettings):
-    model_config = SettingsConfigDict(env_file=str(BASE_DIR / ".env"), env_file_encoding="utf-8", extra="ignore")
+    model_config = SettingsConfigDict(env_file=str(BASE_DIR / ".env.sample"), env_file_encoding="utf-8", extra="ignore")
     DB_HOST: str = "127.0.0.1"
     DB_PORT: int = Field(default=3306, ge=1, le=65535)
     DB_USER: str = "root"
