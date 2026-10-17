@@ -1,7 +1,7 @@
 """统一登录账号 ORM 模型，对应 scripts/sql/all.sql 中的 user_account。"""
 from datetime import datetime
 
-from sqlalchemy import BigInteger, CheckConstraint, DateTime, ForeignKey, String, func
+from sqlalchemy import BigInteger, Integer, CheckConstraint, DateTime, ForeignKey, String, func
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.database import Base
@@ -21,7 +21,7 @@ class UserAccount(Base):
     )
 
     user_id: Mapped[int] = mapped_column(
-        BigInteger, primary_key=True, autoincrement=True, comment="统一用户主键"
+        BigInteger().with_variant(Integer(),'sqlite'), primary_key=True, autoincrement=True, comment="统一用户主键"
     )
     username: Mapped[str] = mapped_column(String(64), nullable=False, unique=True)
     password_hash: Mapped[str] = mapped_column(String(255), nullable=False)

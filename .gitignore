@@ -23,3 +23,6 @@ app/__pycache__/
 .env
 .env.*
 !.env.example
+.runtime/
+dify/local/runtime/
+.playwright-mcp/

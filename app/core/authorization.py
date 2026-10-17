@@ -5,6 +5,8 @@ from typing import Annotated, Callable
 
 import yaml
 from fastapi import Depends, HTTPException, status
+from sqlalchemy.orm import Session
+from app.database import get_db
 
 from app.config import settings
 from app.models.user_account import UserAccount
@@ -37,6 +39,9 @@ def load_access_control() -> dict:
 
 def permissions_for(identity_type: str) -> set[str]:
     """根据身份类型取得 YAML 中配置的权限标识集合。"""
+    if identity_type=='admin':
+        from app.core.enterprise.enterprise_authorization import ROLE_ACTIONS
+        return set().union(*(set(role.get('permissions',[])) for role in load_access_control()['roles'].values()))|{'enterprise.'+a for a in set().union(*ROLE_ACTIONS.values())}
     role = load_access_control()["roles"].get(identity_type)
     return set(role.get("permissions", [])) if role else set()
 
@@ -47,9 +52,11 @@ def require_permission(permission: str) -> Callable:
 
     def dependency(
         account: Annotated[UserAccount, Depends(get_current_account)],
+        db: Annotated[Session, Depends(get_db)],
     ) -> UserAccount:
         """检查当前账号是否具有路由要求的权限。"""
-        if permission not in permissions_for(account.identity_type):
+        from app.core.common.system_admin import is_system_admin
+        if not is_system_admin(db,account) and permission not in permissions_for(account.identity_type):
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Permission denied",
@@ -109,7 +116,7 @@ def access_for(identity_type: str, user_id: int) -> dict:
             detail="Identity has no access policy",
         )
 
-    permissions = set(role.get("permissions", []))
+    permissions = permissions_for(identity_type)
     pages = {
         page_id: page
         for page_id, page in policy["pages"].items()

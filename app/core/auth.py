@@ -41,4 +41,6 @@ def get_current_account(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Identity has no access policy",
         )
+    from app.core.common.account_state import ensure_account_active
+    ensure_account_active(db,account)
     return account

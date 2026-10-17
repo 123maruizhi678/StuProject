@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="color-scheme" content="dark"><title>企业管理 · StuProject</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="/static/css/enterprise/enterprise.css?v=20261017-tech">
+  <script type="module" src="/static/js/enterprise/enterprise.js?v=20261017-admin-fix"></script>
+</head>
+<body class="shell-page">
+  <section id="login" class="login-shell">
+    <div class="login-intro"><a class="brand" href="/static/index.html"><span class="brand-mark">S</span><span>StuProject<small>企业管理 / ENTERPRISE</small></span></a><span class="eyebrow">CONNECTED TEAMS. CLEARER WORK.</span><h1>协同每一份力量，<br>推进每一项工作。</h1><p>连接客户、教务与团队，<br>让日常业务在一个工作台中有序流转。</p><div class="login-orbit" aria-hidden="true"><span></span><b>S</b><i></i></div><div class="login-foot">企业协作 · 智能辅助 · 统一工作空间</div></div>
+    <form id="login-form" class="login-card panel"><span class="eyebrow">WORKSPACE ACCESS</span><h2>登录企业工作台</h2><p class="muted">使用已开通的员工账户进入工作空间。</p><label>账号<input name="username" autocomplete="username" placeholder="请输入账号" required></label><label>密码<input name="password" type="password" autocomplete="current-password" placeholder="请输入密码" required></label><button type="submit">进入工作台 <span aria-hidden="true">↗</span></button><p id="login-error" class="error" role="alert"></p><a href="/static/index.html" class="muted">← 返回系统主页面</a></form>
+  </section>
+  <div id="workspace" class="workspace" hidden>
+    <button id="nav-backdrop" class="nav-backdrop" aria-label="关闭导航" hidden></button>
+    <aside class="sidebar" id="sidebar">
+      <a class="brand" href="/enterprise"><span class="brand-mark">S</span><span>StuProject<small>企业管理 / ENTERPRISE</small></span></a>
+      <nav id="navigation" aria-label="企业业务导航"></nav>
+      <div class="aside-footer"><div class="profile-avatar">E</div><div><span id="identity"></span><small id="role-label"></small></div><button id="logout" class="icon-button" aria-label="退出登录"></button></div>
+      <a class="back-home" href="/static/index.html">← 返回系统主页面</a>
+    </aside>
+    <div class="workspace-main">
+      <header class="topbar"><div class="topbar-heading"><button id="toggle-nav" class="icon-button" aria-label="展开导航" aria-expanded="false"></button><span class="breadcrumb">企业管理 <span>/</span> <strong id="page-title">工作概览</strong></span></div><div class="topbar-status"><span class="connection"><i></i>工作空间</span><time id="today"></time><button id="notifications-shortcut" class="icon-button" aria-label="我的通知" hidden></button></div></header>
+      <iframe id="module-frame" name="enterprise-module" title="企业管理业务页面" referrerpolicy="same-origin"></iframe>
+    </div>
+  </div>
+</body>
+</html>

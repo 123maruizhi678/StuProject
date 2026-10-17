@@ -4,12 +4,13 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.api.auth import router as auth_router
-from app.api.enterprise_student import router as enterprise_student_router
+from app.api.enterprise.enterprise import router as enterprise_router
+from app.api.common.account_registration import router as account_registration_router
 from app.core.authorization import load_access_control, require_permission
 from app.core.logger import get_logger, init_logger
 from app.core.response import register_exception_handlers
 from app.database import dispose_db, get_db
-from app.api.student_leave import create_router as create_student_leave_router
+from app.models import common as shared_models
 
 init_logger()
 logger = get_logger(__name__)
@@ -37,15 +38,12 @@ app.add_middleware(
 )
 register_exception_handlers(app)
 app.include_router(auth_router, prefix="/api/v1")
-app.include_router(enterprise_student_router, prefix="/api/v1")
+app.include_router(enterprise_router, prefix="/api/v1")
+app.include_router(account_registration_router,prefix='/api/v1')
 
 # S01仅接入学生请假；登录和权限判断复用组长公共依赖。
-app.include_router(
-    create_student_leave_router(
-        require_permission("student.admin_service.create"), get_db
-    ),
-    prefix="/api/v1",
-)
+MIGRATION_PENDING_MODULES = ["student_leave"]
+# 学生请假适配器尚未交付；不创建企业替身服务、不注册假业务入口。
 
 # 路由注册（各业务模块就绪后在此 include，挂载到 /api/v1）
 # from app.api import customer, agent, enterprise, student
@@ -101,3 +99,30 @@ def student_openapi():
 
 
 app.openapi = student_openapi
+
+from pathlib import Path
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
+_frontend = Path(__file__).resolve().parent.parent / "frontend"
+app.mount("/static", StaticFiles(directory=_frontend), name="static")
+@app.get("/enterprise", include_in_schema=False)
+def enterprise_page():
+    return FileResponse(_frontend / "enterprise" / "enterprise.html")
+
+@app.get('/admin/accounts',include_in_schema=False)
+def admin_accounts_page():
+    return FileResponse(_frontend/'admin'/'accounts.html',headers={'Cache-Control':'no-store'})
+
+@app.get('/admin',include_in_schema=False)
+def admin_page():
+    from fastapi.responses import RedirectResponse
+    return RedirectResponse('/admin/accounts')
+
+from fastapi import Depends
+from fastapi.responses import JSONResponse
+from app.core.common.admin_authorization import require_platform_admin
+
+@app.get('/api/v1/admin/openapi.json',include_in_schema=False)
+def admin_openapi(operator=Depends(require_platform_admin)):
+    from app.core.common.admin_openapi import build_admin_openapi
+    return JSONResponse(build_admin_openapi(app),headers={'Cache-Control':'no-store'})

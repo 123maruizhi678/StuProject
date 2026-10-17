@@ -1,0 +1,17 @@
+@import url('../enterprise/enterprise.css?v=20261017-tech');
+/* 平台账户管理复用企业模块科技风，保持身份入口独立。 */
+.admin-page{background:radial-gradient(ellipse at 90% 0,#17345555,transparent 50%),var(--bg);min-height:100vh}
+.admin-page main{max-width:1320px;margin:auto;padding:36px 30px}
+.admin-page header,.header-actions,.admin-page .pagination{display:flex;justify-content:space-between;align-items:center;gap:16px}
+.admin-page header{margin-bottom:28px}.admin-page header p{margin:0}.header-actions{font-size:11px;color:var(--muted)}
+.card{background:linear-gradient(145deg,#111f35,#101a2b);border:1px solid var(--line);padding:27px;border-radius:14px;margin-bottom:24px}
+.layout{display:grid;grid-template-columns:1.5fr 1fr;gap:24px}.admin-page .form-grid{margin:20px 0}.form-actions{display:flex;justify-content:flex-end;margin-top:24px}
+.password-note{background:#173147;border:1px solid #294d68;padding:11px 14px;border-radius:7px;color:#92c9e7;font-size:11px}
+.admin-page .login-shell{display:grid;grid-template-columns:1fr;place-items:center;min-height:100dvh;padding:24px;background:radial-gradient(ellipse at 30% 20%,#173d5860,transparent 55%),var(--bg)}
+.admin-page .login-card{width:min(440px,100%);max-width:440px;padding:36px;margin:0}.admin-page .login-card h1{font-size:28px}.admin-page .login-card label{margin:23px 0}
+.admin-page .login-card button{justify-content:center}.result-field{display:grid;grid-template-columns:100px 1fr;gap:12px;border-bottom:1px solid var(--line);padding:13px 0;font-size:12px}.result-field strong{font-weight:400;color:var(--muted)}.result-field span{overflow-wrap:anywhere}
+.admin-page .empty{padding:35px 0;line-height:1.9;text-align:left;font-size:12px}.admin-page small{font-size:11px;color:var(--muted);font-weight:400}
+.admin-page pre{overflow:auto;max-height:460px;background:#0a1425;border:1px solid var(--line);padding:18px;border-radius:8px;font:11px/1.8 Consolas,monospace}
+.admin-page .pagination{justify-content:flex-end;font-size:11px;margin-top:20px}
+@media(max-width:850px){.layout{grid-template-columns:1fr;gap:0}.admin-page main{padding:24px 16px}.admin-page header{align-items:flex-start}.header-actions{flex-wrap:wrap;justify-content:flex-end}.header-actions a{width:100%;text-align:right}}
+@media(max-width:520px){.card{padding:23px 17px}.admin-page h1{font-size:24px}.result-field{grid-template-columns:80px 1fr}.admin-page .login-card{padding:28px 23px}.header-actions{max-width:150px}.header-actions span{font-size:10px}.header-actions button{padding:7px 10px;font-size:11px}}

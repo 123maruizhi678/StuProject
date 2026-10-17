@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="color-scheme" content="dark"><title>课程管理 · 企业管理</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="/static/css/enterprise/enterprise.css?v=20261017-tech">
+  <script type="module" src="/static/js/enterprise/resource.js?v=20261017-tech"></script>
+</head>
+<body data-resource="courses">
+  <!-- 本功能拥有独立HTML；共用请求、权限和表单组件。 -->
+  <main class="page-content" hidden>
+    <header class="page-heading"><div><span id="page-group" class="eyebrow"></span><h1 id="page-title">课程管理</h1><p id="page-description"></p></div><span class="connection"><i></i>当前授权范围</span></header>
+    <section class="panel">
+      <div class="table-toolbar"><div><h2><span id="list-title">课程管理</span><span id="list-count" class="count-label"></span></h2></div><div class="actions"><button id="refresh" class="secondary" type="button">↻ 刷新</button><button id="new-record" type="button" hidden>＋ 新增</button></div></div>
+      <div class="panel-heading"><label class="table-filter"><input id="table-search" type="search" placeholder="筛选本页记录…" aria-label="筛选本页记录"></label><span class="muted">每页 20 条</span></div>
+      <p id="notice" role="status" aria-live="polite"></p>
+      <div id="table-loading" class="loading" hidden>正在加载记录…</div>
+      <div class="table-scroll"><table><thead id="table-head"></thead><tbody id="table-body"></tbody></table></div>
+      <div id="empty" class="empty" hidden><span class="empty-symbol" aria-hidden="true">◇</span><h3 id="empty-title">当前没有记录</h3><p id="empty-description"></p></div>
+      <div class="pagination"><button id="previous" class="secondary" type="button" disabled>← 上一页</button><span id="page-info"></span><button id="next" class="secondary" type="button" disabled>下一页 →</button></div>
+    </section>
+    <footer class="page-foot"><span>STUPROJECT / ENTERPRISE</span><span>时间统一为北京时间</span></footer>
+  </main>
+  <dialog id="editor"><form id="edit-form"><div class="dialog-heading"><h2 id="edit-title"></h2><button type="button" id="close-editor" class="link">关闭 ×</button></div><div id="fields" class="form-grid"></div><p id="edit-error" class="error" role="alert"></p><div class="dialog-actions"><button type="button" id="cancel-editor" class="secondary">取消</button><button type="submit">保存</button></div></form></dialog>
+  <dialog id="detail-dialog"><div class="dialog-heading"><h2 id="detail-title">记录详情</h2><button type="button" id="close-detail" class="link">关闭 ×</button></div><div id="detail-content"></div></dialog>
+</body>
+</html>

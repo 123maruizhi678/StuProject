@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>账户管理 · StuProject</title>
+  <link rel="icon" href="data:,">
+  <meta name="color-scheme" content="dark">
+  <link rel="stylesheet" href="/static/css/admin/accounts.css?v=20261017-tech">
+  <script defer src="/static/js/admin/accounts.js?v=20261017-admin-fix"></script>
+</head>
+<body class="admin-page">
+  <section id="login" class="login-shell">
+    <form id="login-form" class="card login-card">
+      <span class="eyebrow">STUPROJECT / ADMINISTRATION</span>
+      <h1>管理员登录</h1><p class="muted">使用平台管理员账户开通员工、学生、客户及管理员账户。</p>
+      <label>用户名<input name="username" autocomplete="username" required></label>
+      <label>密码<input name="password" type="password" autocomplete="current-password" required></label>
+      <button type="submit">登录 ↗</button><p id="login-error" class="error" role="alert"></p><a href="/static/index.html" class="muted">← 返回系统主页面</a>
+    </form>
+  </section>
+  <section id="denied" class="login-shell" hidden><div class="card login-card"><h1>当前身份无权开户</h1><p>账户管理仅允许平台管理员使用。</p><a id="employee-link" href="/enterprise" hidden>进入企业工作台</a><button id="denied-logout" type="button">切换账户</button></div></section>
+  <main id="workspace" hidden>
+    <header><div><span class="eyebrow">STUPROJECT / ADMINISTRATION</span><h1>账户管理</h1><p class="muted">创建账户，同步关联档案与身份权限。</p></div><div class="header-actions"><a href="/enterprise" class="muted">企业工作台 ↗</a><a href="/static/index.html" class="muted">系统主页面 ↗</a><span id="identity"></span><button id="logout" class="secondary" type="button">退出登录</button></div></header>
+    <div class="layout">
+      <section class="card">
+        <h2>新增账户</h2><p class="password-note" id="password-note"></p>
+        <form id="register-form">
+          <div class="form-grid">
+            <label>登录用户名<input id="new-username" name="username" maxlength="64" autocomplete="off" required></label>
+            <label>账户身份<select id="identity-type" name="identity_type"><option value="employee">员工</option><option value="student">学生</option><option value="customer">客户</option><option value="admin">平台管理员</option></select></label>
+            <label id="mode-label">档案方式<select id="profile-mode"><option value="new">新建档案并开户</option><option value="existing">绑定已有档案</option></select></label>
+          </div>
+          <div id="profile-fields" class="form-grid"></div>
+          <p id="profile-hint" class="muted"></p>
+          <p id="register-error" class="error" role="alert"></p>
+          <div class="form-actions"><button type="submit">创建账户</button></div>
+        </form>
+      </section>
+      <section class="card"><h2>创建结果</h2><div id="registration-result" class="empty" aria-live="polite">成功创建后，这里会显示用户名、身份及关联档案。</div><p class="muted">员工按职位取得业务角色，数据范围由部门和学生／课程关系决定。学生访问范围限定本人。</p></section>
+    </div>
+    <section class="card"><div class="panel-heading"><h2>已开通账户 <small id="account-count"></small></h2><button id="refresh" type="button" class="secondary">刷新</button></div><p id="list-error" class="error" role="alert"></p><div class="table-scroll"><table><thead><tr><th>账户ID</th><th>用户名</th><th>身份</th><th>员工ID</th><th>学生ID</th><th>客户ID</th></tr></thead><tbody id="account-rows"></tbody></table></div><div class="pagination"><button id="previous" class="secondary" type="button">上一页</button><span id="page-info"></span><button id="next" class="secondary" type="button">下一页</button></div></section>
+    <section class="card"><div class="panel-heading"><h2>管理员接口文档</h2><button id="show-docs" type="button" class="secondary">查看注册接口</button></div><div id="admin-docs" hidden><p>POST /api/v1/auth/register · 默认初始密码123456 · 写入携带Idempotency-Key</p><pre id="registration-schema"></pre></div><p id="docs-error" class="error" role="alert"></p></section>
+  </main>
+</body>
+</html>

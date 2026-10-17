@@ -36,7 +36,11 @@ class LayoutContracts(unittest.TestCase):
             ddl = re.search(r"CREATE TABLE `?" + name + r"`?\s*\(.*?;", sql, re.S).group()
             parsed = sqlglot.parse_one(ddl, read="mysql")
             expected = [column.name for column in parsed.this.expressions if isinstance(column, exp.ColumnDef)]
-            self.assertEqual(list(getattr(common, name).columns.keys()), expected, name)
+            # 36表文件为原始基线；企业增量单独登记，不能把合法新增列视为缺失基线。
+            actual=list(getattr(common,name).columns.keys())
+            self.assertEqual([column for column in actual if column in expected],expected,name)
+            extras=set(actual)-set(expected)
+            self.assertEqual(extras,{'sla_snapshot'} if name=='service_ticket_record' else set(),name)
 
     def test_application_openapi_has_unique_operations(self):
         from app.main import app, MIGRATION_PENDING_MODULES

@@ -1,8 +1,9 @@
 version: 1
 # Backend API authorization remains mandatory; frontend visibility is not security.
 roles:
+  # admin为最高权限；permissions_for会合并全部已声明权限及企业动作。
   admin:
-    permissions: [admin.dashboard]
+    permissions: [admin.dashboard, account.manage]
   employee:
     permissions: [dashboard.employee, student.profile.read, student.admin_service.review, service_ticket.read, service_ticket.handle, report.read]
   customer:
@@ -16,13 +17,14 @@ pages:
   password_reset: {title: Password reset, route: /password-reset, public: true}
   account: {title: Account, route: /account, requires_auth: true}
   admin_dashboard: {title: Admin console, route: /admin, requires_auth: true, permission: admin.dashboard}
+  admin_accounts: {title: Account registration, route: /admin/accounts, requires_auth: true, permission: account.manage}
   employee_dashboard: {title: Employee dashboard, route: /employee, requires_auth: true, permission: dashboard.employee}
   customer_dashboard: {title: Customer dashboard, route: /customer, requires_auth: true, permission: dashboard.customer}
   student_dashboard: {title: Student dashboard, route: /student, requires_auth: true, permission: dashboard.student}
   student_profile: {title: Student profile, route: /student/profile, requires_auth: true, permission_any: [student.profile.read, student.profile.read_own]}
   service_tickets: {title: Service tickets, route: /tickets, requires_auth: true, permission_any: [service_ticket.read, service_ticket.read_own, service_ticket.handle]}
 modules:
-  admin_workspace: {title: Administration, required_any: [admin.dashboard], pages: [admin_dashboard]}
+  admin_workspace: {title: Administration, required_any: [admin.dashboard], pages: [admin_dashboard, admin_accounts]}
   employee_workspace: {title: Employee workspace, required_any: [dashboard.employee], pages: [employee_dashboard]}
   customer_workspace: {title: Customer workspace, required_any: [dashboard.customer], pages: [customer_dashboard]}
   student_workspace: {title: Student workspace, required_any: [dashboard.student], pages: [student_dashboard, student_profile]}

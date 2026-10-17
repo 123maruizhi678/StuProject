@@ -48,6 +48,11 @@ def login(
 @router.get("/me/access")
 def get_my_access(
     account: Annotated[UserAccount, Depends(get_current_account)],
+    db: Annotated[Session, Depends(get_db)],
 ):
     """Return the user's allowed pages and modules for frontend navigation."""
-    return success(access_for(account.identity_type, account.user_id))
+    from app.core.common.system_admin import is_system_admin
+    admin=is_system_admin(db,account)
+    result=access_for('admin' if admin else account.identity_type,account.user_id)
+    result.update(identity_type=account.identity_type,is_admin=admin)
+    return success(result)
