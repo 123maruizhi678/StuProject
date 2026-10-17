@@ -27,7 +27,7 @@ from fastapi import Depends
 from sqlalchemy.orm import Session
 
 from app.core.auth import get_current_account
-from app.core.response import BusinessException, ResultCode
+from app.core.common.response import BusinessException, ResultCode
 from app.database import get_db
 from app.models.user_account import UserAccount
 from app.repositories.report.report_repository import load_employee_scope

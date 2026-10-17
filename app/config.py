@@ -34,6 +34,10 @@ class Settings(BaseSettings):
     DIFY_SQL_OUTPUT_KEY: str = "sql"
     # Dify HTTP 请求超时秒数（NL2SQL / 报告工作流共用）。
     DIFY_API_TIMEOUT_SECONDS: float = 60.0
+    # 学生统一 Workflow 应用密钥，从 .env 或同名系统环境变量读取。
+    STUDENT_DIFY_KEY: SecretStr = Field(default=SecretStr(""), repr=False)
+    # 学生会话及办理确认凭证使用独立签名密钥。
+    STUDENT_ACTION_SECRET: str = Field(default="", repr=False)
     # 报告生成工作流专用配置；地址为空时回退 DIFY_API_BASE。
     REPORT_DIFY_API_BASE: str = ""
     REPORT_DIFY_API_KEY: str = Field(default="", repr=False)

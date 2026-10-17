@@ -25,7 +25,7 @@ from fastapi import BackgroundTasks
 from sqlalchemy.orm import Session
 
 from app.clients.report import ReportDifyClient, ReportDifyError, ReportModelOutcomeUnknown
-from app.core.response import BusinessException, ResultCode
+from app.core.common.response import BusinessException, ResultCode
 from app.database import SessionLocal
 from app.models.report import ReportConfig, ReportRecord, utcnow
 from app.repositories.report import report_repository as repo

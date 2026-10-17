@@ -4,6 +4,7 @@ from typing import Annotated, Callable
 from fastapi import APIRouter, Depends, Header
 from fastapi.responses import JSONResponse
 
+from app.core.common.response import fail, success
 from app.clients.student_leave_dify import StudentLeaveDifyError, get_leave_workflow
 from app.schemas.student_leave import LeaveInput, LeaveResponse
 from app.services.student_leave_service import LeaveError, StudentLeaveService
@@ -34,10 +35,11 @@ def create_router(account_dependency: Callable, db_dependency: Callable,
     ):
         try:
             data = StudentLeaveService(db, workflow).submit(account, request_key, payload)
-            return {"code": 0, "message": "success", "data": data}
+            return success(data)
         except (LeaveError, StudentLeaveDifyError) as error:
-            return JSONResponse(status_code=error.status, content={
-                "code": error.status, "message": error.message, "data": None,
-            })
+            return JSONResponse(
+                status_code=error.status,
+                content=fail(error.status, error.message),
+            )
 
     return router

@@ -27,7 +27,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 
-from app.core.logger import get_logger, init_logger
+from app.core.common.logger import get_logger, init_logger
 from app.database import SessionLocal
 from app.tasks.report.report_tasks import (
     ReportTaskQueue,
