@@ -23,3 +23,7 @@ app/__pycache__/
 .env
 .env.*
 !.env.example
+
+# 企业目录迁移的原始快照与运行检查产物
+.migration_backups/
+.runtime/

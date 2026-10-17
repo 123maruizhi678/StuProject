@@ -1,0 +1,1127 @@
+{
+    "source_root":  "C:\\Users\\Windows\\Desktop\\qy",
+    "target_root":  "D:\\project\\StuProject",
+    "status":  "moved_and_verified",
+    "files":  [
+                  {
+                      "source":  "C:\\Users\\Windows\\Desktop\\qy\\app\\api\\common\\account_registration.py",
+                      "destination":  "app/api/common/account_registration.py",
+                      "original_sha256":  "e86d6e06b4dddf4370b94bdc06bbad24c41657eb71fadc36de8991e988925730",
+                      "action":  "copied",
+                      "original_backup":  ".migration_backups/enterprise_20261017/incoming/app/api/common/account_registration.py",
+                      "destination_sha256":  "4adcca7970add3826f7d590b020a7e89f789ccace261688b7f8e07326c2fea44",
+                      "source_removed":  true
+                  },
+                  {
+                      "source":  "C:\\Users\\Windows\\Desktop\\qy\\app\\api\\enterprise\\__init__.py",
+                      "destination":  "app/api/enterprise/__init__.py",
+                      "original_sha256":  "f380fab86f428390a42f0ba43ac0fb861f921881c3873fdd26495b77e9b3f249",
+                      "action":  "copied",
+                      "original_backup":  ".migration_backups/enterprise_20261017/incoming/app/api/enterprise/__init__.py",
+                      "destination_sha256":  "39c73a7aa368fe1c619e7106a63179b0577eaaec0b5c3efea46a7b0b3fb793f4",
+                      "source_removed":  true
+                  },
+                  {
+                      "source":  "C:\\Users\\Windows\\Desktop\\qy\\app\\api\\enterprise\\enterprise.py",
+                      "destination":  "app/api/enterprise/enterprise.py",
+                      "original_sha256":  "231a77d336d287eb1109049839bd03a982cebec8e4c224b93fc853924cc4ad80",
+                      "action":  "copied",
+                      "original_backup":  ".migration_backups/enterprise_20261017/incoming/app/api/enterprise/enterprise.py",
+                      "destination_sha256":  "929600beed921add9a2d748f8a7fd98dd0fdb179db80dd5397904e594ead2ffd",
+                      "source_removed":  true
+                  },
+                  {
+                      "source":  "C:\\Users\\Windows\\Desktop\\qy\\app\\clients\\enterprise\\__init__.py",
+                      "destination":  "app/clients/enterprise/__init__.py",
+                      "original_sha256":  "f380fab86f428390a42f0ba43ac0fb861f921881c3873fdd26495b77e9b3f249",
+                      "action":  "copied",
+                      "original_backup":  ".migration_backups/enterprise_20261017/incoming/app/clients/enterprise/__init__.py",
+                      "destination_sha256":  "39c73a7aa368fe1c619e7106a63179b0577eaaec0b5c3efea46a7b0b3fb793f4",
+                      "source_removed":  true
+                  },
+                  {
+                      "source":  "C:\\Users\\Windows\\Desktop\\qy\\app\\clients\\enterprise\\enterprise_asr.py",
+                      "destination":  "app/clients/enterprise/enterprise_asr.py",
+                      "original_sha256":  "871590ea58ec69386044944edb9da56cd55d3a2cafe9bdd4ee38f11ee1bb238e",
+                      "action":  "copied",
+                      "original_backup":  ".migration_backups/enterprise_20261017/incoming/app/clients/enterprise/enterprise_asr.py",
+                      "destination_sha256":  "3e78c49082553ee084eecbd8be3fdff8683db7de6006891e33b6b1a35f3219b8",
+                      "source_removed":  true
+                  },
+                  {
+                      "source":  "C:\\Users\\Windows\\Desktop\\qy\\app\\clients\\enterprise\\enterprise_dify.py",
+                      "destination":  "app/clients/enterprise/enterprise_dify.py",
+                      "original_sha256":  "2deb180598882d2e7e8e4d8a7754ea82f8397d21da88fcdfe11eb1e99f8197af",
+                      "action":  "copied",
+                      "original_backup":  ".migration_backups/enterprise_20261017/incoming/app/clients/enterprise/enterprise_dify.py",
+                      "destination_sha256":  "0623909b6ee4e5800576551e780cf9d52f18cfc31787b94b5b8087b02359bd91",
+                      "source_removed":  true
+                  },
+                  {
+                      "source":  "C:\\Users\\Windows\\Desktop\\qy\\app\\clients\\enterprise\\enterprise_nl2sql_dify.py",
+                      "destination":  "app/clients/enterprise/enterprise_nl2sql_dify.py",
+                      "original_sha256":  "cda41efc6deefd79c3f84e1e1999e3eb97b8999a2a878bd56b57ff1076e93e49",
+                      "action":  "copied",
+                      "original_backup":  ".migration_backups/enterprise_20261017/incoming/app/clients/enterprise/enterprise_nl2sql_dify.py",
+                      "destination_sha256":  "a1301721812f69b76ffeeb1fd860093939504908b9250f539452011cc97fb0ca",
+                      "source_removed":  true
+                  },
+                  {
+                      "source":  "C:\\Users\\Windows\\Desktop\\qy\\app\\core\\common\\account_state.py",
+                      "destination":  "app/core/common/account_state.py",
+                      "original_sha256":  "74993b24c039f06f74e5d05d2d4d6f176436bfcf51434dc31b6b8ba950dc0ded",
+                      "action":  "copied",
+                      "original_backup":  ".migration_backups/enterprise_20261017/incoming/app/core/common/account_state.py",
+                      "destination_sha256":  "d3d1f61f0d69ad267256fdedf76e21cbeb2ccff3ecc6921b5429b3224bca3095",
+                      "source_removed":  true
+                  },
+                  {
+                      "source":  "C:\\Users\\Windows\\Desktop\\qy\\app\\core\\common\\admin_authorization.py",
+                      "destination":  "app/core/common/admin_authorization.py",
+                      "original_sha256":  "06b990653550f77a976352e531c1d6f88c75ee8f030061fa00a3d5f415eb4b81",
+                      "action":  "copied",
+                      "original_backup":  ".migration_backups/enterprise_20261017/incoming/app/core/common/admin_authorization.py",
+                      "destination_sha256":  "6b49aaa5bb7ce549e5423d32cf6411c48aebbf7e0c1f80c6dc2182b9e22352b3",
+                      "source_removed":  true
+                  },
+                  {
+                      "source":  "C:\\Users\\Windows\\Desktop\\qy\\app\\core\\common\\admin_openapi.py",
+                      "destination":  "app/core/common/admin_openapi.py",
+                      "original_sha256":  "751a7c62ca4f445f198ae90f4c1b642bf1b124f6c4250e7e2e1cfb655a6b8788",
+                      "action":  "copied",
+                      "original_backup":  ".migration_backups/enterprise_20261017/incoming/app/core/common/admin_openapi.py",
+                      "destination_sha256":  "b571a1921d3b0800ba89bff7e5986d1b22eb6a4a393fbb37a49c2b67acca35df",
+                      "source_removed":  true
+                  },
+                  {
+                      "source":  "C:\\Users\\Windows\\Desktop\\qy\\app\\core\\common\\phone_protection.py",
+                      "destination":  "app/core/common/phone_protection.py",
+                      "original_sha256":  "692335f4a22431b97f26ad58fb4e8da3af3888642018651e8f7f1ecf9ac07691",
+                      "action":  "copied",
+                      "original_backup":  ".migration_backups/enterprise_20261017/incoming/app/core/common/phone_protection.py",
+                      "destination_sha256":  "37866fe2123cdcb35730c3537e73fda8edaaf6acbee936bba32ed0d2ea2b5630",
+                      "source_removed":  true
+                  },
+                  {
+                      "source":  "C:\\Users\\Windows\\Desktop\\qy\\app\\core\\common\\position_roles.py",
+                      "destination":  "app/core/common/position_roles.py",
+                      "original_sha256":  "fd1815f3230dea219a313419668ffa32e3f230e33de9c8b5a09df3dba69e64d8",
+                      "action":  "copied",
+                      "original_backup":  ".migration_backups/enterprise_20261017/incoming/app/core/common/position_roles.py",
+                      "destination_sha256":  "097f395af45c2b93c6b66eba373600db13ca893806b044aa8213f3dfb89ee525",
+                      "source_removed":  true
+                  },
+                  {
+                      "source":  "C:\\Users\\Windows\\Desktop\\qy\\app\\core\\common\\system_admin.py",
+                      "destination":  "app/core/common/system_admin.py",
+                      "original_sha256":  "0d3c00d694c2271ed8668b08647dae61984d7cac31587e3a1f13b75520d0e8fd",
+                      "action":  "copied",
+                      "original_backup":  ".migration_backups/enterprise_20261017/incoming/app/core/common/system_admin.py",
+                      "destination_sha256":  "f1a9f48b46606ac00e740c101f155f8833dd220b05edbaf3d92f7f049566c703",
+                      "source_removed":  true
+                  },
+                  {
+                      "source":  "C:\\Users\\Windows\\Desktop\\qy\\app\\core\\enterprise\\__init__.py",
+                      "destination":  "app/core/enterprise/__init__.py",
+                      "original_sha256":  "f380fab86f428390a42f0ba43ac0fb861f921881c3873fdd26495b77e9b3f249",
+                      "action":  "copied",
+                      "original_backup":  ".migration_backups/enterprise_20261017/incoming/app/core/enterprise/__init__.py",
+                      "destination_sha256":  "39c73a7aa368fe1c619e7106a63179b0577eaaec0b5c3efea46a7b0b3fb793f4",
+                      "source_removed":  true
+                  },
+                  {
+                      "source":  "C:\\Users\\Windows\\Desktop\\qy\\app\\core\\enterprise\\enterprise_authorization.py",
+                      "destination":  "app/core/enterprise/enterprise_authorization.py",
+                      "original_sha256":  "17c58fb1e609e161d17b8aca37334de3ad1e7da8434b12627556e2790b87d1fb",
+                      "action":  "copied",
+                      "original_backup":  ".migration_backups/enterprise_20261017/incoming/app/core/enterprise/enterprise_authorization.py",
+                      "destination_sha256":  "3b4e066beb2583d945192ccbe8431d5ffed2a205d3586c0fab3aaff0a016bcc6",
+                      "source_removed":  true
+                  },
+                  {
+                      "source":  "C:\\Users\\Windows\\Desktop\\qy\\app\\core\\enterprise\\enterprise_sql_guard.py",
+                      "destination":  "app/core/enterprise/enterprise_sql_guard.py",
+                      "original_sha256":  "0ec71879ad5248291dc1eb6a30b4b6b085a45c0b7fdd0e7ad60a37fddd871f40",
+                      "action":  "copied",
+                      "original_backup":  ".migration_backups/enterprise_20261017/incoming/app/core/enterprise/enterprise_sql_guard.py",
+                      "destination_sha256":  "9de7ce9cd0a9ac4a36e6c13b275534277d3ad40c7ebbe408d9d68f65f3d34bd4",
+                      "source_removed":  true
+                  },
+                  {
+                      "source":  "C:\\Users\\Windows\\Desktop\\qy\\app\\enterprise_policy.yaml",
+                      "destination":  "app/enterprise_policy.yaml",
+                      "original_sha256":  "709a9f02f0809f25c42b7300e24a7ddd71e5eda45cde9c3598622104551ead50",
+                      "action":  "copied",
+                      "original_backup":  ".migration_backups/enterprise_20261017/incoming/app/enterprise_policy.yaml",
+                      "destination_sha256":  "709a9f02f0809f25c42b7300e24a7ddd71e5eda45cde9c3598622104551ead50",
+                      "source_removed":  true
+                  },
+                  {
+                      "source":  "C:\\Users\\Windows\\Desktop\\qy\\app\\models\\common\\student_local_education.py",
+                      "destination":  "app/models/common/student_local_education.py",
+                      "original_sha256":  "dd069d77e2a4be2ca4ace94795f5725bf0adac84c42457ddfefc3dbc2fc0891f",
+                      "action":  "copied",
+                      "original_backup":  ".migration_backups/enterprise_20261017/incoming/app/models/common/student_local_education.py",
+                      "destination_sha256":  "d9169256bec4e46f42b282be5f164ba9331540d05d2778669405fc9550b1092b",
+                      "source_removed":  true
+                  },
+                  {
+                      "source":  "C:\\Users\\Windows\\Desktop\\qy\\app\\models\\enterprise\\__init__.py",
+                      "destination":  "app/models/enterprise/__init__.py",
+                      "original_sha256":  "d148f3ade5571cc36c9b87be54c859a2f9790af45737cef50bd4e0301a2b1e6e",
+                      "action":  "copied",
+                      "original_backup":  ".migration_backups/enterprise_20261017/incoming/app/models/enterprise/__init__.py",
+                      "destination_sha256":  "bdca0bae607c81b134f8041edf02c60481be66fb348a6ff05fabeb8187f49e89",
+                      "source_removed":  true
+                  },
+                  {
+                      "source":  "C:\\Users\\Windows\\Desktop\\qy\\app\\models\\enterprise\\customer_followup.py",
+                      "destination":  "app/models/enterprise/customer_followup.py",
+                      "original_sha256":  "fbdcc97ff85b9711ae8183b8a9cd7c02bb21fc63d48acccbabbd7a4f788ffa17",
+                      "action":  "copied",
+                      "original_backup":  ".migration_backups/enterprise_20261017/incoming/app/models/enterprise/customer_followup.py",
+                      "destination_sha256":  "672c98097a079e6bc13611bea6b3202376050dc3a41661eef2d884b6f2a74421",
+                      "source_removed":  true
+                  },
+                  {
+                      "source":  "C:\\Users\\Windows\\Desktop\\qy\\app\\models\\enterprise\\employee_daily_report.py",
+                      "destination":  "app/models/enterprise/employee_daily_report.py",
+                      "original_sha256":  "927575978d0cfd568d32c501aa0fb3859e8ff5707289619e3ab925e829f5ffdc",
+                      "action":  "copied",
+                      "original_backup":  ".migration_backups/enterprise_20261017/incoming/app/models/enterprise/employee_daily_report.py",
+                      "destination_sha256":  "227a35ff429f5f9d68fca77c3321025247e414eacb34d05c8b7fd32e0970ba70",
+                      "source_removed":  true
+                  },
+                  {
+                      "source":  "C:\\Users\\Windows\\Desktop\\qy\\app\\models\\enterprise\\knowledge_entry.py",
+                      "destination":  "app/models/enterprise/knowledge_entry.py",
+                      "original_sha256":  "12f5c6f024fb88dc167cad8b71fe153d9b031a7b6b9a559cc9e35a4a485faabe",
+                      "action":  "copied",
+                      "original_backup":  ".migration_backups/enterprise_20261017/incoming/app/models/enterprise/knowledge_entry.py",
+                      "destination_sha256":  "4b5c32d8b39af450e372b177b5201e39bd2e42c9ab5e07c7788ddba0d031ef6a",
+                      "source_removed":  true
+                  },
+                  {
+                      "source":  "C:\\Users\\Windows\\Desktop\\qy\\app\\models\\enterprise\\local_course.py",
+                      "destination":  "app/models/enterprise/local_course.py",
+                      "original_sha256":  "332e2819df577843df49637b78e46b3c443f5f468d2843bdcd0aa16ad747f66e",
+                      "action":  "copied",
+                      "original_backup":  ".migration_backups/enterprise_20261017/incoming/app/models/enterprise/local_course.py",
+                      "destination_sha256":  "fe925d9684cca0c822c84d054c8a42e440c2dfe1641895685bbef7afae5396a5",
+                      "source_removed":  true
+                  },
+                  {
+                      "source":  "C:\\Users\\Windows\\Desktop\\qy\\app\\position_roles.yaml",
+                      "destination":  "app/position_roles.yaml",
+                      "original_sha256":  "78ca1a78987e0744b79e7f9a76d40a24ef05c95d42fcaef2cf359f270230c275",
+                      "action":  "copied",
+                      "original_backup":  ".migration_backups/enterprise_20261017/incoming/app/position_roles.yaml",
+                      "destination_sha256":  "78ca1a78987e0744b79e7f9a76d40a24ef05c95d42fcaef2cf359f270230c275",
+                      "source_removed":  true
+                  },
+                  {
+                      "source":  "C:\\Users\\Windows\\Desktop\\qy\\app\\repositories\\enterprise\\__init__.py",
+                      "destination":  "app/repositories/enterprise/__init__.py",
+                      "original_sha256":  "f380fab86f428390a42f0ba43ac0fb861f921881c3873fdd26495b77e9b3f249",
+                      "action":  "copied",
+                      "original_backup":  ".migration_backups/enterprise_20261017/incoming/app/repositories/enterprise/__init__.py",
+                      "destination_sha256":  "39c73a7aa368fe1c619e7106a63179b0577eaaec0b5c3efea46a7b0b3fb793f4",
+                      "source_removed":  true
+                  },
+                  {
+                      "source":  "C:\\Users\\Windows\\Desktop\\qy\\app\\repositories\\enterprise\\enterprise_repository.py",
+                      "destination":  "app/repositories/enterprise/enterprise_repository.py",
+                      "original_sha256":  "66fab5fa2596042bdf6c7256511371e15574e28467da490c5191c13d2517b44e",
+                      "action":  "copied",
+                      "original_backup":  ".migration_backups/enterprise_20261017/incoming/app/repositories/enterprise/enterprise_repository.py",
+                      "destination_sha256":  "d596270299635795fb4c3528f99429713af7ff00e6b17de03be9a93149fdd630",
+                      "source_removed":  true
+                  },
+                  {
+                      "source":  "C:\\Users\\Windows\\Desktop\\qy\\app\\schemas\\common\\account_registration.py",
+                      "destination":  "app/schemas/common/account_registration.py",
+                      "original_sha256":  "f3d43d29b2edd715e566cb2d8f4332f4a098047ba60bd671765e1be01da3b888",
+                      "action":  "copied",
+                      "original_backup":  ".migration_backups/enterprise_20261017/incoming/app/schemas/common/account_registration.py",
+                      "destination_sha256":  "38d3e003445baa6d76c6ab1051e2870fe67640c4e93b8b5a291b245b7e51df62",
+                      "source_removed":  true
+                  },
+                  {
+                      "source":  "C:\\Users\\Windows\\Desktop\\qy\\app\\schemas\\enterprise\\__init__.py",
+                      "destination":  "app/schemas/enterprise/__init__.py",
+                      "original_sha256":  "f380fab86f428390a42f0ba43ac0fb861f921881c3873fdd26495b77e9b3f249",
+                      "action":  "copied",
+                      "original_backup":  ".migration_backups/enterprise_20261017/incoming/app/schemas/enterprise/__init__.py",
+                      "destination_sha256":  "39c73a7aa368fe1c619e7106a63179b0577eaaec0b5c3efea46a7b0b3fb793f4",
+                      "source_removed":  true
+                  },
+                  {
+                      "source":  "C:\\Users\\Windows\\Desktop\\qy\\app\\schemas\\enterprise\\enterprise.py",
+                      "destination":  "app/schemas/enterprise/enterprise.py",
+                      "original_sha256":  "d806c5dbe4f7caa8a945325646ba924d4806d09f7ffec4da7a1661148649906e",
+                      "action":  "copied",
+                      "original_backup":  ".migration_backups/enterprise_20261017/incoming/app/schemas/enterprise/enterprise.py",
+                      "destination_sha256":  "7aa2b3c13bd2cfc979af98d6f27410ccf3c489e8b88ed90ee8c659bc6c4cbe86",
+                      "source_removed":  true
+                  },
+                  {
+                      "source":  "C:\\Users\\Windows\\Desktop\\qy\\app\\services\\common\\account_registration.py",
+                      "destination":  "app/services/common/account_registration.py",
+                      "original_sha256":  "b523a1022db5ffbda616f3928ba186fb6a169ad2177518f13bd924a28e184503",
+                      "action":  "copied",
+                      "original_backup":  ".migration_backups/enterprise_20261017/incoming/app/services/common/account_registration.py",
+                      "destination_sha256":  "d537634572d5cdf0f47846ceeb38335b13556a26db7dd664303bcf19ff6b5222",
+                      "source_removed":  true
+                  },
+                  {
+                      "source":  "C:\\Users\\Windows\\Desktop\\qy\\app\\services\\enterprise\\__init__.py",
+                      "destination":  "app/services/enterprise/__init__.py",
+                      "original_sha256":  "f380fab86f428390a42f0ba43ac0fb861f921881c3873fdd26495b77e9b3f249",
+                      "action":  "copied",
+                      "original_backup":  ".migration_backups/enterprise_20261017/incoming/app/services/enterprise/__init__.py",
+                      "destination_sha256":  "39c73a7aa368fe1c619e7106a63179b0577eaaec0b5c3efea46a7b0b3fb793f4",
+                      "source_removed":  true
+                  },
+                  {
+                      "source":  "C:\\Users\\Windows\\Desktop\\qy\\app\\services\\enterprise\\enterprise_admin.py",
+                      "destination":  "app/services/enterprise/enterprise_admin.py",
+                      "original_sha256":  "b7c434980688f8e19f8bff8da5e4e79a5ac777205278b5552f71a28ee64b868b",
+                      "action":  "copied",
+                      "original_backup":  ".migration_backups/enterprise_20261017/incoming/app/services/enterprise/enterprise_admin.py",
+                      "destination_sha256":  "28e527da3427e1c0cba06c63e51a6b3bdbc26b033d5664f74ee7f989d11b6704",
+                      "source_removed":  true
+                  },
+                  {
+                      "source":  "C:\\Users\\Windows\\Desktop\\qy\\app\\services\\enterprise\\enterprise_command.py",
+                      "destination":  "app/services/enterprise/enterprise_command.py",
+                      "original_sha256":  "6bc8db5b977bcf9c8b842cb284f099b734144254d86d39b3bde90839ed10368e",
+                      "action":  "copied",
+                      "original_backup":  ".migration_backups/enterprise_20261017/incoming/app/services/enterprise/enterprise_command.py",
+                      "destination_sha256":  "c4789eab2f2b6ec998a2916221910e5c3d451e1c36c9c154a7598e53bdf0a29a",
+                      "source_removed":  true
+                  },
+                  {
+                      "source":  "C:\\Users\\Windows\\Desktop\\qy\\app\\services\\enterprise\\enterprise_customer.py",
+                      "destination":  "app/services/enterprise/enterprise_customer.py",
+                      "original_sha256":  "f297b74782bb4a6d96364171f58738a52458b1ff4c22cddee61e6de4ec3ec447",
+                      "action":  "copied",
+                      "original_backup":  ".migration_backups/enterprise_20261017/incoming/app/services/enterprise/enterprise_customer.py",
+                      "destination_sha256":  "1a2090ce0857c4e6fdc633c59541bc060ea11ba76a53eb1649c476c0467663d0",
+                      "source_removed":  true
+                  },
+                  {
+                      "source":  "C:\\Users\\Windows\\Desktop\\qy\\app\\services\\enterprise\\enterprise_daily_report.py",
+                      "destination":  "app/services/enterprise/enterprise_daily_report.py",
+                      "original_sha256":  "550301816ebf4b2fdd1baf67f0087e5f7be334a37696e721396666f7cc837a14",
+                      "action":  "copied",
+                      "original_backup":  ".migration_backups/enterprise_20261017/incoming/app/services/enterprise/enterprise_daily_report.py",
+                      "destination_sha256":  "44f59c8f0f91c64f854459e9f233bf5bdc9ed6c2eaf11c62705cd96368703be6",
+                      "source_removed":  true
+                  },
+                  {
+                      "source":  "C:\\Users\\Windows\\Desktop\\qy\\app\\services\\enterprise\\enterprise_education.py",
+                      "destination":  "app/services/enterprise/enterprise_education.py",
+                      "original_sha256":  "fa1471147215e3577e0291267baed0a2007b23ae441d105941118211bcb23cdb",
+                      "action":  "copied",
+                      "original_backup":  ".migration_backups/enterprise_20261017/incoming/app/services/enterprise/enterprise_education.py",
+                      "destination_sha256":  "1a83928a02ae05b7fea9c4467a1237b075d1041f930d88119f81405ab0b287fb",
+                      "source_removed":  true
+                  },
+                  {
+                      "source":  "C:\\Users\\Windows\\Desktop\\qy\\app\\services\\enterprise\\enterprise_knowledge.py",
+                      "destination":  "app/services/enterprise/enterprise_knowledge.py",
+                      "original_sha256":  "b9d5368c06f0cbe35a87c6c652844f41e065aff3372f88f1d52749a21ab34183",
+                      "action":  "copied",
+                      "original_backup":  ".migration_backups/enterprise_20261017/incoming/app/services/enterprise/enterprise_knowledge.py",
+                      "destination_sha256":  "917500eb72a94d92458fc2ef83e6c49ffcf36063da80fd7e299ea1ae0d073014",
+                      "source_removed":  true
+                  },
+                  {
+                      "source":  "C:\\Users\\Windows\\Desktop\\qy\\app\\services\\enterprise\\enterprise_nl2sql.py",
+                      "destination":  "app/services/enterprise/enterprise_nl2sql.py",
+                      "original_sha256":  "0217f0385e9d0f89cadbddc8c7ab50e80fb7eb7b8c5b2da7c0659c37a93464b4",
+                      "action":  "copied",
+                      "original_backup":  ".migration_backups/enterprise_20261017/incoming/app/services/enterprise/enterprise_nl2sql.py",
+                      "destination_sha256":  "211a0910169927096be67aa55abfca259ef12abbc43b06044cbbba81b99fedee",
+                      "source_removed":  true
+                  },
+                  {
+                      "source":  "C:\\Users\\Windows\\Desktop\\qy\\app\\services\\enterprise\\enterprise_notification.py",
+                      "destination":  "app/services/enterprise/enterprise_notification.py",
+                      "original_sha256":  "05975356b0683c32bafc314b4f16c7835628426ae7f6b2429ab2c45cd6cffa69",
+                      "action":  "copied",
+                      "original_backup":  ".migration_backups/enterprise_20261017/incoming/app/services/enterprise/enterprise_notification.py",
+                      "destination_sha256":  "cdcdc14820dbded8755c008a4d2160b97303da1ef022ada333eb0b3f4c5f8dc2",
+                      "source_removed":  true
+                  },
+                  {
+                      "source":  "C:\\Users\\Windows\\Desktop\\qy\\app\\services\\enterprise\\enterprise_score.py",
+                      "destination":  "app/services/enterprise/enterprise_score.py",
+                      "original_sha256":  "de1bdd6701dd9b721b0e17a18c705416c2269488a5a0d7205c069dfbce37b2d1",
+                      "action":  "copied",
+                      "original_backup":  ".migration_backups/enterprise_20261017/incoming/app/services/enterprise/enterprise_score.py",
+                      "destination_sha256":  "c7fbbdb8e40efcc5e0a05bc333fe3bd67742e58454b571248184a591dc196996",
+                      "source_removed":  true
+                  },
+                  {
+                      "source":  "C:\\Users\\Windows\\Desktop\\qy\\app\\services\\enterprise\\enterprise_ticket.py",
+                      "destination":  "app/services/enterprise/enterprise_ticket.py",
+                      "original_sha256":  "c7d3c491c40615dc1646fa39907522a1874269d51edb94b7c3c03ba107275e55",
+                      "action":  "copied",
+                      "original_backup":  ".migration_backups/enterprise_20261017/incoming/app/services/enterprise/enterprise_ticket.py",
+                      "destination_sha256":  "909193bdccacd9f038eba5d1f2df378020c4f529c26e0c1203fd84f01d0236d2",
+                      "source_removed":  true
+                  },
+                  {
+                      "source":  "C:\\Users\\Windows\\Desktop\\qy\\app\\services\\enterprise\\enterprise_ticket_policy.py",
+                      "destination":  "app/services/enterprise/enterprise_ticket_policy.py",
+                      "original_sha256":  "3479dfa52cf500eb7e9be4536ab88f8d9edc540e73a36467ef5d5ceca54a9d49",
+                      "action":  "copied",
+                      "original_backup":  ".migration_backups/enterprise_20261017/incoming/app/services/enterprise/enterprise_ticket_policy.py",
+                      "destination_sha256":  "c6664f2127fb4457d3ab52db3b46adef04ca6bf64abf6d70077672711d235ea1",
+                      "source_removed":  true
+                  },
+                  {
+                      "source":  "C:\\Users\\Windows\\Desktop\\qy\\dify\\enterprise\\enterprise_daily_summary.yml",
+                      "destination":  "dify/enterprise/enterprise_daily_summary.yml",
+                      "original_sha256":  "4a0bab9896e1afec7463fc4081bd349a4d6f9e41150911fd769c643b1346cc0d",
+                      "action":  "copied",
+                      "original_backup":  ".migration_backups/enterprise_20261017/incoming/dify/enterprise/enterprise_daily_summary.yml",
+                      "destination_sha256":  "4a0bab9896e1afec7463fc4081bd349a4d6f9e41150911fd769c643b1346cc0d",
+                      "source_removed":  true
+                  },
+                  {
+                      "source":  "C:\\Users\\Windows\\Desktop\\qy\\dify\\enterprise\\enterprise_extract.yml",
+                      "destination":  "dify/enterprise/enterprise_extract.yml",
+                      "original_sha256":  "c7ee4c8b63d7bfb9723b43019782fb4bbb96591953cdb22541d874c308dd7d19",
+                      "action":  "copied",
+                      "original_backup":  ".migration_backups/enterprise_20261017/incoming/dify/enterprise/enterprise_extract.yml",
+                      "destination_sha256":  "c7ee4c8b63d7bfb9723b43019782fb4bbb96591953cdb22541d874c308dd7d19",
+                      "source_removed":  true
+                  },
+                  {
+                      "source":  "C:\\Users\\Windows\\Desktop\\qy\\dify\\enterprise\\enterprise_knowledge.yml",
+                      "destination":  "dify/enterprise/enterprise_knowledge.yml",
+                      "original_sha256":  "5557a97b86baefd7a948bd7df9b36b1d8a9481c7cf0f7d20398bbdd8dc3a4269",
+                      "action":  "copied",
+                      "original_backup":  ".migration_backups/enterprise_20261017/incoming/dify/enterprise/enterprise_knowledge.yml",
+                      "destination_sha256":  "5557a97b86baefd7a948bd7df9b36b1d8a9481c7cf0f7d20398bbdd8dc3a4269",
+                      "source_removed":  true
+                  },
+                  {
+                      "source":  "C:\\Users\\Windows\\Desktop\\qy\\dify\\enterprise\\enterprise_nl2sql_readonly.yml",
+                      "destination":  "dify/enterprise/enterprise_nl2sql_readonly.yml",
+                      "original_sha256":  "f54d5cc0c126c8c0cc1f5955a7f5903eb28a299534c9f348f22528ac2ae580bb",
+                      "action":  "copied",
+                      "original_backup":  ".migration_backups/enterprise_20261017/incoming/dify/enterprise/enterprise_nl2sql_readonly.yml",
+                      "destination_sha256":  "f54d5cc0c126c8c0cc1f5955a7f5903eb28a299534c9f348f22528ac2ae580bb",
+                      "source_removed":  true
+                  },
+                  {
+                      "source":  "C:\\Users\\Windows\\Desktop\\qy\\dify\\enterprise\\README.md",
+                      "destination":  "dify/enterprise/README.md",
+                      "original_sha256":  "39396761488e2daa651406239e9f628d49d6e542ef1eb3464952348939b1bba4",
+                      "action":  "copied",
+                      "original_backup":  ".migration_backups/enterprise_20261017/incoming/dify/enterprise/README.md",
+                      "destination_sha256":  "39396761488e2daa651406239e9f628d49d6e542ef1eb3464952348939b1bba4",
+                      "source_removed":  true
+                  },
+                  {
+                      "source":  "C:\\Users\\Windows\\Desktop\\qy\\frontend\\admin\\accounts.html",
+                      "destination":  "frontend/admin/accounts.html",
+                      "original_sha256":  "dd0609afb113585752559267df7aa16e2feba0ef775a337bda3807e3961a6311",
+                      "action":  "copied",
+                      "original_backup":  ".migration_backups/enterprise_20261017/incoming/frontend/admin/accounts.html",
+                      "destination_sha256":  "fdcbf69bca79426bb33202e65eb6b4fd0d9d92d46567d062b37be78b6b1efc5d",
+                      "source_removed":  true
+                  },
+                  {
+                      "source":  "C:\\Users\\Windows\\Desktop\\qy\\frontend\\css\\admin\\accounts.css",
+                      "destination":  "frontend/css/admin/accounts.css",
+                      "original_sha256":  "3316cd551ddf130eebaf9ac0d32441707ec8e7f19e8af768f1134afd37adf532",
+                      "action":  "copied",
+                      "original_backup":  ".migration_backups/enterprise_20261017/incoming/frontend/css/admin/accounts.css",
+                      "destination_sha256":  "3316cd551ddf130eebaf9ac0d32441707ec8e7f19e8af768f1134afd37adf532",
+                      "source_removed":  true
+                  },
+                  {
+                      "source":  "C:\\Users\\Windows\\Desktop\\qy\\frontend\\css\\enterprise\\enterprise.css",
+                      "destination":  "frontend/css/enterprise/enterprise.css",
+                      "original_sha256":  "0ab269b534045b2c290c5b8a13802d9c7bb2e16db8a933eb67dc773d3fe5d25e",
+                      "action":  "copied",
+                      "original_backup":  ".migration_backups/enterprise_20261017/incoming/frontend/css/enterprise/enterprise.css",
+                      "destination_sha256":  "0ab269b534045b2c290c5b8a13802d9c7bb2e16db8a933eb67dc773d3fe5d25e",
+                      "source_removed":  true
+                  },
+                  {
+                      "source":  "C:\\Users\\Windows\\Desktop\\qy\\frontend\\enterprise\\enterprise.html",
+                      "destination":  "frontend/enterprise/enterprise.html",
+                      "original_sha256":  "d9c49cc08f616fd70ca949aff40d2da43ad66278f8f12cc9d54ab16a5b603b21",
+                      "action":  "replaced_with_backup",
+                      "original_backup":  ".migration_backups/enterprise_20261017/incoming/frontend/enterprise/enterprise.html",
+                      "destination_sha256":  "d9c49cc08f616fd70ca949aff40d2da43ad66278f8f12cc9d54ab16a5b603b21",
+                      "source_removed":  true
+                  },
+                  {
+                      "source":  "C:\\Users\\Windows\\Desktop\\qy\\frontend\\enterprise\\pages\\academic-events.html",
+                      "destination":  "frontend/enterprise/pages/academic-events.html",
+                      "original_sha256":  "9a0da3acf04c1c31fba8f9c955f41ce5f7d1d6317751dc140b52640b8d229b79",
+                      "action":  "copied",
+                      "original_backup":  ".migration_backups/enterprise_20261017/incoming/frontend/enterprise/pages/academic-events.html",
+                      "destination_sha256":  "9a0da3acf04c1c31fba8f9c955f41ce5f7d1d6317751dc140b52640b8d229b79",
+                      "source_removed":  true
+                  },
+                  {
+                      "source":  "C:\\Users\\Windows\\Desktop\\qy\\frontend\\enterprise\\pages\\application-progress.html",
+                      "destination":  "frontend/enterprise/pages/application-progress.html",
+                      "original_sha256":  "cea5d75ed2f721fd1aa768fe06e9797d2d30d511af3e8a610d75b65ac595a1f1",
+                      "action":  "copied",
+                      "original_backup":  ".migration_backups/enterprise_20261017/incoming/frontend/enterprise/pages/application-progress.html",
+                      "destination_sha256":  "cea5d75ed2f721fd1aa768fe06e9797d2d30d511af3e8a610d75b65ac595a1f1",
+                      "source_removed":  true
+                  },
+                  {
+                      "source":  "C:\\Users\\Windows\\Desktop\\qy\\frontend\\enterprise\\pages\\assistant.html",
+                      "destination":  "frontend/enterprise/pages/assistant.html",
+                      "original_sha256":  "f658aabfbca8a96a6e67f6c60e61255138c706d079171da9de3fc49f2e51c424",
+                      "action":  "copied",
+                      "original_backup":  ".migration_backups/enterprise_20261017/incoming/frontend/enterprise/pages/assistant.html",
+                      "destination_sha256":  "f658aabfbca8a96a6e67f6c60e61255138c706d079171da9de3fc49f2e51c424",
+                      "source_removed":  true
+                  },
+                  {
+                      "source":  "C:\\Users\\Windows\\Desktop\\qy\\frontend\\enterprise\\pages\\courses.html",
+                      "destination":  "frontend/enterprise/pages/courses.html",
+                      "original_sha256":  "0bb9d82d2816421a6732591e108067e107ba0d7c36013827fea06794974b4244",
+                      "action":  "copied",
+                      "original_backup":  ".migration_backups/enterprise_20261017/incoming/frontend/enterprise/pages/courses.html",
+                      "destination_sha256":  "0bb9d82d2816421a6732591e108067e107ba0d7c36013827fea06794974b4244",
+                      "source_removed":  true
+                  },
+                  {
+                      "source":  "C:\\Users\\Windows\\Desktop\\qy\\frontend\\enterprise\\pages\\customer.html",
+                      "destination":  "frontend/enterprise/pages/customer.html",
+                      "original_sha256":  "86ecd7a047dce8b9ed6c11d39702dd321aa55a9336d9c7ee09be7aa0dddeb5ce",
+                      "action":  "copied",
+                      "original_backup":  ".migration_backups/enterprise_20261017/incoming/frontend/enterprise/pages/customer.html",
+                      "destination_sha256":  "86ecd7a047dce8b9ed6c11d39702dd321aa55a9336d9c7ee09be7aa0dddeb5ce",
+                      "source_removed":  true
+                  },
+                  {
+                      "source":  "C:\\Users\\Windows\\Desktop\\qy\\frontend\\enterprise\\pages\\daily-report.html",
+                      "destination":  "frontend/enterprise/pages/daily-report.html",
+                      "original_sha256":  "9f460a6d57938089ef2af2b03b43b5b398ca66b9b004bff54deac90d16aff8aa",
+                      "action":  "copied",
+                      "original_backup":  ".migration_backups/enterprise_20261017/incoming/frontend/enterprise/pages/daily-report.html",
+                      "destination_sha256":  "9f460a6d57938089ef2af2b03b43b5b398ca66b9b004bff54deac90d16aff8aa",
+                      "source_removed":  true
+                  },
+                  {
+                      "source":  "C:\\Users\\Windows\\Desktop\\qy\\frontend\\enterprise\\pages\\departments.html",
+                      "destination":  "frontend/enterprise/pages/departments.html",
+                      "original_sha256":  "d6976912661db346fa856bd84b195d4634e20774597f08fa14cd361617e4b44d",
+                      "action":  "copied",
+                      "original_backup":  ".migration_backups/enterprise_20261017/incoming/frontend/enterprise/pages/departments.html",
+                      "destination_sha256":  "d6976912661db346fa856bd84b195d4634e20774597f08fa14cd361617e4b44d",
+                      "source_removed":  true
+                  },
+                  {
+                      "source":  "C:\\Users\\Windows\\Desktop\\qy\\frontend\\enterprise\\pages\\employees.html",
+                      "destination":  "frontend/enterprise/pages/employees.html",
+                      "original_sha256":  "b45a50221e65b7f4a71296fef21857e7d02488b271ccd2bdabc9e04492d3c4c6",
+                      "action":  "copied",
+                      "original_backup":  ".migration_backups/enterprise_20261017/incoming/frontend/enterprise/pages/employees.html",
+                      "destination_sha256":  "b45a50221e65b7f4a71296fef21857e7d02488b271ccd2bdabc9e04492d3c4c6",
+                      "source_removed":  true
+                  },
+                  {
+                      "source":  "C:\\Users\\Windows\\Desktop\\qy\\frontend\\enterprise\\pages\\knowledge.html",
+                      "destination":  "frontend/enterprise/pages/knowledge.html",
+                      "original_sha256":  "0a90c77095c40616ea28aad4be1efa9bd6f0fb6a2cefb38f6cd91561725c5039",
+                      "action":  "copied",
+                      "original_backup":  ".migration_backups/enterprise_20261017/incoming/frontend/enterprise/pages/knowledge.html",
+                      "destination_sha256":  "0a90c77095c40616ea28aad4be1efa9bd6f0fb6a2cefb38f6cd91561725c5039",
+                      "source_removed":  true
+                  },
+                  {
+                      "source":  "C:\\Users\\Windows\\Desktop\\qy\\frontend\\enterprise\\pages\\notifications.html",
+                      "destination":  "frontend/enterprise/pages/notifications.html",
+                      "original_sha256":  "04c140d233f9bee1fddeb7d0d420591cb69bcd23e54dd87456abf21beb21aee6",
+                      "action":  "copied",
+                      "original_backup":  ".migration_backups/enterprise_20261017/incoming/frontend/enterprise/pages/notifications.html",
+                      "destination_sha256":  "04c140d233f9bee1fddeb7d0d420591cb69bcd23e54dd87456abf21beb21aee6",
+                      "source_removed":  true
+                  },
+                  {
+                      "source":  "C:\\Users\\Windows\\Desktop\\qy\\frontend\\enterprise\\pages\\operation-logs.html",
+                      "destination":  "frontend/enterprise/pages/operation-logs.html",
+                      "original_sha256":  "4ee05896672d2a3e2ad89ddf8fd77f537f70d09580dee8ca73501fe6dcde904a",
+                      "action":  "copied",
+                      "original_backup":  ".migration_backups/enterprise_20261017/incoming/frontend/enterprise/pages/operation-logs.html",
+                      "destination_sha256":  "4ee05896672d2a3e2ad89ddf8fd77f537f70d09580dee8ca73501fe6dcde904a",
+                      "source_removed":  true
+                  },
+                  {
+                      "source":  "C:\\Users\\Windows\\Desktop\\qy\\frontend\\enterprise\\pages\\overview.html",
+                      "destination":  "frontend/enterprise/pages/overview.html",
+                      "original_sha256":  "dcbc687710dee030f6086d20a1ce6a3f15f00e1d36cabbc0a8f45fcc5d45216c",
+                      "action":  "copied",
+                      "original_backup":  ".migration_backups/enterprise_20261017/incoming/frontend/enterprise/pages/overview.html",
+                      "destination_sha256":  "dcbc687710dee030f6086d20a1ce6a3f15f00e1d36cabbc0a8f45fcc5d45216c",
+                      "source_removed":  true
+                  },
+                  {
+                      "source":  "C:\\Users\\Windows\\Desktop\\qy\\frontend\\enterprise\\pages\\scores.html",
+                      "destination":  "frontend/enterprise/pages/scores.html",
+                      "original_sha256":  "f86460b627571624906afb80c2765155e9a1da8a0270190d510745accb536df2",
+                      "action":  "copied",
+                      "original_backup":  ".migration_backups/enterprise_20261017/incoming/frontend/enterprise/pages/scores.html",
+                      "destination_sha256":  "f86460b627571624906afb80c2765155e9a1da8a0270190d510745accb536df2",
+                      "source_removed":  true
+                  },
+                  {
+                      "source":  "C:\\Users\\Windows\\Desktop\\qy\\frontend\\enterprise\\pages\\student-bindings.html",
+                      "destination":  "frontend/enterprise/pages/student-bindings.html",
+                      "original_sha256":  "82aa6e603e6a45d35db17d60903275313f26f0c62b3d0c50f4d19a377b2c2cf8",
+                      "action":  "copied",
+                      "original_backup":  ".migration_backups/enterprise_20261017/incoming/frontend/enterprise/pages/student-bindings.html",
+                      "destination_sha256":  "82aa6e603e6a45d35db17d60903275313f26f0c62b3d0c50f4d19a377b2c2cf8",
+                      "source_removed":  true
+                  },
+                  {
+                      "source":  "C:\\Users\\Windows\\Desktop\\qy\\frontend\\enterprise\\pages\\student-courses.html",
+                      "destination":  "frontend/enterprise/pages/student-courses.html",
+                      "original_sha256":  "601b5eec873d684f9f472166224d98b0829fac58f72709a137b82bf0f9f2edc6",
+                      "action":  "copied",
+                      "original_backup":  ".migration_backups/enterprise_20261017/incoming/frontend/enterprise/pages/student-courses.html",
+                      "destination_sha256":  "601b5eec873d684f9f472166224d98b0829fac58f72709a137b82bf0f9f2edc6",
+                      "source_removed":  true
+                  },
+                  {
+                      "source":  "C:\\Users\\Windows\\Desktop\\qy\\frontend\\enterprise\\pages\\students.html",
+                      "destination":  "frontend/enterprise/pages/students.html",
+                      "original_sha256":  "9b2c06173aa9b70ca3a979fab3b1e11f22085085e232ce94249f737cad63adf5",
+                      "action":  "copied",
+                      "original_backup":  ".migration_backups/enterprise_20261017/incoming/frontend/enterprise/pages/students.html",
+                      "destination_sha256":  "9b2c06173aa9b70ca3a979fab3b1e11f22085085e232ce94249f737cad63adf5",
+                      "source_removed":  true
+                  },
+                  {
+                      "source":  "C:\\Users\\Windows\\Desktop\\qy\\frontend\\enterprise\\pages\\tickets.html",
+                      "destination":  "frontend/enterprise/pages/tickets.html",
+                      "original_sha256":  "0f0d8dd1393f9122bf39ee63fce370d50e1974c0f157fea263ecec4c71cbc836",
+                      "action":  "copied",
+                      "original_backup":  ".migration_backups/enterprise_20261017/incoming/frontend/enterprise/pages/tickets.html",
+                      "destination_sha256":  "0f0d8dd1393f9122bf39ee63fce370d50e1974c0f157fea263ecec4c71cbc836",
+                      "source_removed":  true
+                  },
+                  {
+                      "source":  "C:\\Users\\Windows\\Desktop\\qy\\frontend\\enterprise\\pages\\todos.html",
+                      "destination":  "frontend/enterprise/pages/todos.html",
+                      "original_sha256":  "5679481da793345a29067252cafc3fd8d50807d2886e726233bce8eed69e07dc",
+                      "action":  "copied",
+                      "original_backup":  ".migration_backups/enterprise_20261017/incoming/frontend/enterprise/pages/todos.html",
+                      "destination_sha256":  "5679481da793345a29067252cafc3fd8d50807d2886e726233bce8eed69e07dc",
+                      "source_removed":  true
+                  },
+                  {
+                      "source":  "C:\\Users\\Windows\\Desktop\\qy\\frontend\\enterprise\\README.md",
+                      "destination":  "frontend/enterprise/README.md",
+                      "original_sha256":  "f147d586b3b76ba979037dadeb460fdd95589f2f7aa9687a3256437371628408",
+                      "action":  "copied",
+                      "original_backup":  ".migration_backups/enterprise_20261017/incoming/frontend/enterprise/README.md",
+                      "destination_sha256":  "f147d586b3b76ba979037dadeb460fdd95589f2f7aa9687a3256437371628408",
+                      "source_removed":  true
+                  },
+                  {
+                      "source":  "C:\\Users\\Windows\\Desktop\\qy\\frontend\\js\\admin\\accounts.js",
+                      "destination":  "frontend/js/admin/accounts.js",
+                      "original_sha256":  "ce099cbef4bcc089578b87664ee2444a22b7250a7ae746c2ded8559bc711a393",
+                      "action":  "copied",
+                      "original_backup":  ".migration_backups/enterprise_20261017/incoming/frontend/js/admin/accounts.js",
+                      "destination_sha256":  "72943f876db8fa4359cbeeddb76691fe91a411b2c5f8368f7d020961217fd204",
+                      "source_removed":  true
+                  },
+                  {
+                      "source":  "C:\\Users\\Windows\\Desktop\\qy\\frontend\\js\\enterprise\\api.js",
+                      "destination":  "frontend/js/enterprise/api.js",
+                      "original_sha256":  "30e5bea57909d0ab94a5ae7654a59405e74bbec501259e33627db787a9774788",
+                      "action":  "copied",
+                      "original_backup":  ".migration_backups/enterprise_20261017/incoming/frontend/js/enterprise/api.js",
+                      "destination_sha256":  "965d599444af31ae749a2fc447048a243a31ce66eb29f71b387d1f296a70e08b",
+                      "source_removed":  true
+                  },
+                  {
+                      "source":  "C:\\Users\\Windows\\Desktop\\qy\\frontend\\js\\enterprise\\assistant.js",
+                      "destination":  "frontend/js/enterprise/assistant.js",
+                      "original_sha256":  "a2a485eac92a970c700f412d4e895e3536ef9994b4cf5d6d51c91371685b7ce4",
+                      "action":  "copied",
+                      "original_backup":  ".migration_backups/enterprise_20261017/incoming/frontend/js/enterprise/assistant.js",
+                      "destination_sha256":  "a2a485eac92a970c700f412d4e895e3536ef9994b4cf5d6d51c91371685b7ce4",
+                      "source_removed":  true
+                  },
+                  {
+                      "source":  "C:\\Users\\Windows\\Desktop\\qy\\frontend\\js\\enterprise\\catalog.js",
+                      "destination":  "frontend/js/enterprise/catalog.js",
+                      "original_sha256":  "e2e60b0e01853b54f7cccab001abe85f6ac90319bd33a46e657d34f0c5d6b6ab",
+                      "action":  "copied",
+                      "original_backup":  ".migration_backups/enterprise_20261017/incoming/frontend/js/enterprise/catalog.js",
+                      "destination_sha256":  "e2e60b0e01853b54f7cccab001abe85f6ac90319bd33a46e657d34f0c5d6b6ab",
+                      "source_removed":  true
+                  },
+                  {
+                      "source":  "C:\\Users\\Windows\\Desktop\\qy\\frontend\\js\\enterprise\\enterprise.js",
+                      "destination":  "frontend/js/enterprise/enterprise.js",
+                      "original_sha256":  "cc2e785d59f37e44ccc0f2d0d121d7c7e6b3754efc267559828f9e8d4ac51aa2",
+                      "action":  "replaced_with_backup",
+                      "original_backup":  ".migration_backups/enterprise_20261017/incoming/frontend/js/enterprise/enterprise.js",
+                      "destination_sha256":  "d5b0d40b329c1731847f8ce4424e4673d58e8c4253c274245e2139c59034ebf5",
+                      "source_removed":  true
+                  },
+                  {
+                      "source":  "C:\\Users\\Windows\\Desktop\\qy\\frontend\\js\\enterprise\\icons.js",
+                      "destination":  "frontend/js/enterprise/icons.js",
+                      "original_sha256":  "351ec4b27a2f3e0bfe1c0e515b7a514a31d791bc52a806167d63a8f97cf09217",
+                      "action":  "copied",
+                      "original_backup":  ".migration_backups/enterprise_20261017/incoming/frontend/js/enterprise/icons.js",
+                      "destination_sha256":  "351ec4b27a2f3e0bfe1c0e515b7a514a31d791bc52a806167d63a8f97cf09217",
+                      "source_removed":  true
+                  },
+                  {
+                      "source":  "C:\\Users\\Windows\\Desktop\\qy\\frontend\\js\\enterprise\\overview.js",
+                      "destination":  "frontend/js/enterprise/overview.js",
+                      "original_sha256":  "43682092edf9bd25fc3490c59efbe729e74d27e80532934b1fd36a62572a8760",
+                      "action":  "copied",
+                      "original_backup":  ".migration_backups/enterprise_20261017/incoming/frontend/js/enterprise/overview.js",
+                      "destination_sha256":  "43682092edf9bd25fc3490c59efbe729e74d27e80532934b1fd36a62572a8760",
+                      "source_removed":  true
+                  },
+                  {
+                      "source":  "C:\\Users\\Windows\\Desktop\\qy\\frontend\\js\\enterprise\\resource.js",
+                      "destination":  "frontend/js/enterprise/resource.js",
+                      "original_sha256":  "a450dbdfb910050a6006d3b069da2e4ce38751ce0ae7603ef9a2a88d8c6f8fa3",
+                      "action":  "copied",
+                      "original_backup":  ".migration_backups/enterprise_20261017/incoming/frontend/js/enterprise/resource.js",
+                      "destination_sha256":  "a450dbdfb910050a6006d3b069da2e4ce38751ce0ae7603ef9a2a88d8c6f8fa3",
+                      "source_removed":  true
+                  },
+                  {
+                      "source":  "C:\\Users\\Windows\\Desktop\\qy\\frontend\\js\\enterprise\\ui.js",
+                      "destination":  "frontend/js/enterprise/ui.js",
+                      "original_sha256":  "8680e68ef9acae7e1417a4a1527a7f107d6af6a0c1df5015906caa2a8c76cace",
+                      "action":  "copied",
+                      "original_backup":  ".migration_backups/enterprise_20261017/incoming/frontend/js/enterprise/ui.js",
+                      "destination_sha256":  "8680e68ef9acae7e1417a4a1527a7f107d6af6a0c1df5015906caa2a8c76cace",
+                      "source_removed":  true
+                  },
+                  {
+                      "source":  "C:\\Users\\Windows\\Desktop\\qy\\scripts\\enterprise\\append_registration_docs.py",
+                      "destination":  "scripts/enterprise/append_registration_docs.py",
+                      "original_sha256":  "f0d4b8780c703ef17bfca62522a5b48a7dc2a767b7e1606dfae202baf8a8722a",
+                      "action":  "copied",
+                      "original_backup":  ".migration_backups/enterprise_20261017/incoming/scripts/enterprise/append_registration_docs.py",
+                      "destination_sha256":  "f0d4b8780c703ef17bfca62522a5b48a7dc2a767b7e1606dfae202baf8a8722a",
+                      "source_removed":  true
+                  },
+                  {
+                      "source":  "C:\\Users\\Windows\\Desktop\\qy\\scripts\\enterprise\\bootstrap_local.py",
+                      "destination":  "scripts/enterprise/bootstrap_local.py",
+                      "original_sha256":  "1e710b79f6787fd3230fbe9863547dc30f5704ff2e8c94b5144c850c89fccf0c",
+                      "action":  "copied",
+                      "original_backup":  ".migration_backups/enterprise_20261017/incoming/scripts/enterprise/bootstrap_local.py",
+                      "destination_sha256":  "9e4f864afa49482e993710ce496c7129eb761a2d5a7fdbdbc1700c9d050fbbe0",
+                      "source_removed":  true
+                  },
+                  {
+                      "source":  "C:\\Users\\Windows\\Desktop\\qy\\scripts\\enterprise\\check_asr.py",
+                      "destination":  "scripts/enterprise/check_asr.py",
+                      "original_sha256":  "63f17a0a0da848d91a018d4e6c5d4fd03143e65198746751b78c91d85b7b357f",
+                      "action":  "copied",
+                      "original_backup":  ".migration_backups/enterprise_20261017/incoming/scripts/enterprise/check_asr.py",
+                      "destination_sha256":  "242a79558829d088f287c9ab86366df40599309c17fe533e795b6de09856f73d",
+                      "source_removed":  true
+                  },
+                  {
+                      "source":  "C:\\Users\\Windows\\Desktop\\qy\\scripts\\enterprise\\check_asr_download.py",
+                      "destination":  "scripts/enterprise/check_asr_download.py",
+                      "original_sha256":  "2891d5bdcaadf5457516078069278f0cf8bc869cc07e861632b727fd9319883b",
+                      "action":  "copied",
+                      "original_backup":  ".migration_backups/enterprise_20261017/incoming/scripts/enterprise/check_asr_download.py",
+                      "destination_sha256":  "8950f73fe3247ff4224177be49cee050174b6b3995d9c869e552a79912f53d96",
+                      "source_removed":  true
+                  },
+                  {
+                      "source":  "C:\\Users\\Windows\\Desktop\\qy\\scripts\\enterprise\\check_enterprise_contracts.py",
+                      "destination":  "scripts/enterprise/check_enterprise_contracts.py",
+                      "original_sha256":  "0cd39fbb144d0074a640e6829722264479885b4b74536e3f988f9e1a886fe70f",
+                      "action":  "copied",
+                      "original_backup":  ".migration_backups/enterprise_20261017/incoming/scripts/enterprise/check_enterprise_contracts.py",
+                      "destination_sha256":  "1fa3a0357d135f02db8268b0672407825df189967fc4fb1bc29b32f9a271b40c",
+                      "source_removed":  true
+                  },
+                  {
+                      "source":  "C:\\Users\\Windows\\Desktop\\qy\\scripts\\enterprise\\check_environment.py",
+                      "destination":  "scripts/enterprise/check_environment.py",
+                      "original_sha256":  "065968d6b783289885948a57a5ea0ce216fd915497aeaed4ea2591201af30fba",
+                      "action":  "copied",
+                      "original_backup":  ".migration_backups/enterprise_20261017/incoming/scripts/enterprise/check_environment.py",
+                      "destination_sha256":  "7584e69bff061c12703494b0610555349a64e613c515699aad18c73e11e88cfd",
+                      "source_removed":  true
+                  },
+                  {
+                      "source":  "C:\\Users\\Windows\\Desktop\\qy\\scripts\\enterprise\\check_local.py",
+                      "destination":  "scripts/enterprise/check_local.py",
+                      "original_sha256":  "1eccdb733952e336ee170ea7ff8645a4a4f0ca50b632dd481d067073ddf39bc8",
+                      "action":  "copied",
+                      "original_backup":  ".migration_backups/enterprise_20261017/incoming/scripts/enterprise/check_local.py",
+                      "destination_sha256":  "3fd12a9c6878dd1de8a2f7066689aa1124297883848841885013ac5993105191",
+                      "source_removed":  true
+                  },
+                  {
+                      "source":  "C:\\Users\\Windows\\Desktop\\qy\\scripts\\enterprise\\check_mysql_transactions.py",
+                      "destination":  "scripts/enterprise/check_mysql_transactions.py",
+                      "original_sha256":  "11619d6cb4dbf1dd012948cf73d9f050d58f3554c0bb754a504ea54e64bde6f1",
+                      "action":  "copied",
+                      "original_backup":  ".migration_backups/enterprise_20261017/incoming/scripts/enterprise/check_mysql_transactions.py",
+                      "destination_sha256":  "61edf222ac163b62e204f076719a7049cf1275207746ae0ea51a42cbf37ce8db",
+                      "source_removed":  true
+                  },
+                  {
+                      "source":  "C:\\Users\\Windows\\Desktop\\qy\\scripts\\enterprise\\check_registration_local.py",
+                      "destination":  "scripts/enterprise/check_registration_local.py",
+                      "original_sha256":  "beb4c9ff9c84ab95eb44f53d128f3c41d433ca5f3a8536d4e25595adea50d642",
+                      "action":  "copied",
+                      "original_backup":  ".migration_backups/enterprise_20261017/incoming/scripts/enterprise/check_registration_local.py",
+                      "destination_sha256":  "8bddbbc895ea8993eebad7c5705499c3e1b84caa031910a173e0f7ba0d806629",
+                      "source_removed":  true
+                  },
+                  {
+                      "source":  "C:\\Users\\Windows\\Desktop\\qy\\scripts\\enterprise\\check_registration_mysql.py",
+                      "destination":  "scripts/enterprise/check_registration_mysql.py",
+                      "original_sha256":  "a20a72fcdd39a4dbb4f17fb888297c277ee954004f1c61b6b962e6892d8c915c",
+                      "action":  "copied",
+                      "original_backup":  ".migration_backups/enterprise_20261017/incoming/scripts/enterprise/check_registration_mysql.py",
+                      "destination_sha256":  "c8a0fdb42f7516108df03f19856817b26bc6ea6be84a38b93ce6a47321752222",
+                      "source_removed":  true
+                  },
+                  {
+                      "source":  "C:\\Users\\Windows\\Desktop\\qy\\scripts\\enterprise\\check_workflows.py",
+                      "destination":  "scripts/enterprise/check_workflows.py",
+                      "original_sha256":  "9748ad8670ef655fe5a87ba692a099d197f6f12c99f11bbab69e2b1a4d702fad",
+                      "action":  "copied",
+                      "original_backup":  ".migration_backups/enterprise_20261017/incoming/scripts/enterprise/check_workflows.py",
+                      "destination_sha256":  "c662143cb4b12954c4fda5ce0a63b3abccd908799964c53c320536fdc408feb5",
+                      "source_removed":  true
+                  },
+                  {
+                      "source":  "C:\\Users\\Windows\\Desktop\\qy\\scripts\\enterprise\\configure_local.py",
+                      "destination":  "scripts/enterprise/configure_local.py",
+                      "original_sha256":  "c3e9a65f504da990cec6bffb8f450861f417ec32bf81a6b944d98fde63b7feb4",
+                      "action":  "copied",
+                      "original_backup":  ".migration_backups/enterprise_20261017/incoming/scripts/enterprise/configure_local.py",
+                      "destination_sha256":  "c014031cfa122461ecf2d740fd014f392c089c95e0d49d331ceec5a293dec43e",
+                      "source_removed":  true
+                  },
+                  {
+                      "source":  "C:\\Users\\Windows\\Desktop\\qy\\scripts\\enterprise\\dify_inventory.py",
+                      "destination":  "scripts/enterprise/dify_inventory.py",
+                      "original_sha256":  "7e4b40245cd481245aed472c1cc6f9f117057e205778603c01da35c3f36d7af0",
+                      "action":  "copied",
+                      "original_backup":  ".migration_backups/enterprise_20261017/incoming/scripts/enterprise/dify_inventory.py",
+                      "destination_sha256":  "c3667ee206a261a503b17315aa4f4be0caa98d0cb1b745e423c78f3536322dfe",
+                      "source_removed":  true
+                  },
+                  {
+                      "source":  "C:\\Users\\Windows\\Desktop\\qy\\scripts\\enterprise\\export_workflows.py",
+                      "destination":  "scripts/enterprise/export_workflows.py",
+                      "original_sha256":  "0c37946b1936354762cd113c6bb86ef0bef9ba9189239b2e60a52435907969fe",
+                      "action":  "copied",
+                      "original_backup":  ".migration_backups/enterprise_20261017/incoming/scripts/enterprise/export_workflows.py",
+                      "destination_sha256":  "f469617fae2af9bd63b9e5038260fc54acb2b2c7108eba5651c6b6e4d4a9b38a",
+                      "source_removed":  true
+                  },
+                  {
+                      "source":  "C:\\Users\\Windows\\Desktop\\qy\\scripts\\enterprise\\import_local_dify.py",
+                      "destination":  "scripts/enterprise/import_local_dify.py",
+                      "original_sha256":  "3538c5320859801e453f2ff4d181676af1b5f5cadbdda1164a95653488475ad8",
+                      "action":  "copied",
+                      "original_backup":  ".migration_backups/enterprise_20261017/incoming/scripts/enterprise/import_local_dify.py",
+                      "destination_sha256":  "f1b4ecafce74f946ab23b58011b549d5b3bd0211880cfa0053b4f0842beaf73e",
+                      "source_removed":  true
+                  },
+                  {
+                      "source":  "C:\\Users\\Windows\\Desktop\\qy\\scripts\\enterprise\\inspect_demo_data.py",
+                      "destination":  "scripts/enterprise/inspect_demo_data.py",
+                      "original_sha256":  "007a810b9577140e7eb129c046bac715333e2e15c0b597eecf83e394d19aec67",
+                      "action":  "copied",
+                      "original_backup":  ".migration_backups/enterprise_20261017/incoming/scripts/enterprise/inspect_demo_data.py",
+                      "destination_sha256":  "4326bc3665a0a8ce5a486d8f76765e51fcf9da9b6dc4b2774cb6b9338a2a2cb1",
+                      "source_removed":  true
+                  },
+                  {
+                      "source":  "C:\\Users\\Windows\\Desktop\\qy\\scripts\\enterprise\\inspect_dify_failures.py",
+                      "destination":  "scripts/enterprise/inspect_dify_failures.py",
+                      "original_sha256":  "7ecb66a5a9e381a2e44e25b87ecff41678cc40256962b5133adfce22fae261a2",
+                      "action":  "copied",
+                      "original_backup":  ".migration_backups/enterprise_20261017/incoming/scripts/enterprise/inspect_dify_failures.py",
+                      "destination_sha256":  "455e0e0a57c4a8f22da719d3aec46d1cf10921bf3c7654f1874c04f355846e03",
+                      "source_removed":  true
+                  },
+                  {
+                      "source":  "C:\\Users\\Windows\\Desktop\\qy\\scripts\\enterprise\\migrate_enterprise.py",
+                      "destination":  "scripts/enterprise/migrate_enterprise.py",
+                      "original_sha256":  "0612f7e22b4f496ac99e4013a635a2c1c3cf4035feefccc5ce98a573c22e2380",
+                      "action":  "copied",
+                      "original_backup":  ".migration_backups/enterprise_20261017/incoming/scripts/enterprise/migrate_enterprise.py",
+                      "destination_sha256":  "dd86ea82949a588dd66878255a10f8a1e4ef5972e537a45bcbb2e4484f2d74ca",
+                      "source_removed":  true
+                  },
+                  {
+                      "source":  "C:\\Users\\Windows\\Desktop\\qy\\scripts\\enterprise\\prepare_asr.py",
+                      "destination":  "scripts/enterprise/prepare_asr.py",
+                      "original_sha256":  "81a2678447b0740a7fffb92eaf80e44c403149c2e3ee12fbd8ec7ee7bca1cfc0",
+                      "action":  "copied",
+                      "original_backup":  ".migration_backups/enterprise_20261017/incoming/scripts/enterprise/prepare_asr.py",
+                      "destination_sha256":  "f7ed6d32c4c591d898b01ef5ce8f4ffba4d86621c2362657113ae411ae35d738",
+                      "source_removed":  true
+                  },
+                  {
+                      "source":  "C:\\Users\\Windows\\Desktop\\qy\\scripts\\enterprise\\prepare_database.py",
+                      "destination":  "scripts/enterprise/prepare_database.py",
+                      "original_sha256":  "15c1eae5041d256274c2b1f0901aac4ed1ffb92affa3bcbb9ba5471db1395992",
+                      "action":  "copied",
+                      "original_backup":  ".migration_backups/enterprise_20261017/incoming/scripts/enterprise/prepare_database.py",
+                      "destination_sha256":  "56920d1e2cc34ca21a6217f43dc1f940e4f134ce55d2ef19df958fa6c1dc981b",
+                      "source_removed":  true
+                  },
+                  {
+                      "source":  "C:\\Users\\Windows\\Desktop\\qy\\scripts\\enterprise\\promote_local_admin.py",
+                      "destination":  "scripts/enterprise/promote_local_admin.py",
+                      "original_sha256":  "bf5610e6b8ebce127d090235160e7804eb672b75a5a81e67d5abc422f1da3c27",
+                      "action":  "copied",
+                      "original_backup":  ".migration_backups/enterprise_20261017/incoming/scripts/enterprise/promote_local_admin.py",
+                      "destination_sha256":  "6f1593d20c7e1ab7b4166cb902c5c8ce0b59ae1ae26d4c660159527a2bb039e4",
+                      "source_removed":  true
+                  },
+                  {
+                      "source":  "C:\\Users\\Windows\\Desktop\\qy\\scripts\\enterprise\\relocate_runtime_config.py",
+                      "destination":  "scripts/enterprise/relocate_runtime_config.py",
+                      "original_sha256":  "0f877081e1883361c6f827adde7c94452a583c1e7c1b84626b5b96a8806698b0",
+                      "action":  "copied",
+                      "original_backup":  ".migration_backups/enterprise_20261017/incoming/scripts/enterprise/relocate_runtime_config.py",
+                      "destination_sha256":  "8f503f2110dc7411ea617201b4437254b1f0b04c8a04186d1e1015a985f7a0d6",
+                      "source_removed":  true
+                  },
+                  {
+                      "source":  "C:\\Users\\Windows\\Desktop\\qy\\scripts\\enterprise\\repair_academic_version.py",
+                      "destination":  "scripts/enterprise/repair_academic_version.py",
+                      "original_sha256":  "52a94a40959da8611a07fa782eaf580c6468567f0f857b8b1d6a85d51990c93c",
+                      "action":  "copied",
+                      "original_backup":  ".migration_backups/enterprise_20261017/incoming/scripts/enterprise/repair_academic_version.py",
+                      "destination_sha256":  "6f2b01f8da3e0510836389a57db5a242d36d2b6fbec4c4282691ec85a529eda3",
+                      "source_removed":  true
+                  },
+                  {
+                      "source":  "C:\\Users\\Windows\\Desktop\\qy\\scripts\\enterprise\\requirements.txt",
+                      "destination":  "scripts/enterprise/requirements.txt",
+                      "original_sha256":  "9f9f3ec693a71c934a2197928771133b5cd811f7c57f19db66a336a8da5648e0",
+                      "action":  "copied",
+                      "original_backup":  ".migration_backups/enterprise_20261017/incoming/scripts/enterprise/requirements.txt",
+                      "destination_sha256":  "9f9f3ec693a71c934a2197928771133b5cd811f7c57f19db66a336a8da5648e0",
+                      "source_removed":  true
+                  },
+                  {
+                      "source":  "C:\\Users\\Windows\\Desktop\\qy\\scripts\\enterprise\\run_enterprise_tasks.py",
+                      "destination":  "scripts/enterprise/run_enterprise_tasks.py",
+                      "original_sha256":  "5e3bcf056d77ea46767a7ba7e944cde47dc035d48476de0c2b5051c26e8514a9",
+                      "action":  "copied",
+                      "original_backup":  ".migration_backups/enterprise_20261017/incoming/scripts/enterprise/run_enterprise_tasks.py",
+                      "destination_sha256":  "b0e1188cefd56c4e9198a5f1a0fecab3de5695e01541f303d3f4e55d22af7d72",
+                      "source_removed":  true
+                  },
+                  {
+                      "source":  "C:\\Users\\Windows\\Desktop\\qy\\scripts\\enterprise\\seed_demo_data.py",
+                      "destination":  "scripts/enterprise/seed_demo_data.py",
+                      "original_sha256":  "dbb40fc02b9771831076be2b7a95418c28a4d11912249f83f7c9511decf21d22",
+                      "action":  "copied",
+                      "original_backup":  ".migration_backups/enterprise_20261017/incoming/scripts/enterprise/seed_demo_data.py",
+                      "destination_sha256":  "522619249f615bef4945a7ed6ad2a9e2e8ab81dc3aaee88538b9ba599e91df27",
+                      "source_removed":  true
+                  },
+                  {
+                      "source":  "C:\\Users\\Windows\\Desktop\\qy\\scripts\\enterprise\\set_local_admin_login.py",
+                      "destination":  "scripts/enterprise/set_local_admin_login.py",
+                      "original_sha256":  "a56cdc4395de2d0dc074a1205af746fc2b52e10b6931b62b95d4bffc3d05f619",
+                      "action":  "copied",
+                      "original_backup":  ".migration_backups/enterprise_20261017/incoming/scripts/enterprise/set_local_admin_login.py",
+                      "destination_sha256":  "362a06111b577e1f4efdbae5f3aa97875d3b1670443d4be65f32a30124c034a5",
+                      "source_removed":  true
+                  },
+                  {
+                      "source":  "C:\\Users\\Windows\\Desktop\\qy\\scripts\\enterprise\\start_local.ps1",
+                      "destination":  "scripts/enterprise/start_local.ps1",
+                      "original_sha256":  "1aa45a7117f8bfad34dcd7f1a19c15ca2d00148938c0d3dab19bb38b815bb8db",
+                      "action":  "copied",
+                      "original_backup":  ".migration_backups/enterprise_20261017/incoming/scripts/enterprise/start_local.ps1",
+                      "destination_sha256":  "1aa45a7117f8bfad34dcd7f1a19c15ca2d00148938c0d3dab19bb38b815bb8db",
+                      "source_removed":  true
+                  },
+                  {
+                      "source":  "C:\\Users\\Windows\\Desktop\\qy\\scripts\\enterprise\\stop_local.ps1",
+                      "destination":  "scripts/enterprise/stop_local.ps1",
+                      "original_sha256":  "3490ced24ff3114f95cd9eeca6b4acc524f89efdd2ba88eb137eace199e670fe",
+                      "action":  "copied",
+                      "original_backup":  ".migration_backups/enterprise_20261017/incoming/scripts/enterprise/stop_local.ps1",
+                      "destination_sha256":  "3490ced24ff3114f95cd9eeca6b4acc524f89efdd2ba88eb137eace199e670fe",
+                      "source_removed":  true
+                  },
+                  {
+                      "source":  "C:\\Users\\Windows\\Desktop\\qy\\scripts\\enterprise\\verify_demo_data.py",
+                      "destination":  "scripts/enterprise/verify_demo_data.py",
+                      "original_sha256":  "8ac74ffa132eada0c41796ec76c22d223eb7e836625f64fd9d013fa1572fb0ac",
+                      "action":  "copied",
+                      "original_backup":  ".migration_backups/enterprise_20261017/incoming/scripts/enterprise/verify_demo_data.py",
+                      "destination_sha256":  "3f399bda9b8ed6bb0f192e7b0d4f96de000e441307967cc1ecd8700a3b4216e5",
+                      "source_removed":  true
+                  },
+                  {
+                      "source":  "C:\\Users\\Windows\\Desktop\\qy\\scripts\\sql\\bk\\企业智能助手\\企业智能助手_功能与数据库设计方案.md",
+                      "destination":  "scripts/sql/bk/企业智能助手/企业智能助手_功能与数据库设计方案.md",
+                      "original_sha256":  "8502f2051d2a3a53006b0db9842893a30aae60d08c62b1420515db78a2f773c7",
+                      "action":  "identical",
+                      "original_backup":  ".migration_backups/enterprise_20261017/incoming/scripts/sql/bk/企业智能助手/企业智能助手_功能与数据库设计方案.md",
+                      "destination_sha256":  "8502f2051d2a3a53006b0db9842893a30aae60d08c62b1420515db78a2f773c7",
+                      "source_removed":  true
+                  },
+                  {
+                      "source":  "C:\\Users\\Windows\\Desktop\\qy\\scripts\\sql\\bk\\企业智能助手\\企业智能助手_建表.sql",
+                      "destination":  "scripts/sql/bk/企业智能助手/企业智能助手_建表.sql",
+                      "original_sha256":  "ebffccee672de487aaf3f90db76b42eb51888073c45374f6b83350b14d633788",
+                      "action":  "identical",
+                      "original_backup":  ".migration_backups/enterprise_20261017/incoming/scripts/sql/bk/企业智能助手/企业智能助手_建表.sql",
+                      "destination_sha256":  "ebffccee672de487aaf3f90db76b42eb51888073c45374f6b83350b14d633788",
+                      "source_removed":  true
+                  },
+                  {
+                      "source":  "C:\\Users\\Windows\\Desktop\\qy\\scripts\\sql\\bk\\企业智能助手\\企业智能助手_测试数据.sql",
+                      "destination":  "scripts/sql/bk/企业智能助手/企业智能助手_测试数据.sql",
+                      "original_sha256":  "3e72a606800f90d839ab971fe46a62fae52d9779eeeabd46dd6f004623fc53a4",
+                      "action":  "identical",
+                      "original_backup":  ".migration_backups/enterprise_20261017/incoming/scripts/sql/bk/企业智能助手/企业智能助手_测试数据.sql",
+                      "destination_sha256":  "3e72a606800f90d839ab971fe46a62fae52d9779eeeabd46dd6f004623fc53a4",
+                      "source_removed":  true
+                  },
+                  {
+                      "source":  "C:\\Users\\Windows\\Desktop\\qy\\scripts\\sql\\bk\\企业智能助手\\企业智能助手_测试数据说明.md",
+                      "destination":  "scripts/sql/bk/企业智能助手/企业智能助手_测试数据说明.md",
+                      "original_sha256":  "55650b0266f1d22087040458a7f84f02fbb96ed76ac829e257ca72543528b8cf",
+                      "action":  "identical",
+                      "original_backup":  ".migration_backups/enterprise_20261017/incoming/scripts/sql/bk/企业智能助手/企业智能助手_测试数据说明.md",
+                      "destination_sha256":  "55650b0266f1d22087040458a7f84f02fbb96ed76ac829e257ca72543528b8cf",
+                      "source_removed":  true
+                  },
+                  {
+                      "source":  "C:\\Users\\Windows\\Desktop\\qy\\scripts\\sql\\enterprise\\001_local_education.sql",
+                      "destination":  "scripts/sql/enterprise/001_local_education.sql",
+                      "original_sha256":  "dc3d2d481ae42b392ea1aa365fc09c9c8e3f2e46314239dda8eceb4d02df5de3",
+                      "action":  "copied",
+                      "original_backup":  ".migration_backups/enterprise_20261017/incoming/scripts/sql/enterprise/001_local_education.sql",
+                      "destination_sha256":  "dc3d2d481ae42b392ea1aa365fc09c9c8e3f2e46314239dda8eceb4d02df5de3",
+                      "source_removed":  true
+                  },
+                  {
+                      "source":  "C:\\Users\\Windows\\Desktop\\qy\\scripts\\sql\\enterprise\\migration_plan.json",
+                      "destination":  "scripts/sql/enterprise/migration_plan.json",
+                      "original_sha256":  "52e8ed73c91c9b81674f98fd148b1eb983882df21ca23a29b68169d1d00f5712",
+                      "action":  "copied",
+                      "original_backup":  ".migration_backups/enterprise_20261017/incoming/scripts/sql/enterprise/migration_plan.json",
+                      "destination_sha256":  "52e8ed73c91c9b81674f98fd148b1eb983882df21ca23a29b68169d1d00f5712",
+                      "source_removed":  true
+                  },
+                  {
+                      "source":  "C:\\Users\\Windows\\Desktop\\qy\\tests\\enterprise\\admin_registration.browser.js",
+                      "destination":  "tests/enterprise/admin_registration.browser.js",
+                      "original_sha256":  "d766c17b1fcd2cb6d7015b16f62f825eb85579b56381f3c1b2bc1528ef9c2755",
+                      "action":  "copied",
+                      "original_backup":  ".migration_backups/enterprise_20261017/incoming/tests/enterprise/admin_registration.browser.js",
+                      "destination_sha256":  "d766c17b1fcd2cb6d7015b16f62f825eb85579b56381f3c1b2bc1528ef9c2755",
+                      "source_removed":  true
+                  },
+                  {
+                      "source":  "C:\\Users\\Windows\\Desktop\\qy\\tests\\enterprise\\enterprise_editor.browser.js",
+                      "destination":  "tests/enterprise/enterprise_editor.browser.js",
+                      "original_sha256":  "ed044b9f4b4f3121f097efe8701d331689c8ce5b4bca02ca8fdf542bc1b4bfb6",
+                      "action":  "copied",
+                      "original_backup":  ".migration_backups/enterprise_20261017/incoming/tests/enterprise/enterprise_editor.browser.js",
+                      "destination_sha256":  "ed044b9f4b4f3121f097efe8701d331689c8ce5b4bca02ca8fdf542bc1b4bfb6",
+                      "source_removed":  true
+                  },
+                  {
+                      "source":  "C:\\Users\\Windows\\Desktop\\qy\\tests\\enterprise\\enterprise_modules.browser.js",
+                      "destination":  "tests/enterprise/enterprise_modules.browser.js",
+                      "original_sha256":  "a9297242adb4e0e49732925a24a6be890f1ae3b7479dda95d58fb890ee1f779a",
+                      "action":  "copied",
+                      "original_backup":  ".migration_backups/enterprise_20261017/incoming/tests/enterprise/enterprise_modules.browser.js",
+                      "destination_sha256":  "a9297242adb4e0e49732925a24a6be890f1ae3b7479dda95d58fb890ee1f779a",
+                      "source_removed":  true
+                  },
+                  {
+                      "source":  "C:\\Users\\Windows\\Desktop\\qy\\tests\\enterprise\\test_account_registration.py",
+                      "destination":  "tests/enterprise/test_account_registration.py",
+                      "original_sha256":  "76064ba325c61ca2cd4e1936ac1d5b74f9ba4776bce3047dbf83133fb74e0d51",
+                      "action":  "copied",
+                      "original_backup":  ".migration_backups/enterprise_20261017/incoming/tests/enterprise/test_account_registration.py",
+                      "destination_sha256":  "ee96250b8a1af9d416a2013ac2bb51c5ae2e2c78e1d94834595c2de1e2d798fb",
+                      "source_removed":  true
+                  },
+                  {
+                      "source":  "C:\\Users\\Windows\\Desktop\\qy\\tests\\enterprise\\test_enterprise.py",
+                      "destination":  "tests/enterprise/test_enterprise.py",
+                      "original_sha256":  "32fb1dc1db6e221ea345337a6bbb9a37d158b61dd009fb14df138e6530c149ee",
+                      "action":  "copied",
+                      "original_backup":  ".migration_backups/enterprise_20261017/incoming/tests/enterprise/test_enterprise.py",
+                      "destination_sha256":  "be761c38e4c5da9843d2cccfb58ac1f3c844bc1c2b4ce89b78bc27ac64353088",
+                      "source_removed":  true
+                  }
+              ],
+    "shared_policy":  "Keep existing common models, authentication, database and application entry; merge only required additions.",
+    "missing_source_files":  [
+                                 "app/tasks/enterprise/enterprise_tasks.py"
+                             ],
+    "verification":  {
+                         "common_python":  {
+                                               "passed":  39,
+                                               "total":  39
+                                           },
+                         "agent_python":  {
+                                              "passed":  18,
+                                              "total":  18
+                                          },
+                         "report_python":  {
+                                               "passed":  38,
+                                               "total":  38
+                                           },
+                         "frontend_node":  {
+                                               "passed":  14,
+                                               "total":  14
+                                           },
+                         "enterprise_python":  {
+                                                   "passed":  39,
+                                                   "total":  42,
+                                                   "errors":  3,
+                                                   "reason":  "source task implementation missing"
+                                               },
+                         "python_syntax_files":  69,
+                         "enterprise_operations":  75,
+                         "live_database_or_external_service_changes":  false
+                     },
+    "shared_files_retained_in_source":  [
+                                            "app/config.py",
+                                            "app/main.py",
+                                            "app/database.py",
+                                            "app/models/common (existing shared mappings)",
+                                            "app/core/common (existing compatibility shims)",
+                                            "other modules and common front-end assets"
+                                        ],
+    "removed_source_files":  120
+}

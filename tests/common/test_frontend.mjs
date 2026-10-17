@@ -136,7 +136,7 @@ test("模块登记、学生导航、所有页面和脚本的本地依赖均存�
       ? [...source.matchAll(/(?:src|href)=["']([^"'#?]+)[^"']*["']/g)].map(match => match[1])
       : [...source.matchAll(/(?:from\s*|import\s*\()["'](\.[^"']+)["']/g)].map(match => match[1]);
     for (const reference of references) {
-      if (/^https?:/.test(reference)) continue;
+      if (/^(?:https?:|data:|blob:|mailto:|tel:)/.test(reference)) continue;
       if (reference.startsWith("/") && !reference.startsWith("/static/")) continue;
       const target = reference.startsWith("/static/") ? resolve(frontend, reference.slice(8)) : resolve(dirname(file), reference);
       await assert.doesNotReject(access(target), `${relative(frontend, file)} -> ${reference}`);
@@ -180,8 +180,12 @@ test("待联调模块阻止旧接口调用", async () => {
   const adapter = await loadTree("../../frontend/js/common/module-api.js");
   globalThis.fetch = async () => { assert.fail("未就绪模块不应发起网络请求"); };
   await assert.rejects(adapter.API.post("/student/leave", { student_id: 1 }), error => error.code === 503);
-  await assert.rejects(adapter.API.get("/enterprise/customers"), error => error.code === 503);
   await assert.rejects(adapter.API.get("/dashboard/overview"), error => error.code === 503);
+  globalThis.fetch = async url => {
+    assert.equal(url, "/api/v1/enterprise/customer");
+    return reply(200, {code: 0, data: {items: []}});
+  };
+  assert.deepEqual(await adapter.API.get("/enterprise/customer"), {items: []});
 });
 
 test("报告失败重试复用幂等键，受理成功后下次操作换键", async () => {

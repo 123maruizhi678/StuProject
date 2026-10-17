@@ -1,0 +1,233 @@
+kind: app
+version: 0.5.0
+dependencies: []
+app:
+  name: StuProject-企业-query
+  description: StuProject企业管理模块 enterprise-v1；仅业务候选及已授权输入，不具备数据库写入工具
+  mode: workflow
+  icon: 🏢
+  icon_background: '#E0E7FF'
+  use_icon_as_answer_icon: false
+workflow:
+  environment_variables: []
+  conversation_variables: []
+  features:
+    file_upload:
+      enabled: false
+    retriever_resource:
+      enabled: false
+    sensitive_word_avoidance:
+      enabled: false
+    suggested_questions_after_answer:
+      enabled: false
+  graph:
+    nodes:
+    - id: start
+      type: custom
+      position:
+        x: 50
+        y: 200
+      positionAbsolute:
+        x: 50
+        y: 200
+      width: 260
+      height: 100
+      sourcePosition: right
+      targetPosition: left
+      data:
+        type: start
+        title: 授权输入
+        selected: false
+        variables:
+        - variable: question
+          label: question
+          type: paragraph
+          required: true
+          max_length: 60000
+          options: []
+        - variable: schema_context
+          label: schema_context
+          type: paragraph
+          required: true
+          max_length: 60000
+          options: []
+        - variable: dialect
+          label: dialect
+          type: paragraph
+          required: true
+          max_length: 60000
+          options: []
+        - variable: query_constraints
+          label: query_constraints
+          type: paragraph
+          required: true
+          max_length: 60000
+          options: []
+        - variable: bound_filters
+          label: bound_filters
+          type: paragraph
+          required: true
+          max_length: 60000
+          options: []
+        - variable: schema_version
+          label: schema_version
+          type: paragraph
+          required: true
+          max_length: 60000
+          options: []
+        - variable: contract_version
+          label: contract_version
+          type: paragraph
+          required: true
+          max_length: 60000
+          options: []
+    - id: llm
+      type: custom
+      position:
+        x: 380
+        y: 200
+      positionAbsolute:
+        x: 380
+        y: 200
+      width: 260
+      height: 100
+      sourcePosition: right
+      targetPosition: left
+      data:
+        type: llm
+        title: 企业query
+        selected: false
+        model:
+          provider: langgenius/deepseek/deepseek
+          name: deepseek-flash
+          mode: chat
+          completion_params:
+            temperature: 0.1
+        prompt_template:
+        - id: system
+          role: system
+          text: 仅生成单个MySQL SELECT，不执行。只使用schema_context中的逻辑关系及字段，可使用简单主外键JOIN和聚合；不使用WITH、跨库、系统表、写语句、文件函数或SELECT星号，COUNT(*)除外。禁止自造筛选字面值；使用:name占位符，params把name映射到bound_filters中的键，不填写新参数值。无条件查询params为空对象。最多100行。输出JSON对象：contract_version="enterprise-v1",schema_version="enterprise-query-v1",sql_template,params,referenced_tables数组,referenced_columns数组。
+        - id: user
+          role: user
+          text: 'question: {{#start.question#}}
+
+            schema_context: {{#start.schema_context#}}
+
+            dialect: {{#start.dialect#}}
+
+            query_constraints: {{#start.query_constraints#}}
+
+            bound_filters: {{#start.bound_filters#}}
+
+            schema_version: {{#start.schema_version#}}
+
+            contract_version: {{#start.contract_version#}}'
+        context:
+          enabled: false
+          variable_selector: []
+        vision:
+          enabled: false
+        memory: null
+    - id: validate
+      type: custom
+      position:
+        x: 710
+        y: 200
+      positionAbsolute:
+        x: 710
+        y: 200
+      width: 260
+      height: 100
+      sourcePosition: right
+      targetPosition: left
+      data:
+        type: code
+        title: 结果契约校验
+        selected: false
+        code_language: python3
+        code: "import json, re\ndef main(raw: str) -> dict:\n    text = re.sub(r\"\
+          <think>[\\s\\S]*?</think>\", \"\", raw, flags=re.I).strip()\n    if text.startswith(\"\
+          ```\"):\n        text = text.split(\"\\n\",1)[1].rsplit(\"```\",1)[0].strip()\n\
+          \    result = json.loads(text)\n    if not isinstance(result,dict) or result.get(\"\
+          contract_version\") != \"enterprise-v1\":\n        raise ValueError(\"Invalid\
+          \ enterprise result contract\")\n    if not isinstance(result.get('schema_version'),str):\n\
+          \        raise ValueError(\"Invalid schema_version output type\")\n    if\
+          \ not isinstance(result.get('sql_template'),str):\n        raise ValueError(\"\
+          Invalid sql_template output type\")\n    if not isinstance(result.get('params'),dict):\n\
+          \        raise ValueError(\"Invalid params output type\")\n    if not isinstance(result.get('referenced_tables'),list):\n\
+          \        raise ValueError(\"Invalid referenced_tables output type\")\n \
+          \   if not isinstance(result.get('referenced_columns'),list):\n        raise\
+          \ ValueError(\"Invalid referenced_columns output type\")\n    return {\"\
+          result\":result}\n"
+        variables:
+        - variable: raw
+          value_selector:
+          - llm
+          - text
+        outputs:
+          result:
+            type: object
+            children: null
+    - id: end
+      type: custom
+      position:
+        x: 1040
+        y: 200
+      positionAbsolute:
+        x: 1040
+        y: 200
+      width: 260
+      height: 100
+      sourcePosition: right
+      targetPosition: left
+      data:
+        type: end
+        title: 结构化输出
+        selected: false
+        outputs:
+        - variable: query_result
+          value_selector:
+          - validate
+          - result
+          value_type: object
+    edges:
+    - id: start-llm
+      source: start
+      target: llm
+      sourceHandle: source
+      targetHandle: target
+      type: custom
+      data:
+        sourceType: start
+        targetType: llm
+        isInIteration: false
+        isInLoop: false
+      zIndex: 0
+    - id: llm-validate
+      source: llm
+      target: validate
+      sourceHandle: source
+      targetHandle: target
+      type: custom
+      data:
+        sourceType: llm
+        targetType: code
+        isInIteration: false
+        isInLoop: false
+      zIndex: 0
+    - id: validate-end
+      source: validate
+      target: end
+      sourceHandle: source
+      targetHandle: target
+      type: custom
+      data:
+        sourceType: code
+        targetType: end
+        isInIteration: false
+        isInLoop: false
+      zIndex: 0
+    viewport:
+      x: 0
+      y: 0
+      zoom: 0.7

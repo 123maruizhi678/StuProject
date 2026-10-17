@@ -29,6 +29,9 @@ try {
   const context = await browser.newContext();
   const errors = [], requests = [], generationKeys = [];
   let allowCustomerPreview = false;
+  const reportItem = { report_record_id: 17, report_code: "daily_report", report_name: "虚构日报",
+    start_time: "2026-10-16T00:00:00Z", end_time: "2026-10-17T00:00:00Z", status: "success", generated_at: "2026-10-17T01:00:00Z" };
+  let reportConfig = { report_code: "daily_report", report_name: "虚构日报", report_period: "daily", cron_expr: null, enabled: true, row_version: 1 };
   const publicAccess = { pages: { home: {}, login: {}, agent: {} }, modules: { agent_center: {} } };
   const accessFor = role => ({ ...publicAccess, user_id: 7, identity_type: role,
     permissions: role === "admin" ? ["admin.dashboard", "report.read", "report.generate", "report.config.read", "report.config.write"] : [],
@@ -52,8 +55,16 @@ try {
     } else if (path === "/auth/me/access") data = accessFor((request.headers().authorization || "").split("fake-")[1] || "student");
     else if (path === "/agent/events") data = [];
     else if (path === "/agent/chat") data = { session_id: "fictional-session", reply: "虚构客服回复", need_action: false };
-    else if (path === "/report/list") data = { items: [], total: 0, page: 1, page_size: 20 };
-    else if (path === "/report/configs") data = [];
+    else if (path === "/report/list") data = { items: [reportItem], total: 1, page: 1, page_size: 20 };
+    else if (path === "/report/17") data = { ...reportItem, report_version: "v1", source_record_count: 3,
+      metric_json: { daily_count: { value: 3, unit: "份" } }, report_content: "# 虚构分析\n**测试正文**\n<script>window.fakeInjected = true</script>" };
+    else if (path === "/report/configs") data = [reportConfig];
+    else if (path === "/report/configs/daily_report" && request.method() === "PUT") {
+      const body = request.postDataJSON();
+      assert.equal(body.row_version, reportConfig.row_version);
+      reportConfig = { ...reportConfig, ...body, row_version: body.row_version + 1 };
+      data = reportConfig;
+    }
     else if (path === "/report/generate") {
       generationKeys.push(request.headers()["idempotency-key"]);
       if (generationKeys.length === 1) code = 503;
@@ -84,13 +95,39 @@ try {
   await login("admin", "/#module/report");
   const report = page.frameLocator("#module-frame");
   await report.locator("#workspace").waitFor();
+  await report.getByRole("button", { name: "详情", exact: true }).click();
+  await report.locator("#detailCard:not([hidden])").waitFor();
+  assert.equal(await report.locator("#detailCode").textContent(), "daily_report");
+  assert.match(await report.locator("#detailMetrics").textContent(), /daily_count.*3/s);
+  assert.equal(await report.locator("#detailContent strong").textContent(), "测试正文");
+  assert.equal(await report.locator("#detailContent script").count(), 0);
+  await report.locator("#detailClose").click();
+  await report.locator("#configList input").first().fill("虚构更新日报");
+  await report.getByRole("button", { name: "保存", exact: true }).click();
+  await report.locator(".config-item .title").filter({ hasText: "虚构更新日报" }).waitFor();
+  assert.equal(reportConfig.row_version, 2);
   await report.locator("#generateBtn").click();
+  await report.locator("#genStart").fill("2026-10-17T09:30");
+  await report.locator("#genEnd").fill("2026-10-17T08:30");
+  await report.locator("#genSubmit").click();
+  await report.locator("#genError").filter({ hasText: "截止时间必须晚于开始时间" }).waitFor();
+  assert.equal(generationKeys.length, 0);
+  await report.locator("#genStart").fill("");
+  await report.locator("#genEnd").fill("");
   await report.locator("#genSubmit").click();
   await report.locator("#genError:not([hidden])").waitFor();
   await report.locator("#genSubmit:not([disabled])").click();
   await report.locator("#generateCard[hidden]").waitFor({ state: "attached" });
   assert.equal(generationKeys.length, 2);
   assert.equal(generationKeys[0], generationKeys[1]);
+  await page.setViewportSize({ width: 390, height: 844 });
+  const reportFrame = page.frames().find(frame => frame.url().includes("/static/report/report.html"));
+  assert.equal(await reportFrame.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), true);
+  await report.locator("#themeBtn").click();
+  assert.equal(await report.locator("html").getAttribute("data-theme"), "light");
+  assert.equal(await reportFrame.evaluate(() => getComputedStyle(document.querySelector(".card")).backgroundColor), "rgba(255, 255, 255, 0.92)");
+  await report.locator("#themeBtn").click();
+  await page.setViewportSize({ width: 1280, height: 900 });
   await page.goto(`${origin}/#module/dashboard`);
   const dashboard = page.frameLocator("#module-frame");
   await dashboard.locator("#module-notice").filter({ hasText: "业务服务正在联调" }).waitFor();
@@ -144,7 +181,7 @@ try {
   assert.equal(await page.locator("#menu-toggle").getAttribute("aria-expanded"), "true");
   assert.equal(requests.some(item => /^\/(student|enterprise|customer|dashboard)\//.test(item.path)), false);
   assert.deepEqual(errors, []);
-  console.log("Browser integration: public agent, report auth/retry, dashboard, enterprise/student tabs, permission denial, redirects and mobile layout passed.");
+  console.log("Browser integration: public agent, report auth/retry/detail/config/time validation/themes/mobile, dashboard, enterprise/student tabs, permission denial and redirects passed.");
 } finally {
   await browser?.close();
   await new Promise(resolve => server.close(resolve));

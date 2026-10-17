@@ -5,28 +5,40 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>智能报告 · 粤教服务</title>
   <meta name="description" content="智能报告模块：异步生成、列表查询、详情阅读与配置管理">
+  <!-- 智能报告独立模块；复用公共登录和 /api/v1 接口。 -->
   <link rel="stylesheet" href="/static/css/report/report.css">
 </head>
 <body>
+  <!-- 氛围层：网格 + 扫描线 + 顶部辉光（不拦截交互） -->
+  <div class="fx" aria-hidden="true">
+    <div class="fx-grid"></div>
+    <div class="fx-scan"></div>
+    <div class="fx-glow"></div>
+  </div>
+
+  <!-- 顶部导航 -->
   <header class="topbar">
     <div class="brand">
-      <div class="logo">报</div>
-      <div>
+      <div class="logo"><span></span></div>
+      <div class="brand-text">
         <div class="name">智能报告</div>
-        <div class="sub">固定指标取数 · AI 撰写分析 · 匿名聚合</div>
+        <div class="sub">INTELLIGENT REPORT · 固定指标取数 / AI 撰写分析</div>
       </div>
     </div>
     <div class="top-actions">
       <span class="badge" id="identityBadge" hidden></span>
-      <button class="btn sm" id="themeBtn" title="切换深浅色">🌓</button>
+      <button class="icon-btn" id="themeBtn" title="切换深浅色">◐</button>
       <a class="btn sm ghost" href="/account" target="_top">账号与权限</a>
     </div>
   </header>
 
   <main class="content">
     <!-- 登录 -->
-    <section class="card" id="loginCard">
-      <h2>登录</h2>
+    <section class="card login-card" id="loginCard">
+      <div class="card-title">
+        <h2>身份认证</h2>
+        <span class="card-code">AUTH</span>
+      </div>
       <p class="hint">报告仅向平台管理员与部门主管开放；请使用统一账号登录。</p>
       <a class="btn" href="/login?next=%2F%23module%2Freport" target="_top">前往统一登录</a>
       <p class="error" id="loginError" hidden></p>
@@ -34,11 +46,15 @@
 
     <!-- 工作区 -->
     <div id="workspace" hidden>
+      <!-- 报告列表 -->
       <section class="card">
         <div class="card-head">
-          <h2>报告列表</h2>
+          <div class="card-title">
+            <h2>报告列表</h2>
+            <span class="card-code">LIST</span>
+          </div>
           <div class="filters">
-            <select id="filterCode">
+            <select id="filterCode" title="报告类型">
               <option value="">全部类型</option>
               <option value="customer_overview">客户经营分析</option>
               <option value="daily_report">员工日报（日）</option>
@@ -46,7 +62,7 @@
               <option value="mental_weekly">心理健康周报</option>
               <option value="complaint_weekly">投诉处理周报</option>
             </select>
-            <select id="filterStatus">
+            <select id="filterStatus" title="状态">
               <option value="">全部状态</option>
               <option value="pending">待生成</option>
               <option value="running">生成中</option>
@@ -54,30 +70,38 @@
               <option value="failed">失败</option>
             </select>
             <button class="btn sm" id="refreshBtn">刷新</button>
-            <button class="btn sm primary" id="generateBtn">生成报告</button>
+            <button class="btn sm primary" id="generateBtn">＋ 生成报告</button>
           </div>
         </div>
-        <div class="table-scroll"><table class="table">
-          <thead>
-            <tr>
-              <th>ID</th><th>报告</th><th>类型</th><th>统计窗口（UTC）</th><th>状态</th><th>完成时间</th><th></th>
-            </tr>
-          </thead>
-          <tbody id="reportRows"></tbody>
-        </table></div>
+        <div class="table-wrap">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>ID</th><th>报告</th><th>类型</th><th>统计窗口（UTC）</th><th>状态</th><th>完成时间</th><th></th>
+              </tr>
+            </thead>
+            <tbody id="reportRows"></tbody>
+          </table>
+        </div>
         <div class="pager">
-          <button class="btn sm ghost" id="prevPage">上一页</button>
-          <span id="pageInfo"></span>
-          <button class="btn sm ghost" id="nextPage">下一页</button>
+          <button class="btn sm ghost" id="prevPage">‹ 上一页</button>
+          <span class="mono" id="pageInfo"></span>
+          <button class="btn sm ghost" id="nextPage">下一页 ›</button>
         </div>
       </section>
 
-      <!-- 生成表单 -->
+      <!-- 生成面板 -->
       <section class="card" id="generateCard" hidden>
-        <h2>生成报告</h2>
-        <p class="hint">后台异步生成：受理后立即返回报告ID与 pending 状态，请稍后在列表中查看结果。时间边界需成对提供（北京时间）。</p>
+        <div class="card-head">
+          <div class="card-title">
+            <h2>生成报告</h2>
+            <span class="card-code">GENERATE</span>
+          </div>
+          <button class="btn sm ghost" id="genCancel">收起</button>
+        </div>
+        <p class="hint">后台异步生成：受理后立即返回报告 ID 与 pending 状态，结果请在列表中查看。时间边界须成对提供（北京时间）。</p>
         <div class="form-row">
-          <select id="genCode">
+          <select id="genCode" title="报告类型">
             <option value="customer_overview">客户经营分析</option>
             <option value="daily_report">员工日报（日）</option>
             <option value="weekly_report">员工日报（周）</option>
@@ -87,22 +111,29 @@
           <input id="genStart" type="datetime-local" title="起始时间（可选，北京时间）">
           <input id="genEnd" type="datetime-local" title="截止时间（可选，北京时间）">
           <button class="btn primary" id="genSubmit">提交生成</button>
-          <button class="btn ghost" id="genCancel">取消</button>
         </div>
         <p class="error" id="genError" hidden></p>
       </section>
 
       <!-- 配置管理（平台管理员） -->
       <section class="card" id="configCard" hidden>
-        <h2>报告配置</h2>
-        <p class="hint">仅平台管理员可读取与修改；修改使用乐观锁（row_version）。</p>
+        <div class="card-head">
+          <div class="card-title">
+            <h2>报告配置</h2>
+            <span class="card-code">CONFIG</span>
+          </div>
+        </div>
+        <p class="hint">仅平台管理员可读取与修改；保存使用乐观锁（row_version），冲突时请刷新后重试。</p>
         <div id="configList"></div>
       </section>
 
-      <!-- 详情 -->
+      <!-- 报告详情 -->
       <section class="card" id="detailCard" hidden>
         <div class="card-head">
-          <h2 id="detailTitle">报告详情</h2>
+          <div class="card-title">
+            <h2 id="detailTitle">报告详情</h2>
+            <span class="card-code" id="detailCode">DETAIL</span>
+          </div>
           <button class="btn sm ghost" id="detailClose">关闭</button>
         </div>
         <dl class="meta" id="detailMeta"></dl>
