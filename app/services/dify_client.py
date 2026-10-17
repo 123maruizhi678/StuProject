@@ -1,40 +1,15 @@
-"""客服 Agent 的 Dify Workflow 客户端抽象与实现。
+
+
+"""客服 Agent 的 Dify Chatflow 客户端抽象与实现。
 
 职责边界：Dify 只做「理解意图 + 生成话术」，不直接连业务库。
 当前阶段使用 MockDifyClient（关键词硬编码 7 大场景），Dify 就绪后
 将 .env 的 DIFY_CLIENT 切为 real，后端接口与数据流不变。
 """
-import re
 from dataclasses import dataclass
-from typing import Any, Protocol
+from typing import Protocol
 
 from app.config import settings
-from app.core.dify import DifyHttpClient
-from app.core.logger import get_logger
-
-logger = get_logger(__name__)
-
-# 意图 -> 前端动作：由后端按 intent 推导，不依赖 Dify 输出
-_INTENT_ACTION_MAP = {
-    "course_recommend": {"type": "show_courses", "payload": {}},
-    "event_query": {"type": "show_events", "payload": {}},
-}
-
-# 推理模型（deepseek-reasoner 等）会把思维链混进 LLM 输出文本，需在返回前剥掉，
-# 避免客户看到 AI 的内部推理过程。匹配 <think>...</think> 整块及其中的 reasoning 标记。
-_REASONING_BLOCK = re.compile(
-    r"<think>\s*(?:<!--[\w.-]*reasoning[\w.-]*-->.*?)?</think>\s*", re.DOTALL
-)
-_REASONING_MARKER = re.compile(r"<!--[\w.-]*reasoning[\w.-]*-->")
-
-
-def _strip_reasoning(text: str) -> str:
-    """剥除回复中的思维链块与残留 reasoning 标记，仅保留面向客户的正文。"""
-    if not text:
-        return text
-    cleaned = _REASONING_BLOCK.sub("", text)
-    cleaned = _REASONING_MARKER.sub("", cleaned)
-    return cleaned.strip()
 
 
 @dataclass
@@ -47,7 +22,7 @@ class ChatResult:
 
 
 class DifyClient(Protocol):
-    """客服 Workflow 客户端接口（mock 与 real 均实现）。"""
+    """客服 Chatflow 客户端接口（mock 与 real 均实现）。"""
 
     def chat(self, session_id: str, message: str) -> ChatResult: ...
 
@@ -86,33 +61,10 @@ class MockDifyClient:
 
 
 class RealDifyClient:
-    """Dify 客服工作流客户端：POST /workflows/run，读取 data.outputs。
-
-    对应 Dify 应用「客服Agent」（Workflow 模式）：
-        入参 inputs.query = 访客消息
-        出参 outputs.intent = 意图英文 slug，outputs.reply = 话术
-    action 由本模块按 intent 推导，与 mock 行为保持一致。
-    """
+    """Dify Chatflow 就绪后在此实现：走 Dify /chat-messages，返回 intent + reply + action。"""
 
     def __init__(self) -> None:
-        self.key = settings.DIFY_AGENT_API_KEY
-        if not self.key:
-            raise ValueError("未配置 DIFY_AGENT_API_KEY，无法启用 real 客户端（请将 .env 的 DIFY_CLIENT 设为 mock）")
-        self._http = DifyHttpClient(api_base=settings.DIFY_API_BASE, timeout=settings.DIFY_API_TIMEOUT_SECONDS)
-
-    def chat(self, session_id: str, message: str) -> ChatResult:
-        payload = {
-            "inputs": {"query": message},
-            "response_mode": "blocking",
-            "user": f"visitor-{session_id}",
-        }
-        data = self._http.post_json_sync("workflows/run", api_key=self.key, payload=payload)
-        outputs: dict[str, Any] = data.get("data", {}).get("outputs") or {}
-        intent = outputs.get("intent") or "chat"
-        reply = _strip_reasoning(outputs.get("reply") or "")
-        if not reply:
-            logger.warning("Dify 工作流返回 reply 为空: outputs=%s", outputs)
-        return ChatResult(intent=intent, reply=reply, action=_INTENT_ACTION_MAP.get(intent))
+        raise NotImplementedError("Dify Chatflow 尚未接入，请将 .env 的 DIFY_CLIENT 设为 mock")
 
 
 def get_dify_client() -> DifyClient:

@@ -3,35 +3,33 @@
 职责：
     - 会话 / 消息落库（留资、审计）
     - 活动列表 / 详情查询
-    - 活动报名（校验 + 防重 + 行锁事务）
+    - 活动报名（校验 + 防重 + 事务）
     - 课程列表查询（课程推荐分支数据源）
     - FAQ 兜底查询
 
 写库类业务规则必须在后端实现，不交给 Dify。
-
-事务顺序（对齐《开发文档/操作文档.md》）：
-    1. 短事务：确保会话 → 写 user 消息 → commit；此段失败不调用 Dify；
-    2. 事务外调用 Dify，避免持锁等待外部 HTTP；失败用兜底话术，不丢留资；
-    3. 新短事务：写 assistant 消息 → commit；失败不回滚已提交的用户消息。
 """
+import uuid
 from datetime import datetime
 
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.core.logger import get_logger
 from app.core.response import BusinessException, ResultCode
-from app.clients.agent.dify_client import get_dify_client
-from app.models.agent.agent import LectureEvent
-from app.repositories.agent import agent_repository as repo
-
-logger = get_logger(__name__)
+from app.models.agent import (
+    ChatMessage,
+    ChatSession,
+    CourseProject,
+    EventSignup,
+    Faq,
+    LectureEvent,
+)
+from app.services.dify_client import get_dify_client
 
 # 业务状态常量
 EVENT_OPEN = "报名中"       # 活动可报名
+SIGNUP_ACTIVE = "有效"      # 报名记录有效
 COURSE_ON_SHELF = "上架"    # 课程上架
-
-# Dify 调用失败时的兜底话术（用户消息已落库，不丢留资）
-FALLBACK_REPLY = "抱歉，客服助手暂时繁忙，请稍后再试。如有紧急问题，可拨打热线或留下联系方式，我们会尽快联系您。"
 
 
 def _fmt(dt: datetime | None) -> str:
@@ -41,47 +39,48 @@ def _fmt(dt: datetime | None) -> str:
 
 # ---------- 对话 ----------
 def run_chat(db: Session, session_id: str | None, user_id: str | None, message: str) -> dict:
-    """对话入口：确保会话 → 写 user 消息 → 调 Dify → 写 assistant 消息。
-
-    Dify 调用失败不影响用户消息落库：user 消息先行提交，Dify 异常时
-    记录日志并用兜底话术回复，保证对话闭环与留资不丢失。
-    """
+    """对话入口：确保会话 → 写 user 消息 → 调 Dify → 写 assistant 消息。"""
     message = (message or "").strip()
     if not message:
         raise BusinessException("消息不能为空", code=ResultCode.PARAM_ERROR)
 
-    sid = repo.ensure_session(db, session_id, user_id)
-    repo.add_message(db, sid, "user", message, "")
-    db.commit()
+    sid = _ensure_session(db, session_id, user_id)
+    db.add(ChatMessage(session_id=sid, role="user", content=message, intent=""))
 
-    try:
-        result = get_dify_client().chat(sid, message)
-        intent, reply, action = result.intent, result.reply, result.action
-    except Exception:
-        logger.exception("客服 Dify 调用失败，使用兜底话术")
-        intent, reply, action = "", FALLBACK_REPLY, None
+    result = get_dify_client().chat(sid, message)
 
-    repo.add_message(db, sid, "assistant", reply, intent)
+    db.add(ChatMessage(session_id=sid, role="assistant", content=result.reply, intent=result.intent))
     db.commit()
 
     return {
         "session_id": sid,
-        "intent": intent,
-        "reply": reply,
-        "need_action": bool(action),
-        "action": action,
+        "intent": result.intent,
+        "reply": result.reply,
+        "need_action": bool(result.action),
+        "action": result.action,
     }
+
+
+def _ensure_session(db: Session, session_id: str | None, user_id: str | None) -> str:
+    """按 session_id 复用会话；不存在（或未传）则创建。"""
+    sid = session_id or uuid.uuid4().hex
+    existing = db.scalar(select(ChatSession).where(ChatSession.session_id == sid))
+    if existing:
+        return existing.session_id
+    db.add(ChatSession(session_id=sid, user_id=user_id or "", channel="web"))
+    return sid
 
 
 # ---------- 活动 ----------
 def list_events(db: Session, status: str | None = None) -> list[dict]:
-    """活动列表；支持按状态筛选。"""
-    return [_event_to_dict(e) for e in repo.list_events(db, status)]
+    stmt = select(LectureEvent).order_by(LectureEvent.start_time.asc())
+    if status:
+        stmt = stmt.where(LectureEvent.status == status)
+    return [_event_to_dict(e) for e in db.scalars(stmt).all()]
 
 
 def get_event(db: Session, event_id: int) -> dict | None:
-    """活动详情；不存在返回 None（由路由层转 404 语义）。"""
-    e = repo.get_event(db, event_id)
+    e = db.get(LectureEvent, event_id)
     return _event_to_dict(e) if e else None
 
 
@@ -107,14 +106,8 @@ def signup(
     customer_phone: str,
     customer_info: dict | None = None,
 ) -> dict:
-    """活动报名：行锁串行化 → 校验活动状态与名额 → 状态式防重 → 事务内写库。"""
-    customer_name = (customer_name or "").strip()
-    customer_phone = (customer_phone or "").strip()
-    if not customer_name or not customer_phone:
-        raise BusinessException("姓名和手机号不能为空", code=ResultCode.PARAM_ERROR)
-
-    # FOR UPDATE 行锁：并发下串行化同一活动的报名，防止名额超卖与计数丢失
-    event = repo.lock_event(db, event_id)
+    """活动报名：校验活动状态与名额，防重复报名，事务内写库。"""
+    event = db.get(LectureEvent, event_id)
     if not event:
         raise BusinessException("活动不存在", code=ResultCode.PARAM_ERROR)
     if event.status != EVENT_OPEN:
@@ -122,19 +115,41 @@ def signup(
     if event.quota > 0 and event.signed_count >= event.quota:
         raise BusinessException("活动名额已满", code=ResultCode.PARAM_ERROR)
 
-    # 状态式防重：仅当存在「有效」报名记录时拒绝；已取消的记录不阻挡重新报名
-    dup = repo.find_active_signup(db, event_id, customer_phone)
+    dup = db.scalar(
+        select(EventSignup).where(
+            EventSignup.event_id == event_id,
+            EventSignup.customer_phone == customer_phone,
+            EventSignup.status == SIGNUP_ACTIVE,
+        )
+    )
     if dup:
         raise BusinessException("您已报名该活动", code=ResultCode.PARAM_ERROR)
 
-    record = repo.add_signup(db, event, customer_name, customer_phone, customer_info)
+    now = datetime.now()
+    signup = EventSignup(
+        event_id=event_id,
+        customer_name=customer_name,
+        customer_phone=customer_phone,
+        customer_info=customer_info,
+        signup_time=now,
+        source="客服对话",
+        status=SIGNUP_ACTIVE,
+    )
+    db.add(signup)
+    event.signed_count += 1
     db.commit()
-    return {"signup_id": record.id, "signup_time": _fmt(record.signup_time)}
+    return {"signup_id": signup.id, "signup_time": _fmt(now)}
 
 
 # ---------- 课程 ----------
 def list_courses(db: Session, category: str | None = None) -> list[dict]:
-    """仅返回上架课程；支持类别筛选。"""
+    stmt = (
+        select(CourseProject)
+        .where(CourseProject.status == COURSE_ON_SHELF)
+        .order_by(CourseProject.id.asc())
+    )
+    if category:
+        stmt = stmt.where(CourseProject.category == category)
     return [
         {
             "course_id": c.id,
@@ -145,14 +160,22 @@ def list_courses(db: Session, category: str | None = None) -> list[dict]:
             "location": c.location,
             "signup_method": c.signup_method,
         }
-        for c in repo.list_courses(db, category)
+        for c in db.scalars(stmt).all()
     ]
 
 
 # ---------- FAQ ----------
 def search_faq(db: Session, question: str | None = None) -> dict | None:
     """FAQ 兜底：按问题关键词模糊匹配，无命中返回第一条。"""
-    row = repo.search_faq(db, question)
+    kw = (question or "").strip()
+    if kw:
+        row = db.scalar(
+            select(Faq).where(Faq.question.like(f"%{kw}%")).order_by(Faq.id.asc()).limit(1)
+        )
+    else:
+        row = None
+    if row is None:
+        row = db.scalar(select(Faq).order_by(Faq.id.asc()).limit(1))
     if row is None:
         return None
     return {"question": row.question, "answer": row.answer, "category": row.category}
