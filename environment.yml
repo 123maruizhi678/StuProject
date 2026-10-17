@@ -16,4 +16,3 @@ dependencies:
       - argon2-cffi==25.1.0
       - PyJWT==2.15.1
       - httpx==0.28.1
-      - httpx2==2.13.1

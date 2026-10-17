@@ -45,4 +45,4 @@ get_current_account 逐请求解析 JWT.sub，读取真实 user_account，再核
 
 通用 Dify 工具由后端调用者传入 api_base、api_key 和 payload，不发布面向浏览器的模型接口，不解释工作流结果，也不执行模型 SQL。
 
-账号初始化和运行步骤见项目根 README；完整实现与验证见开发文档/公共登录与权限入口_开发说明.md。
+账号初始化和运行步骤见项目根 README；目录归位与各层职责见开发文档/项目目录架构_最终汇总.md。

@@ -43,6 +43,6 @@ python -m unittest discover -s tests -t . -v
 python scripts/common/check_shared_schema.py
 ```
 
-测试使用隔离的内存数据库，不依赖真实 Dify。完整目录、权限边界、数据库增量与接口示例见 [公共模块开发说明](开发文档/公共登录与权限入口_开发说明.md)。
+测试使用隔离的内存数据库，不依赖真实 Dify。完整目录见《项目目录架构_最终汇总.md》，权限边界、数据库增量与接口示例见《操作文档.md》及 app/README.md。
 
 按用户要求，所有后续操作跳过业务文档文件夹。已有36张数据库表和开发文档保留。
