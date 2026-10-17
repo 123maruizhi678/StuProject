@@ -1,168 +1,37 @@
-# 精确动作映射；入口可见性不替代业务对象范围校验。
 version: 1
+# Backend API authorization remains mandatory; frontend visibility is not security.
 roles:
   admin:
-    permissions:
-    - admin.dashboard
-    - customer.rule.read
-    - customer.rule.manage
-    - report.generate
-    - report.read
-    - report.config.read
-    - report.config.write
+    permissions: [admin.dashboard, report.generate, report.read, report.config.read, report.config.write]
   employee:
-    permissions:
-    - dashboard.employee
-    - enterprise.access
-    - enterprise.daily.write_own
-    - enterprise.daily.read
-    - enterprise.organization.read
-    - enterprise.knowledge.read
-    - enterprise.todo.read_own
-    - enterprise.notification.read_own
-    - enterprise.query
-    - enterprise.command
-    - customer.result.read
+    permissions: [dashboard.employee, student.profile.read, student.admin_service.review, service_ticket.read, service_ticket.handle]
   customer:
-    permissions:
-    - dashboard.customer
-    - course_project.read
-    - event_signup.create
+    permissions: [dashboard.customer, course_project.read, event_signup.create, service_ticket.create, service_ticket.read_own]
   student:
-    permissions:
-    - dashboard.student
-    - student.profile.read_own
-    - student.admin_service.create
-    - student.admin_service.read_own
-    - student.admin_service.withdraw_own
-    - service_ticket.create
-    - service_ticket.read_own
-    - student.ticket.reply_own
-    - student.ticket.confirm_own
-    - student.ticket.rate_own
-    - student.mental.create_own
-    - student.academic.read_own
-    - student.reminder.manage_own
-    - student.progress.read_own
-    - student.notification.read_own
-    - student.chat
-    - student.action.confirm
-    - student.course.read_own
-    - student.score.read_own
-    - course_project.read
-employee_roles:
-  employee:
-    permissions: []
-  consultant:
-    permissions:
-    - enterprise.customer.create
-    - enterprise.customer.read
-    - enterprise.customer.update
-    - enterprise.customer.status
-    - enterprise.customer.archive
-    - student.progress.maintain
-    - enterprise.customer.followup
-  manager:
-    permissions:
-    - enterprise.customer.create
-    - enterprise.customer.read
-    - enterprise.customer.update
-    - enterprise.customer.status
-    - enterprise.customer.archive
-    - student.progress.maintain
-    - enterprise.customer.followup
-    - enterprise.customer.assign
-    - student.admin_service.assign
-    - enterprise.daily.summary
-    - enterprise.ticket.read
-    - enterprise.ticket.assign
-    - report.read
-  teacher:
-    permissions:
-    - student.profile.read
-    - student.admin_service.review
-    - student.warning.read
-    - student.warning.handle
-    - student.notification.read
-    - service_ticket.read
-    - service_ticket.handle
-    - enterprise.student.read
-    - enterprise.score.read
-    - enterprise.ticket.read
-    - enterprise.ticket.handle
-  academic:
-    permissions:
-    - enterprise.student.read
-    - enterprise.score.read
-    - student.academic.maintain
-    - enterprise.score.write
-    - enterprise.score.void
-  admin:
-    permissions:
-    - enterprise.organization.manage
-    - enterprise.employee.manage
-    - enterprise.role.manage
-    - enterprise.binding.manage
-    - enterprise.knowledge.manage
-    - enterprise.knowledge.publish
-    - enterprise.audit.read
-    - enterprise.student.read
-  analyst:
-    permissions:
-    - customer.source.create
-    - customer.source.parse
-    - customer.judge.create
-    - customer.judge.batch
-  reviewer:
-    permissions:
-    - customer.rule.read
+    permissions: [dashboard.student, student.profile.read_own, student.admin_service.create, student.admin_service.read_own, student.notification.read_own]
+# Page IDs and routes are metadata for a future frontend; these do not create pages.
 pages:
-  student_assistant:
-    title: 学生助手
-    route: /student-assistant
-    permission: dashboard.student
-  home:
-    title: 公共入口
-    route: /
-    public: true
-    requires_auth: false
-  login:
-    title: 账号登录
-    route: /login
-    public: true
-    requires_auth: false
-  account:
-    title: 本人权限
-    route: /account
-    requires_auth: true
+  home: {title: Home, route: /, public: true}
+  login: {title: Login, route: /login, public: true}
+  password_reset: {title: Password reset, route: /password-reset, public: true}
+  account: {title: Account, route: /account, requires_auth: true}
+  admin_dashboard: {title: Admin console, route: /admin, requires_auth: true, permission: admin.dashboard}
+  employee_dashboard: {title: Employee dashboard, route: /employee, requires_auth: true, permission: dashboard.employee}
+  customer_dashboard: {title: Customer dashboard, route: /customer, requires_auth: true, permission: dashboard.customer}
+  student_dashboard: {title: Student dashboard, route: /student, requires_auth: true, permission: dashboard.student}
+  student_profile: {title: Student profile, route: /student/profile, requires_auth: true, permission_any: [student.profile.read, student.profile.read_own]}
+  service_tickets: {title: Service tickets, route: /tickets, requires_auth: true, permission_any: [service_ticket.read, service_ticket.read_own, service_ticket.handle]}
+  report: {title: 智能报告, route: /report, requires_auth: true, permission_any: [report.generate, report.read, report.config.read, report.config.write]}
 modules:
-  common:
-    title: 公共登录与权限入口
-    public: true
-    pages:
-    - home
-    - login
-  account:
-    title: 本人权限
-    pages:
-    - account
-  enterprise:
-    title: 企业能力（由企业模块提供）
-    required_any:
-    - enterprise.access
-  customer_research:
-    title: 研判能力（由研判模块提供）
-    required_any:
-    - customer.source.create
-    - customer.result.read
-    - customer.rule.read
-  report:
-    title: 报告能力（由报告模块提供）
-    required_any:
-    - report.read
-  student:
-    title: 学生助手
-    pages:
-    - student_assistant
-    required_any:
-    - dashboard.student
+  admin_workspace: {title: Administration, required_any: [admin.dashboard], pages: [admin_dashboard]}
+  employee_workspace: {title: Employee workspace, required_any: [dashboard.employee], pages: [employee_dashboard]}
+  customer_workspace: {title: Customer workspace, required_any: [dashboard.customer], pages: [customer_dashboard]}
+  student_workspace: {title: Student workspace, required_any: [dashboard.student], pages: [student_dashboard, student_profile]}
+  ticket_center:
+    title: Ticket center
+    required_any: [service_ticket.create, service_ticket.read_own, service_ticket.handle]
+    pages: [service_tickets]
+  report_center:
+    title: 智能报告
+    required_any: [report.generate, report.read, report.config.read, report.config.write]
+    pages: [report]

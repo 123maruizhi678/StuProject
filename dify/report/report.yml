@@ -1,0 +1,206 @@
+app:
+  description: ''
+  icon: 🤖
+  icon_background: '#D5F5F6'
+  mode: workflow
+  name: 智能报告生成
+  use_icon_as_answer_icon: false
+dependencies:
+- current_identifier: null
+  type: marketplace
+  value:
+    marketplace_plugin_unique_identifier: langgenius/deepseek:0.0.24@9e12eef09973667f0eaf4f082af883167e1de88740b22e71e71488d020c3778a
+    version: null
+kind: app
+version: 0.5.0
+workflow:
+  conversation_variables: []
+  environment_variables: []
+  features:
+    file_upload:
+      allowed_file_extensions:
+      - .JPG
+      - .JPEG
+      - .PNG
+      - .GIF
+      - .WEBP
+      - .SVG
+      allowed_file_types:
+      - image
+      allowed_file_upload_methods:
+      - local_file
+      - remote_url
+      enabled: false
+      fileUploadConfig:
+        attachment_image_file_size_limit: 2
+        audio_file_size_limit: 50
+        batch_count_limit: 5
+        file_size_limit: 15
+        file_upload_limit: 20
+        image_file_batch_limit: 10
+        image_file_size_limit: 10
+        single_chunk_attachment_limit: 10
+        video_file_size_limit: 100
+        workflow_file_upload_limit: 10
+      image:
+        enabled: false
+        number_limits: 3
+        transfer_methods:
+        - local_file
+        - remote_url
+      number_limits: 3
+    opening_statement: ''
+    retriever_resource:
+      enabled: true
+    sensitive_word_avoidance:
+      enabled: false
+    speech_to_text:
+      enabled: false
+    suggested_questions: []
+    suggested_questions_after_answer:
+      enabled: false
+    text_to_speech:
+      enabled: false
+      language: ''
+      voice: ''
+  graph:
+    edges:
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: start
+        targetType: llm
+      id: 1792069521962-source-1792069677026-target
+      source: '1792069521962'
+      sourceHandle: source
+      target: '1792069677026'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: llm
+        targetType: end
+      id: 1792069677026-source-1792069756565-target
+      source: '1792069677026'
+      sourceHandle: source
+      target: '1792069756565'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    nodes:
+    - data:
+        selected: true
+        title: 用户输入
+        type: start
+        variables:
+        - default: ''
+          hint: ''
+          label: report_code
+          options: []
+          placeholder: ''
+          required: true
+          type: text-input
+          variable: report_code
+        - default: ''
+          hint: ''
+          label: metrics
+          options: []
+          placeholder: ''
+          required: true
+          type: text-input
+          variable: metrics
+      height: 134
+      id: '1792069521962'
+      position:
+        x: 80
+        y: 281
+      positionAbsolute:
+        x: 80
+        y: 281
+      selected: true
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+    - data:
+        context:
+          enabled: false
+          variable_selector: []
+        model:
+          completion_params:
+            temperature: 0.7
+          mode: chat
+          name: deepseek-v4-pro
+          provider: langgenius/deepseek/deepseek
+        prompt_template:
+        - id: 710635ae-36eb-4097-ac99-be6202d1d456
+          role: system
+          text: '你是一名数据分析师。请根据下面的报告类型和指标数据，生成一份结构化的中文报告正文。
+
+
+            报告类型：{{#1792069521962.report_code#}}
+
+            指标数据（JSON）：{{#1792069521962.metrics#}}
+
+
+            要求：
+
+            1. 只能原样引用指标 JSON 中出现的数字及其书写形式；严禁编造、估算、四舍五入或计算任何新数字，包括但不限于差值、比率、百分比、平均值、合计、环比、同比、人均值和约数；
+
+            2. 需要描述数量关系时只使用定性文字（如“略高于”“基本持平”“明显偏低”），不得给出指标中不存在的数字；
+
+            3. 指标缺少数值或 availability 不为 available 时，只说明该指标不可用及其原因，不得推测或补数；
+
+            4. 用 Markdown 小标题组织（摘要、趋势研判、归因分析、建议），语言简洁专业；
+
+            5. 只输出报告正文，不要输出思考过程或与指标无关的内容。
+
+            '
+        selected: false
+        title: LLM
+        type: llm
+        vision:
+          enabled: false
+      height: 87
+      id: '1792069677026'
+      position:
+        x: 382
+        y: 282
+      positionAbsolute:
+        x: 382
+        y: 282
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 241
+    - data:
+        outputs:
+        - value_selector:
+          - '1792069677026'
+          - text
+          value_type: string
+          variable: report_text
+        selected: false
+        title: 输出
+        type: end
+      height: 87
+      id: '1792069756565'
+      position:
+        x: 683
+        y: 282
+      positionAbsolute:
+        x: 683
+        y: 282
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 241
+    viewport:
+      x: 18.343599239864545
+      y: -62.9522450663967
+      zoom: 0.8669252116809568
+  rag_pipeline_variables: []

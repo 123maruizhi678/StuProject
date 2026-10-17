@@ -23,6 +23,3 @@ app/__pycache__/
 .env
 .env.*
 !.env.example
-
-# 本地权威课程与真实选课关系，不提交学生名单
-scripts/student/student_courses.json
