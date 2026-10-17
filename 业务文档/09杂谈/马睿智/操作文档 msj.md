@@ -48,7 +48,7 @@
 
 企业12节正文、15表字段字典及旧请假结构参考、学生8章正文及七表73字段全部按主题纳入原章节。两份相同联合协作契约V1去重后完整保留于第十六章；原章号在标注E（企业）/S（学生）的段内指来源自身章节，不误指本主文档。
 
-六模块按表名去重的直接相关规划范围为36张；联合22表/43条物理FK是企业学生子范围，报告customer_judgement等额外缺失依赖继续保留。学生21+老师10+服务同步3为34方法，企业复述的请假/老师方法不重复计数；企业组合接口须按真实方法路径拆分，不宣称全系统已注册总数。
+六模块按表名去重的直接相关规划范围为36张；联合22表/43条物理FK是企业学生子范围。报告研判来源已按037统一为research_result经customer_info关联主档，不再把customer_judgement算作需新建的额外表。学生21+老师10+服务同步3为34方法，企业复述的请假/老师方法不重复计数；企业组合接口须按真实方法路径拆分，不宣称全系统已注册总数。
 
 共同目标为公共人员JWT、单请假事实表及唯一固定服务、写动作模型提取与确认、企业NL2SQL只读、学生固定查询、报告只读上游。同步服务凭据是人员认证之外的明确分支；目标权限、物理外键、统一HTTP200及通知代次均未实施，本轮不修改代码/配置/SQL/数据库或启动任务。
 
@@ -299,6 +299,24 @@
 | 修改报告配置 | `PUT /api/v1/report/configs/{report_code}` | `report.config.write` | 平台管理员；字段、版本及审计校验仍待实现 |
 
 报告只消费经授权的上游数据。心理周报采用匿名聚合，报告访问权不授予心理原文、个人预警或请假审批能力。用户已明确主管只能查看，平台管理员可执行全部报告操作并访问全公司及所有部门报告。报告记录如何保存/验证范围仍待结构方案与实现，不擅增数据库字段；权限结论见第二章。
+
+#### 报告五接口完整Schema（031—040本轮补齐中的035）
+
+以下为冻结的接口目标，依据本地 `app/schemas/report.py`、`app/api/report.py` 补全；本轮只修订文档，不表示代码已实现全部校验或权限。所有时间响应使用带 `Z` 的UTC ISO 8601文本；业务默认时区为北京时间 `Asia/Shanghai`，不能用数据库UTC存储或旧Schema默认UTC替代业务时区。
+
+| 方法及路径 | 请求Schema | 成功时data Schema |
+| --- | --- | --- |
+| `POST /api/v1/report/generate` | 公共Bearer JWT；必传 `Idempotency-Key` 请求头（8—128位可见ASCII，无首尾空白，重试复用）；JSON包含 `report_code`、可选 `start_time`／`end_time`、可选 `timezone`。`report_code`限五类枚举；时间边界成对提供；`timezone`省略为 `Asia/Shanghai`，本期显式值也仅接受该值。拒绝未知字段，不接收客户端自报指标、操作者、版本、快照或报告正文。 | `{report_record_id:正整数, idempotency_key:字符串, status:四状态枚举, reused:布尔值, start_time:UTC时间, end_time:UTC时间, timezone:"Asia/Shanghai"}`。新建为pending；复用时返回已有真实状态，不强制改为pending。 |
+| `GET /api/v1/report/list` | 公共JWT；查询参数 `report_code?:五类枚举`、`status?:四状态枚举`、`page:正整数=1`、`page_size:1..100=20`，拒绝未知查询参数。保持既有page分页契约，不混入企业／学生的limit／offset契约。 | `{total:非负整数,page:正整数,page_size:1..100,items:ReportListItem[]}`；`ReportListItem={report_record_id,report_code,report_name,start_time,end_time,status,generated_at?}`。按 `created_at DESC, report_record_id DESC` 稳定排序；total、items使用相同授权过滤。列表不返回正文、指标、失败详情或幂等请求凭据。 |
+| `GET /api/v1/report/{report_record_id}` | 公共JWT；路径ID为正BIGINT范围整数，先校验report.read及当前数据范围。 | `ReportRecordOut={report_record_id,report_code,report_name,idempotency_key,start_time,end_time,timezone,data_snapshot_at?,report_version,source_record_count,status,report_content?,metric_json?,fail_reason?,generated_at?,created_at,updated_at}`。ID／计数为整数；正文为Markdown字符串；metric_json为对象或NULL；fail_reason仅为脱敏说明。内部请求回执、操作者标识和非公开取数清单不进入响应。 |
+| `GET /api/v1/report/configs` | 公共JWT，仅平台管理员和report.config.read；无请求体或查询参数。 | `ReportConfigOut[]`，按report_code排序；每项为 `{report_config_id:正整数,report_code:五类枚举,report_name:字符串,report_period:day/week/month,cron_expr:字符串或NULL,enabled:布尔值,row_version:正整数,created_at:UTC时间,updated_at:UTC时间}`。 |
+| `PUT /api/v1/report/configs/{report_code}` | 公共JWT，仅平台管理员和report.config.write；路径code限五类枚举。JSON必填 `row_version:整数≥1`、`report_name:去首尾空白后1..128字符`、`enabled:布尔值`；`cron_expr`必填且可为NULL，非空时长度1..64并通过实际调度适配器语法校验。拒绝未知字段，不允许改code／周期／ID。 | 更新后的完整ReportConfigOut；事务内比较row_version，成功后加1；不匹配返回409。cron为NULL仅关闭该类自动调度，不把手动生成权限交给主管；设置enabled或cron不代表任务已经启用。 |
+
+五类code为 `customer_overview`、`daily_report`、`weekly_report`、`mental_weekly`、`complaint_weekly`；四状态为 `pending/running/success/failed`。pending／running时正文、完成时间为NULL；success才返回正式正文；failed返回脱敏fail_reason且不返回半成品正文。metric_json仅返回已发布的指标白名单及非敏感版本元数据，心理输出继续受第045项约束。
+
+报告接口目标采用HTTP 200 + `{code,message,data}` 应用信封：0成功；400非法枚举、时间窗、字段或分页；401无效／缺失JWT；403动作权限不足；404对象不存在或超出对象范围；409版本、幂等或状态冲突；503上游／模型／可信范围依赖未就绪；500未预期内部异常。业务拒绝时data可为NULL，不能泄露跨部门对象是否存在；已受理任务后发生失败，通过记录status=failed展示。应用参数校验、HTTPException适配和代理非200的落实仍归第009项；调用方继续处理网络／代理非200，本文不声称全局错误出口已统一。
+
+路由注册顺序固定为 `/configs`、`/configs/{report_code}`、`/generate`、`/list` 在前，`/{report_record_id}` 在后；动态ID还须做整数校验。验收以完整方法+路径为单位，每个只注册一次，检查 `/list`、`/configs` 不被动态详情捕获。平台管理员可生成／配置／读取；有效manager仅可读本人部门报告，其余拒绝。当前Schema不新增部门选择字段；部门生成参数及持久化方案仍由第006项承接，未闭合时不得声称部门生成已经可用，后台范围解析失败应返回依赖未就绪，不能默认为公司范围。
 
 #### 来源合并概览（保留原范围）
 | 项目 | 内容 |
@@ -640,7 +658,7 @@
 
 报告每个接口复用公共JWT账号上下文，再检查允许的人群、具体动作和数据范围。平台管理员分支与employee+manager分支均需可到达；不得先强制identity_type=admin将主管拒绝，也不得只检查employee将其他员工放行。角色、有效部门及数据范围由服务端读取，不信任前端或模型传入的角色/部门。`app/core/report_auth.py`如采用，必须复用公共认证，不建立第二套JWT。
 
-部门过滤发生在取数、聚合和模型输入前，并延续到生成任务、报告存储、详情、列表、缓存及回放；仅过滤列表不能防止直接猜ID读取跨部门报告。现有报告37字段摘要未给范围承载方案，仍需后续设计，不把部门过滤写为已实现。来源《开发文档_msj.md》1.1、3.3、3.5及《开发文档-Albert2.md》1.4、4.5、8.1支持按部门/敏感级别授权和系统管理员管理报告配置。
+部门过滤发生在取数、聚合和模型输入前，并延续到生成任务、报告存储、详情、列表、缓存及回放；仅过滤列表不能防止直接猜ID读取跨部门报告。报告三表37字段基线已补齐，但范围承载仍由第006项冻结和核验，不把部门过滤写为已实现。来源《开发文档_msj.md》1.1、3.3、3.5及《开发文档-Albert2.md》1.4、4.5、8.1支持按部门/敏感级别授权和系统管理员管理报告配置。
 
 ### 按个人开发文档修订的权限清单（本轮当前口径）
 
@@ -833,7 +851,7 @@
 
 来源约定：同幂等键同口径返回已有记录，同键不同口径按 409 冲突处理；生成受理后立即返回 report_record_id，任务状态从 pending 转为 success 或 failed，并记录 fail_reason。报告“已受理”不表示已生成成功，查询接口应根据保存状态返回。
 
-具体 HTTP 状态、业务码和 response data 模型尚未给出，继续受本章既有异常出口差异约束。无效 report_code、非法时间窗、上游缺表/缺列、权限不足、重复触发、模型失败及失败查询需要逐项约定，不凭“统一返回”推断所有路径已统一。
+报告五接口的请求／响应Schema及目标HTTP／业务码已明确于第一章“报告五接口完整Schema”：采用HTTP200应用信封，400参数、401身份、403动作、404对象、409冲突、503依赖、500内部错误。已受理后的生成失败通过记录status=failed及脱敏fail_reason读取；实际异常适配和鉴权接入仍需按第009／035项核验，不把目标协议写成现有运行保证。
 
 ### 学生 S四：统一返回目标与异常处理
 
@@ -984,7 +1002,7 @@
 | 项目 | 调用约定 |
 | --- | --- |
 | 唯一对外生成触发 | POST /api/v1/report/generate；后台生成，立即返回report_record_id及pending |
-| 生成参数 | report_code、可选start_time/end_time；当前业务时区统一Asia/Shanghai（用户确认，替代来源默认UTC）；未传时间窗仍按已约定完整周期，不能把17:00触发时间直接当当天完整统计窗 |
+| 生成参数 | 必填Idempotency-Key及report_code，可选成对start_time/end_time；timezone默认北京时间Asia/Shanghai且本期仅接受该值；省略窗口取上一完整自然日／自然周，按038转UTC存储；17:00只是触发时刻 |
 | 固定取数 | _fetch_metrics固定参数化SQL；目标可拆到report_metrics，先计算真实指标、应用心理聚合范围后再传模型 |
 | 场景客户端 | app/clients/report_dify.py中的ReportDifyClient.generate_report()；经公共DifyHttpClient调用 |
 | 工作流 | dify/report/report.yml，智能报告生成；来源节点为“用户输入 → LLM → 输出” |
@@ -996,7 +1014,7 @@
 
 来源报告状态包含pending/running/success/failed；running的持久化、执行租约和恢复仍待验证。本轮静态核对实际配置/客户端，报告Key名已明确为REPORT_DIFY_API_KEY，输出键由REPORT_DIFY_OUTPUT_KEY配置，地址取REPORT_DIFY_API_BASE或回退公共DIFY_API_BASE；当前根.env已配置报告Key与输出键，但未验证Key有效性、Dify发布状态或调用成功。请求封装见下文及第十八章第018项，不再将变量名列为未知。
 
-五类报告的模型输入均来自各自固定指标：customer_overview为客户状态/新增/跟进/流失等；daily_report与weekly_report为正式日报数量指标；mental_weekly为匿名评估/风险分布/预警及趋势；complaint_weekly为投诉状态/分类/时效/满意度。风险识别归学生、日报内容级摘要归企业；报告不再建重复识别/摘要智能体。客户研判customer_judgement和成交金额仍是未接上游，不能靠模型填补。
+五类报告的模型输入均来自各自固定指标：customer_overview为客户状态/新增/跟进/流失等；daily_report与weekly_report为正式日报数量指标；mental_weekly为匿名评估/风险分布/预警及趋势；complaint_weekly为投诉状态/分类/时效/满意度。风险识别归学生、日报内容级摘要归企业；报告不再建重复识别/摘要智能体。研判统一通过research_result→customer_info关联主档，按037选择与去重；本期排除没有权威来源的成交金额，不由模型填补。
 
 原始cyl.md已明确其他四个接口及权限，补齐前次合并说明的信息空缺：
 
@@ -1832,6 +1850,31 @@ student_auth只负责业务确认/会话凭证及服务身份分支，人员认�
 批量研判 `customer/judge/batch` 按来源范围批量执行，逐条走单条研判逻辑并汇总成功/失败数。规则维护 `GET/PUT /api/v1/customer/rules` 由 `customer.rule.read` / `customer.rule.manage` 控制，更新走新版本号、旧版本保留，满足可维护性。
 
 
+#### 研判引用一致性与主档归并（031—034冻结规则）
+
+**同源引用。** `customer_info` 增加目标唯一键 `uq_info_id_source(id,source_id)`；`research_result` 增加同序索引 `idx_result_info_source(customer_info_id,source_id)` 和组合外键 `fk_result_info_source(customer_info_id,source_id) → customer_info(id,source_id)`，更新／删除均RESTRICT。结果的source_id从已授权的customer_info读取，不相信客户端单独传入值；若请求同时给出且不一致，返回400且不写结果。单条、批量、重试统一调用同一固定服务并在事务内检查；只保留两个独立FK不能作为同源保证。迁移前先查找来源错配，隔离并人工核实，不静默改指向；本规则不决定第030项的历史追加方式或结果幂等模型。
+
+**产品编码。** `product.product_code` 与 `customer_info.target_product_code` 统一为 `VARCHAR(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin`，严格区分大小写；code去除首尾空白后须为1—32字符，创建后禁止改名。customer_info可为NULL，增加 `idx_info_target_product(target_product_code)` 及物理外键 `fk_info_target_product(target_product_code) → product(product_code)`，更新／删除均RESTRICT。未提供意向则保存NULL；未知编码返回400，不自动创建产品、不悄悄变NULL；新录入或改选disabled产品返回409。产品停用保留既有意向、规则及结果，只停止新选用和正常研判；本期产品不物理删除，仅停用，历史查询仍可解释旧code。意向不等于规则命中，也不自动映射客服课程。
+
+**来源引用。** `customer_profile.source_reference` 保持 `VARCHAR(128)`，作为后端生成的类型化逻辑引用：`customer_info:<正整数id>`、`research_result:<正整数id>`、`event_signup:<正整数id>`；只允许这三种前缀，ASCII小写、无空白、ID无前导零。不得放文件路径、手机号、任意URL或同名的知识库source_reference。常规研判归并优先用customer_info引用；明确从某条结果发起时使用research_result引用并核对同源关系；公开报名的event_signup引用仅用于当前关闭的可选转线索能力。关联的真实实体必须存在且操作者可读，引用生成后不随重试改变，不伪装成跨表物理FK。
+
+| 主档字段 | 来源与写入规则 |
+| --- | --- |
+| customer_id／customer_no | 数据库／固定主档服务生成，不使用来源ID、姓名或手机号替代主键／业务编号。 |
+| full_name | customer_info.full_name或经确认的报名姓名；新建必须非空，缺失则补充确认，不虚构匿名姓名。 |
+| phone_ciphertext／phone_lookup_token | 按公共同套加密／检索方案写入；token仅查询候选，不证明同一人，不自动合并。报名明文电话只在授权服务内转换，不进入日志。 |
+| education_level | 仅从customer_info.education_level按受控枚举映射；不合法则要求更正，不从模型猜测。 |
+| target_country_code | customer_info没有对应物理列；仅接受raw_fields白名单内经确认的合法国家码，否则NULL，不把产品code填入国家字段。 |
+| source_channel／source_reference | 服务端分别写 `research`／类型化研判引用，或在未来授权启用时写 `agent_signup`／报名引用；两者不得由匿名请求任意指定。 |
+| department_id／employee_id | 前者由合法归属流程确定且必填，后者为有效顾问或NULL；不以analyst提交人冒充顾问。第025项未提供可信归属时停止归并，不凭默认部门建档。 |
+| status／authority_source／is_archived | 新建固定new／local／false，status_changed_at取真实建档时刻；外部ID和外部更新时间保持NULL。其他必填项及版本／时间由固定主档服务生成。 |
+
+归并只允许有相应客户动作权限和对象范围的内部人员，通过预览→候选核对→确认执行：锁定customer_info及候选主档，检查expected_version；新建或显式关联主档后，同事务回填 `customer_info.customer_id` 并递增版本，写必要审计和成功回执。已有customer_id相同则幂等返回；不同则409，禁止静默换绑。选用research_result引用也回填它真实关联的customer_info，不在结果表另造customer_id。同键不同参数409；操作键绑定真实操作者、动作及请求键，业务去重锚点为customer_info.id（报名转线索则为event_signup.id），避免从不同结果重复建档。多次来源关联的历史记录写受控审计，主档source_reference仅保留首次创建来源，不用后续来源覆盖。既有主档字段默认不覆盖；更正需独立授权动作和版本校验，不把归并当批量更新接口。审计操作者与幂等回执实际承载仍依第007／010项，未就绪不得执行。
+
+raw_fields本期仅允许 `target_country_code`、`language_level_code`、`intended_enrollment_year`：国家码及语言级别从后端受控字典核验；入学年份为四位整数且范围为1900—2199。均为可选字段，不为其新增物理列；拒绝未知key、任意嵌套对象／数组和非预期类型。仅target_country_code可按上表进入主档，其他仅为经审核的研判扩展输入，不自动赋予规则用途。姓名、电话、邮箱走专用保护字段；完整原文、地址、证件、心理资料和自由备注均不进raw_fields。原件、contact_email的保护及保留期限仍由第022项确定，本轮不把白名单视为该项已完成。
+
+**可选联动开关。** 本期客服报名／留资自动转线索、自动接入研判、研判自动建主档、私有结论反哺匿名客服均关闭，不启动相关后台消费者或新增公开写入口。仅上段“授权内部人员预览确认后的研判主档归并”作为受控人工流程，且需满足归属、权限、审计等依赖；不能由访客标识触发。未来启用自动联动必须另行冻结收集用途、可信人员／服务身份、负责人及范围、确认、字段白名单、稳定事件去重和对账。公开披露白名单只包含原已公开的上架课程、活动、FAQ及其公开字段，不含客户关联、研判是否命中、评分、规则理由或个人信息；即使内部自动化获准启用，也不默认放开私有结果向匿名会话披露。product与course_project映射仍依第023项，不因启用联动自动建立外键。
+
 ### 四模块调用边界与报告生成流程
 
 来源 `cyl合并后.md` 4.1 的示意图把匿名客服也画在公共 JWT 后方，并将其他受保护业务标成管理员；本节按已有匿名规则及逐接口授权口径修正。
@@ -1849,20 +1892,84 @@ student_auth只负责业务确认/会话凭证及服务身份分支，人员认�
 - **客服模块**：匿名开放，不接 JWT；对话编排、活动/课程/FAQ 查询、报名落库；Dify 只生成话术与动作，后端以数据库事实为准。
 - **报告模块**：平台管理员和部门主管可访问，复用公共JWT、精确report权限与数据范围；配置和手动生成均限平台管理员，主管仅查看；作为数据消费末端只读上游、算指标、调Dify写分析、落库。
 
-#### 报告生成主线（来源设计）
+#### 报告生成主线（035—040冻结目标）
 
-1. 管理员登录取得 JWT，调 `POST /api/v1/report/generate`（`report_code` + 可选时间窗）。
-2. 报告路由经公共鉴权校验管理员与 `report.generate`（当前未挂鉴权，为待办）。
-3. 幂等判定：同键同口径返回已有记录，同键不同口径返回 409。
-4. 建 `report_record`（`status=pending`）立即返回 `report_record_id`，后台任务异步执行：
-   - 固定 SQL 从上游源表取数（只读）；
-   - 计算指标（固定口径）；
-   - 调「智能报告生成」Workflow（`report_code` + `metrics` → `report_text`）；
-   - 剥离 `<think>` 推理内容，写正文与指标快照；
-   - 置 `success`；任一步失败置 `failed` + `fail_reason`。
-5. 管理员轮询 `GET /report/{report_record_id}` 取结果；`GET /report/list` 只看元数据；心理周报默认匿名聚合。
+1. 平台管理员用公共JWT及 `Idempotency-Key` 提交五类report_code、可选成对时间窗；业务默认北京时间Asia/Shanghai。服务端先确认动作和可信公司／部门范围，不能用模型或未校验参数决定范围。
+2. 按第一章Schema校验，按本章指标字典解析统计窗口，冻结配置版本、指标版本、模板版本和生成修订号；先检查请求回执，再由业务生成键竞争唯一报告记录。
+3. 新记录及请求映射提交成功后返回pending；相同请求／业务键返回已有ID和真实状态，不重复入队。后台任务持久化、租约和恢复仍按第041项落实。
+4. 任务使用独立会话，在同一只读一致性事务内完成授权过滤、上游读取及固定指标计算；把可复算聚合输入和元数据冻结到metric_json后结束取数事务，不跨Dify调用持有读事务。
+5. 仅把获准指标白名单交给报告Workflow，核对返回正文数字并按统一发布事务保存正式指标／正文；模型失败保留冻结输入，不返回伪造成功。跨JSON、明细及正文的完整发布保障仍依第044／046项。
+6. 平台管理员或有效主管通过详情／列表查询授权记录；每次读取和幂等回放重新检查当前身份及范围。不得以复用同一报告为由允许跨部门读取。
 
-合并限制：报告管理员策略和逐权限依赖尚待接入；详情/列表前缀归一见第一章。后台任务必须使用自己的数据库会话，不能在响应结束后继续依赖已关闭的请求会话；不把“异步”声明写成已经可靠执行的保证。
+#### 报告上游消费契约（037）
+
+只读上游以当前业务表为准：原 `customer_judgement` 只是历史名称，报告不为此新建同义表；研判统一消费 `research_result → customer_info → customer_profile`，并校验结果与信息同源。customer_profile及必要employee／student_profile仅用于主档关联、范围核验，查询输出不直接暴露其敏感字段。
+
+| 真实来源 | 必需字段／状态 | 取数时间、粒度及可用条件 |
+| --- | --- | --- |
+| customer_profile | customer_id、department_id、status(new/contacting/qualified/signed/lost)、status_changed_at、is_archived、created_at、row_version；lost_reason仅授权内部分类，模型不接收原文 | 新增按created_at；存量／状态按取数快照；期间流失需真实状态变更事件，只有当前status_changed_at不能完整重建期间历史。 |
+| customer_followup | followup_id、customer_id、employee_id、followup_at、followup_status(none/pending/done/cancelled)、row_version | 跟进发生量按followup_at及followup_id计数；followup_status是后续安排状态，不用它否定已发生的跟进事实。 |
+| research_result＋customer_info | 结果id、source_id、customer_info_id、product_id、rule_version、matched、created_at；信息id、source_id、customer_id | 仅正常完成且关联可信主档的结果进入客户指标。按窗口内created_at筛选，同一customer_id×product_id取created_at最大、再id最大的一条；不同来源也不重复计入该对。未归并资料不进入客户比例，独立标记excluded_unlinked_count（内部质量统计）。 |
+| employee_daily_report | daily_report_id、employee_id、report_date、department_id_at_submit、status(submitted/void)、submitted_at、row_version | report_date按北京时间业务日期筛选，计数粒度为日报ID，修订不新增提交次数；部门按提交快照，不以员工当前部门代替。历史修订归属仍依第056项，无法还原时不发布历史部门指标。 |
+| mental_health_profile | id、student_id、risk_level(low/medium/high/critical)、observed_at、source_event_id、analysis_version | observed_at决定评估窗口，按可信源事件去重；取数前检查同一分析版本及本人学生的可信部门关系，汇总后才进入模型；源事件去重的真实落地依第061项。 |
+| mental_warning | id、student_id、risk_level(high/critical)、follower_status(pending/processing/closed)、created_at、version | created_at决定新增预警；处置状态为快照现状；按id去重。学生明细、原因及个人情绪值不交模型。 |
+| service_ticket＋必要service_ticket_record | ticket_id、ticket_type(complaint/suggestion)、handling_department_id、status(open/assigned/processing/awaiting_student/closed/reopened)、category_code、first_response_at、created_at、resolved_at、closed_at、satisfaction_score、row_version；记录ticket_record_id、cycle_no、record_type、to_status、created_at | 只取complaint；新增按created_at，给方案／关闭等事件按相应历史事件时间；每轮以(ticket_id,cycle_no)唯一。不从被重开清空的当前字段猜测旧轮次。 |
+
+上表是逐表最低消费字段和授权要求，不宣称均已部署；取数前核验表／列、枚举和版本可用。研判规则与输入历史依第026／030项；缺合法主档关联、无有效规则版本或必要历史时，相关指标为unavailable，不将解析失败视为正常未命中。单客户多产品可以分别计产品命中，但客户覆盖人数按customer_id去重；客户命中人数为至少一个被选结果matched=true的客户，不能累加各产品人数。
+
+本期排除营收、成交金额、客单价及金额转化率，不新增 `customer_profile.deal_amount` 或货币字段，也不从研判评分估算金额。以后启用须先有权威金额事实、币种、精度、退款及折算规则并升级指标版本；当前不向模型提供伪造金额或0金额。
+
+#### 五类报告指标字典V1及时间窗（038）
+
+统一业务时区为北京时间 `Asia/Shanghai`；按北京时间解析自然周期后转为UTC存储和比较。默认日窗口为上一完整自然日00:00至本日00:00；默认周窗口为上周一00:00至本周一00:00，不采用最近24小时／7天滚动窗口。每天或周五17:00只决定触发时间，不改变统计窗：2026-10-17触发日报默认统计北京时间10-16 00:00至10-17 00:00；2026-10-16周五触发周报默认统计10-05周一00:00至10-12周一00:00。四类周报共用此规则，不把当周未结束的数据当完整周。
+
+显式start_time／end_time必须同时提供、均带时区偏移，先转换UTC再比较，要求start<end、end不晚于受理时刻、跨度不超过366个北京时间自然日。report_date类指标要求两端换算为北京时间后均为00:00；含时分秒的窗口只允许不含日报日期指标的报告。存储边界精确到毫秒；超过3位的小数秒仅在多余位全0时可接受，否则400，禁止悄悄截断导致幂等碰撞。timezone省略为Asia/Shanghai，本期显式其他时区返回400。边界统一 `[start,end)`，end事件归下一期。查询当前快照与事件期间量在指标名称中区分，显式历史窗口不能伪称重建当年期末状态。
+
+字典版本固定 `metrics-v1`。下表为启用指标集合；状态／等级／类别后缀为受控枚举且展开后各metric_code唯一、长度≤64；单位count为条／人、rate为百分比、duration为小时。计数保存整数语义，比例及均值四舍五入保留4位小数，计算用未舍入的基础计数／时长总和。
+
+| 报告 | metric_code | 来源／筛选、公式与分母 |
+| --- | --- | --- |
+| customer_overview | customer_total、customer_state_{status}、customer_archived_count | 授权customer_profile在取数快照的distinct customer_id总量及按status分类；已归档数单列，不因归档抹去已有销售状态；明确为“取数时现状”，不套期间新增口径。 |
+| customer_overview | customer_new_count | created_at在窗口内的distinct customer_id；包含后来归档的真实新增，仍遵守范围。 |
+| customer_overview | followup_count、followup_customer_count | followup_at在窗口内的distinct followup_id／distinct customer_id，关联授权客户；不按下一次跟进安排状态过滤已发生的沟通。 |
+| customer_overview | customer_lost_event_count | 窗口内真实转入lost的客户状态事件数，按稳定事件ID去重；历史事件缺失则unavailable，不用当前lost数冒充期间流失量，也不计算未定义基数的流失率。 |
+| customer_overview | research_customer_count、research_matched_customer_count、research_match_rate | 使用037的客户×产品选取集；分母为distinct已研判客户数，分子为至少一个产品matched=true的distinct客户数；rate=分子/分母×100。无研判上游为unavailable，空集计数0但比例not_computable。 |
+| customer_overview | research_product_{id}_count、research_product_{id}_matched_count | 同一授权窗口及快照按product_id计选取结果数／命中数；不跨产品相加当客户人数，产品ID不作为外部客户身份。 |
+| daily_report／weekly_report | daily_submitted_count、daily_void_count、daily_author_count | report_date在北京时间日期窗口内；分别为快照status=submitted／void的distinct日报ID数；作者数仅对submitted去重employee_id。修订同ID只计一次；作废不计有效提交和作者。日／周只改变窗口，不另改公式。 |
+| mental_weekly | mental_assessment_count、mental_risk_{level}_count | observed_at在窗口内，按可信源事件去重；分别为评估总数及risk_level分类数。使用同一analysis_version，版本不兼容不得直接混算；评估次数不称学生人数。 |
+| mental_weekly | mental_warning_count、mental_warning_{state}_count | created_at在窗口内的distinct预警ID总量及取数快照follower_status分类；状态分类和新增量使用同一创建队列。仅允许经过第045项匿名保护的聚合输出。 |
+| mental_weekly | mental_assessment_change_rate、mental_warning_change_rate | 与前一个等长且同边界口径窗口比较：(本期量−上期量)/上期量×100；上期0为not_computable，上期缺依赖或版本不同为unavailable。不默认输出个人情绪评分或细粒度趋势。 |
+| complaint_weekly | complaint_new_count、complaint_new_state_{status}_count、complaint_category_{code}_count | ticket_type=complaint且created_at在窗口内；按ticket_id计新增工单及其取数快照状态／受控分类，明确不是期末历史状态。suggestion不混入投诉。 |
+| complaint_weekly | complaint_open_count | 取数快照所有授权投诉中status≠closed的distinct ticket_id；awaiting_student仍为未最终关闭，不限本期新建。 |
+| complaint_weekly | complaint_first_response_hours | 以窗口内真实首次有效人工回应事件为队列，Σ(first_response_at−created_at小时)/有完整有效时间的工单数；自动回执／内部备注排除，另保存valid_count及missing_count。 |
+| complaint_weekly | complaint_cycle_solution_hours、complaint_solved_cycle_count | 以本窗口给方案的(ticket_id,cycle_no)为队列；每轮起点为初次created_at或该轮reopened事件，均值=有效轮次总时长/有效轮次数，给方案量按轮次去重；历史缺失的轮次标缺失，不从最近resolved_at回推。 |
+| complaint_weekly | complaint_closed_count、complaint_close_hours | 窗口内历史确认关闭事件按(ticket_id,cycle_no)去重计关闭次数；关闭时长为该轮起点至关闭事件的有效总时长/有效关闭轮次数。曾关闭后重开仍保留旧关闭事件，但当前未结量以当前status计算；不把关闭次数称当前已关闭工单数。 |
+| complaint_weekly | complaint_satisfaction_avg、complaint_satisfaction_rate | 按“新建于窗口且快照仍closed”的投诉队列，仅纳入学生实际1—5分有效评价，每ticket_id取当前最终有效评价；平均分=分数和/有效评价数；满意率=评分≥4的评价数/有效评价数×100。未评价不当0、不进入分母。无历史评价事件时不宣称统计的是期间评价发生量。 |
+| complaint_weekly | complaint_response_overdue_count、complaint_resolution_overdue_count | 快照仍待回应／尚未给方案且超过对应合法due_at的工单数；生成截止时间及重开计时依第054项。该政策未就绪则unavailable，不能由报告自己补造期限。 |
+
+每个指标同时保存 `{value,unit,availability,reason,numerator?,denominator?,valid_count?,missing_count?,metric_version}`。availability为available／not_computable／unavailable：上游齐全且确无记录的count才是0；分母0为value=NULL及not_computable；缺表／列、授权范围、状态历史、版本或匿名保护为value=NULL及unavailable。缺部分历史的均值仅在明确标出valid_count／missing_count时可作为“可核验样本均值”，不能冒称全量均值；没有有效样本则not_computable。report_metric的空值指标用metric_value=NULL及metric_text保存不可计算原因，满足现有非全空CHECK，不以0占位。
+
+必须的主来源不可读（客户经营的主档／跟进、日报的日报表、心理的评估／预警、投诉的工单表）时任务失败并给出脱敏依赖原因，不生成“全零成功报告”；可选研判、事件历史或政策性指标缺失时保留可用主指标并清楚标注报告覆盖范围。心理匿名保护未就绪时按第045项阻止发布。迟到／修订数据不覆盖已冻结报告，需新生成修订号；跨周期比较必须同指标版本、范围、时区、窗口类型、源分析版本和隐私规则，不可比则unavailable。第055／056／061项仍负责相关业务历史和去重的真实实现，本字典不把它们标为已完成。
+
+#### 多源一致性快照与复算边界（039）
+
+本期报告取数限定同一MySQL实例、InnoDB业务表；取数任务建立独立、REPEATABLE READ、READ ONLY的显式一致性快照事务，所有表、关联及前期比较窗口必须复用该连接／事务，禁止各指标各开连接。不得以读副本混用、普通自动提交SELECT或跨库多次“当前时间”拼成一致快照；发现非事务表、外部接口或不可保证同步截点的副本时停止对应报告并报依赖未就绪。
+
+固定数据库UTC时钟读数记录为data_snapshot_at，说明其只是快照建立时刻的审计标签，不能凭此时间戳重新打开当时MVCC视图。事务第一次一致性读取固定可见数据集；期间新提交、修改或删除不进入该次取数，业务事件还需满足各自[start,end)。只读事务内不调用Dify、不写报告状态；读取并计算完成后提交，再以独立写事务保存冻结输入。记录source_counts_by_table（按各表真实主键去重）、各指标基础计数／分母／时长和、源版本、窗口、范围摘要、query_version、metric_version及聚合输入校验摘要；source_record_count等于参与取数的各表去重行数之和，明确不是“客户数／学生数”，不含未读表和被拒绝行，不把连接放大行数直接求和。
+
+冻结输入放在metric_json的服务端保留区 `_manifest`／`_calculation_inputs`，不新增三表字段；元数据允许初始化时存在而正文仍为NULL。保留区仅存授权聚合基础量、配置／规则／指标版本和摘要，不存个人心理原文、个人ID列表、邮箱或手机号，也不把幂等请求映射放入模型输入。对外详情需由Schema适配器投影公开字段，Dify只接获准指标，不直接透传整个metric_json。
+
+复算承诺限于：用冻结聚合基础输入、公式版本和版本元数据重算既有指标并核对摘要；不承诺仅靠当前业务表和data_snapshot_at完整重建旧业务记录、旧输入文本或模型的同字正文。需要审计原业务版本时依赖各业务历史及保留政策，缺失则明确不可重建。快照后迟到记录／修订只进入以后新修订报告，原报告保持不变。取数失败且尚未冻结完整输入可重新建立一致快照；已冻结后重试只复用该输入，不悄悄重新取数混入新数据。
+
+#### 请求幂等与业务报告复用（040）
+
+1. **请求键与参数摘要。** 前端生成 `Idempotency-Key`，同提交／超时重试保持原键，受理后不再按“当前日期”重算省略的默认窗口。请求命名空间为可信账号user_id＋动作report.generate；调度为可信service_code＋稳定计划触发标识，不伪造员工。第一次请求先持久化原始规范化参数摘要（包括时间是否省略）、解析后的窗口、可信scope_key和冻结版本。后续同键同参数先读取该回执，即使已跨日／配置后来更新也回放原ID；同键不同参数409。当前已失权或范围变化时禁止回放，不把同一个请求键作为新的请求重新解释。
+2. **持久化回执契约。** 请求回执必须原子持久化 `request_namespace、request_key_hash、parameters_hash、resolved_window、scope_key、version_bundle、report_record_id`，对(namespace,key_hash)唯一；不直接将客户端请求键写进report_record.idempotency_key。实现复用共享受控幂等回执机制，操作者／物理承载按第007／010项落实；本轮不新增平行账号或假服务审计。该依赖未就绪不得用进程内字典替代持久化保证，也不得启用生成接口。回执对外只返回受控报告ID，不暴露其他账号请求数据。
+3. **业务生成键。** 服务端对固定字段顺序、UTF-8、无多余空白的规范JSON作SHA-256：`{key_version:"report-key-v1",report_code,scope_key,start_utc_ms,end_utc_ms,timezone:"Asia/Shanghai",metric_version,report_version,config_id,config_row_version,template_version,privacy_policy_version,generation_revision}`；时间采用完整UTC毫秒时间，不能只格式化为日期。摘要64位十六进制存report_record.idempotency_key，沿用uq_report_record_idempotency。scope_key是公司／部门范围的可信、稳定标识（第006项），缺失则503，不回退全公司；配置／隐私版本的完整历史承载依第043／045项，未知不能以空串拼键。账号纳入请求命名空间，不纳入业务键：多个管理员仅在获准相同范围时可复用同一业务报告。
+4. **并发。** 在同一写事务中竞争请求回执唯一约束与报告业务键唯一约束；先获业务键者创建pending记录并关联回执，其他请求在唯一冲突后回滚／重开事务、校验完整版本及范围后关联已有记录，不靠“先查询再插入”防并发。记录、请求映射及可靠任务交付按第041项形成一致受理；未提交不返回成功受理。复用pending／running不再派任务，复用success直接读已有报告，始终重验当前权限。
+5. **失败与新修订。** 相同请求键对failed记录只回放该失败，换一个请求键但业务键相同仍复用同一failed，不偷偷重新调用模型。可恢复执行重试由第041项受控恢复同一报告ID和冻结输入，不增加业务报告；用户明确要求重新取数／重新生成时，平台管理员使用新的请求键，后台经审计分配新的generation_revision，按新业务键创建记录。当前五接口不增加force／retry字段或新重试端点，人工重建修订的控制入口仍须受控交付后才能使用；无该能力时明确不能重建，不靠改配置版本绕过失败。
+
+验收重点：同请求键跨日重试不换窗口；同键换参数409；同日不同毫秒窗口键不同；公司与部门键不同；同范围同版本并发只建一条报告；不同账号不能回放他人请求；管理员或主管失权后不能凭旧ID／回执读取；取数期间业务修改不混入旧快照；模型失败重试不重新取数。本轮只冻结上述语义，未完成第006／007／010／041／043—046等依赖的运行核验，不把它们计为本轮已解决。
 
 #### 客服既有流程（报告来源复述）
 
@@ -2111,8 +2218,8 @@ flowchart TD
 
 ### 与研判、报告、客服的新增联动限制
 
-1. 企业客户服务可承接经确认的客服/研判线索，但继续使用候选匹配、受控归属和幂等，不能仅凭同号自动合并；拟新增ENTERPRISE_PHONE_*密钥必须与主档及研判同套规则核对，不能对已有密文/token直接切换新密钥。
-2. 企业日报字段字典与学生心理/工单状态方案为报告上游增加字段参考，并不证明接口或表已落地。customer_judgement/deal_amount缺口依旧；报告只读聚合且不能读取心理原文作推荐或通用经营分析。
+1. 本期客服自动转线索、自动研判及自动建主档关闭；仅授权内部人员可按033预览确认流程归并研判资料，且必须满足可信归属、审计及幂等依赖，不能仅凭同号自动合并。电话加密／token沿用公共同套密钥，不能直接切换新密钥。
+2. 企业日报、学生心理及工单提供报告只读上游，真实落地仍需核验；研判来源统一research_result→customer_info，金额指标本期排除。报告按037—039取数聚合，不能读取心理原文作推荐或通用经营分析。
 3. 老师工作台通知必须按事件归属调用学生或企业通知入口：student.ticket.*即使由企业服务生产也由StudentTasks投递，事件生产者与投递者不是一回事。以第十六章B.7具体表为目标，不按页面所属模块重复发通知。
 4. 固定写服务与模型抽取职责分开，Dify不持有数据库写权限、不替服务生成操作者；查询生成候选SQL只有通过受控关系及AST校验才可执行。
 
@@ -2165,7 +2272,7 @@ flowchart TD
 3. 缺失与停用：关键字段缺失时返回缺失清单，进入补资料/人工复核，不强行记不匹配；无有效规则、产品停用或规则格式错误时不生成正常命中/未命中结果。具体产品准入与评分阈值仍待第十八章第028项；不新增未经审核的数据库状态枚举。
 4. 工单指标：首次回应取first_response_at-created_at，自动回执/内部备注不计；每轮给方案与最终关闭分别统计。每轮起点为首次created_at或该轮重开事件，终点为同cycle_no给方案记录；最终关闭只有当前closed且存在closed_at才计入。重开清空当前solution/resolved_at/closed_at不抹去历史轮次；无法从记录还原时标不可计算，不填0或猜测。
 5. 心理报告：原始取数→聚合metrics→Dify输入→正文/列表→日志全链路使用汇总白名单。只提供评估次数、风险等级分布、预警总数/处置状态及按获准周期汇总的趋势；评估次数不冒充去重学生人数。学生ID、姓名、联系方式、聊天原文、个人情绪值/预警原因及个人可追踪标识不进入报告链路。部门/时间细分和小样本阈值仍待第十八章第045项，未确定前不开放可定位个人的细分或下钻。
-6. 通用统计：先按权限和时间窗过滤，再按业务主键/事件去重；事件时间列依本文各对象定义，业务时区Asia/Shanghai、存储沿用UTC目标。查询窗口统一[start,end)，结束时点不重复计入下期。分母0、缺上游或缺历史时返回不可计算/依赖未就绪及说明，不把缺失当0；跨周期比较使用同一指标版本。实际指标选择及分母仍待第十八章第038项，默认自然/滚动窗口仍待第十八章第038项。
+6. 通用统计：先按权限和时间窗过滤，再按业务主键/事件去重；事件时间列依本文各对象定义，业务时区Asia/Shanghai、存储沿用UTC目标。查询窗口统一[start,end)，结束时点不重复计入下期。分母0、缺上游或缺历史时返回不可计算/依赖未就绪及说明，不把缺失当0；跨周期比较使用同一指标版本。指标、分母和默认窗口已按第038项冻结：默认北京时间上一完整自然日／自然周，不用滚动窗口，字典及缺失值规则见第八章。
 
 联系方式与心理资料的原始文件/文本如确需保留，须在受控存储保护并按授权访问，运行日志不输出完整原文；具体期限与匿名阈值未被本轮自行决定。以上没有改变既定报告角色、北京时间17:00的日报/周报生成计划或个人页通知方式。
 
@@ -2273,7 +2380,7 @@ flowchart TD
 | education_level | VARCHAR(32) | 是 | NULL | 客户学历层次。 |
 | target_country_code | VARCHAR(8) COLLATE utf8mb4_bin | 是 | NULL | 意向留学国家编码。 |
 | source_channel | VARCHAR(32) | 否 | 未声明 | 客户来源，如人工、客服留资或 CRM。 |
-| source_reference | VARCHAR(128) | 是 | NULL | 来源留资或研判任务引用。 |
+| source_reference | VARCHAR(128) | 是 | NULL | 后端类型化逻辑引用：`customer_info:<id>`／`research_result:<id>`／`event_signup:<id>`；保留首次建档来源，按第八章033核验实体、权限和幂等；报名自动转线索当前关闭。 |
 | employee_id | BIGINT | 是 | NULL | 当前顾问员工 ID，未分派时为空。 外键（FK）关联 employee.employee_id。 |
 | department_id | BIGINT | 否 | 未声明 | 当前客户管理部门 ID。 外键（FK）关联 org_department.department_id。 |
 | status | VARCHAR(32) COLLATE utf8mb4_bin | 否 | 'new' | 客户状态：new、contacting、qualified、signed、lost。 |
@@ -2368,7 +2475,7 @@ flowchart TD
 | 字段 | 类型 | 可空 | 默认值 | 说明 |
 | --- | --- | --- | --- | --- |
 | id | BIGINT | 否 | 自增 | 主键 |
-| product_code | VARCHAR(32) | 否 | — | 产品唯一编码，唯一键 |
+| product_code | VARCHAR(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin | 否 | — | 产品唯一编码，唯一键；创建后不可修改，产品仅停用不物理删除 |
 | product_name | VARCHAR(100) | 否 | — | 产品名称 |
 | description | TEXT | 是 | NULL | 产品说明 |
 | target_profile_summary | TEXT | 是 | NULL | 目标客户画像摘要（规则判定口径的说明） |
@@ -2416,7 +2523,7 @@ flowchart TD
 | position_title | VARCHAR(100) | 是 | NULL | 职位 |
 | city | VARCHAR(64) | 是 | NULL | 所在城市 |
 | income_level | VARCHAR(32) | 是 | NULL | 收入/薪资层级 |
-| target_product_code | VARCHAR(32) | 是 | NULL | 意向产品编码（可空，关联 product.product_code） |
+| target_product_code | VARCHAR(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin | 是 | NULL | 意向产品编码；目标物理FK关联product.product_code，更新／删除RESTRICT；停用产品历史引用保留 |
 | phone_ciphertext | VARBINARY(512) | 是 | NULL | 加密保存的联系电话（沿用 customer_profile 加密约定） |
 | phone_lookup_token | CHAR(64) | 是 | NULL | 标准化手机号的匹配标记，用于受控归并/判重 |
 | contact_email | VARCHAR(254) | 是 | NULL | 联系邮箱 |
@@ -2426,7 +2533,8 @@ flowchart TD
 | row_version | INT | 否 | 1 | 并发版本号 |
 
 - 外键：`fk_customer_info_source(source_id) → customer_source(id)`；`fk_customer_info_customer(customer_id) → customer_profile(customer_id)`（可选，归并后回填）。
-- 索引：`idx_info_source(source_id)`、`idx_info_phone_token(phone_lookup_token)`、`idx_info_customer(customer_id)`。
+- 索引：`idx_info_source(source_id)`、`idx_info_phone_token(phone_lookup_token)`、`idx_info_customer(customer_id)`；031／032目标新增 `uq_info_id_source(id,source_id)` 唯一键及 `idx_info_target_product(target_product_code)`。
+- 032目标物理外键：`fk_info_target_product(target_product_code) → product(product_code)`，ON UPDATE RESTRICT／ON DELETE RESTRICT；未提供为NULL，未知编码拒绝，新选停用产品拒绝。以上为文档目标，未安装真实约束。
 
 **字段命名与加密约定**：联系方式不存明文；`phone_ciphertext` 与 `phone_lookup_token` 与 `customer_profile` 同套加密/匹配方案，保证后续归并可复用同一 token，避免两套去重混用（见本章“字段与表关联冲突”）。
 
@@ -2473,13 +2581,14 @@ flowchart TD
 
 - 外键：`fk_result_source(source_id) → customer_source(id)`、`fk_result_info(customer_info_id) → customer_info(id)`、`fk_result_product(product_id) → product(id)`。
 - 索引：`idx_result_info(customer_info_id)`、`idx_result_product(product_id)`、`idx_result_matched(product_id, matched)`、`idx_result_source(source_id)`。
+- 031目标新增：同序索引 `idx_result_info_source(customer_info_id,source_id)` 和组合外键 `fk_result_info_source(customer_info_id,source_id) → customer_info(id,source_id)`，更新／删除RESTRICT；引用侧唯一键见customer_info。独立source／info外键可保留，但不能代替组合约束；真实迁移先核对错配数据。
 
 字段定位：结果信息索引采用`idx_result_info(customer_info_id)`。逐表时间／版本与数据保护的剩余事项统一见末章。
 
 
 ### 客户研判与跨模块ER关系
 
-customer_info是一份来源的结构化快照，customer_profile是统一客户主档；两者的受控归并见第八章流程。研判角色使用employee.role_codes，不新增identity_type；产品和课程默认独立。未闭合的字段与引用事项统一见第十八章。
+customer_info是一份来源的结构化快照，customer_profile是统一客户主档；类型化来源引用、字段映射、确认归并及默认关闭的自动联动见第八章031—034规则。研判角色使用employee.role_codes，不新增identity_type；产品和课程默认独立。其余未闭合事项仍见第十八章原编号。
 
 #### 三模块表间关系（方案）
 
@@ -2504,30 +2613,117 @@ lecture_event 1:N event_signup (event_id)
 
 关键闭合：客户研判五表通过 `source_id` 串起「来源 → 字段 → 结果」，通过可空 `customer_info.customer_id` 与平台客户主档衔接，通过 `product` 承接两个产品的规则与结论。客服报名 `event_signup` 与客户研判无直接外键，联动通过业务层把报名留资作为 `customer_source` 文本来源接入（见第八章“客服与客户研判联动”）。
 
-关联要求：research_result.source_id 必须与所引用 customer_info.source_id 一致，不能把不同来源的结果和客户信息拼接。
+关联要求：research_result的customer_info_id／source_id以组合外键保证同源，固定服务读取授权信息记录后派生source_id并在事务内核对；单条、批量、重试统一，细则见第八章031规则。
 
-### 智能报告三张专属表（字段摘要，非完整DDL）
+### 智能报告三张专属表（完整字段与单一DDL基线，036）
 
-来源：`cyl合并后.md` 3.4。来源声称“完整字段、约束与索引见主文档第九章”，但合并前主文档不存在报告三表定义，来源本身也只给出字段名称。以下完整保留其 37 个字段名称及明确的唯一键/外键线索；类型、可空性、默认值、精度和具体索引并未提供，本文不补造。
+本轮只读核对了 `scripts/sql/all.sql`、`scripts/sql/bk/智能报告/report_module_ddl.sql`、`app/models/report.py`、`app/schemas/report.py` 及 `业务文档/09杂谈/操作文档个人版/cyl.md`。以下37字段从两份本地DDL提取，三张CREATE TABLE的结构定义一致（忽略说明性COMMENT和空白）；ORM具备对应37字段及表级约束／索引声明。本结论仅为文件静态核对，未连接目标数据库，不证明物理对象、既有数据及约束已安装。
 
-- `report_config`（9 字段）：`report_config_id`、`report_code`（唯一）、`report_name`、`report_period`、`cron_expr`、`enabled`、`created_at`、`updated_at`、`row_version`。
-- `report_record`（18 字段）：`report_record_id`、`report_config_id`（FK）、`report_code`、`idempotency_key`（唯一）、`start_time`、`end_time`、`timezone`、`data_snapshot_at`、`report_version`、`source_record_count`、`report_content`、`metric_json`、`status`、`fail_reason`、`generated_at`、`created_at`、`updated_at`、`row_version`。
-- `report_metric`（10 字段）：`report_metric_id`、`report_record_id`（FK）、`metric_code`、`metric_name`、`metric_value`、`metric_text`、`metric_unit`、`calc_rule`、`period_type`、`created_at`。
+**基线规则：** `scripts/sql/all.sql` 为全量结构唯一主基线，模块DDL只是受控抽取件，ORM按该定义映射；新增需求先形成明确目标差异，再统一修订基线／抽取件／ORM，不能两份SQL独立演化。对已有数据库只使用经审核增量迁移，不运行全量脚本；报告模块DDL包含DROP TABLE，不能当作日常升级脚本。本轮未修改任何SQL／ORM或执行初始化。现有结构仍为3表、9+18+10字段；006／007／043／044等事项可能带来的新字段或约束不由此自动确定。
 
-来源的上述完整定义引用尚未闭合，待提供经审核 DDL 后补全；当前仅可作为字段名称清单。
+通用类型：InnoDB，utf8mb4，表默认utf8mb4_0900_ai_ci；下面标明utf8mb4_bin的编码／状态／幂等列区分大小写。时间为UTC DATETIME(3)，会话须使用+00:00；业务默认北京时间Asia/Shanghai，不能因存储UTC更改默认周期。
 
-| 表 | 已明确的关联 / 唯一性 | 尚缺的结构口径 |
-| --- | --- | --- |
-| report_config | report_config_id 主键语义；report_code 唯一 | 九字段类型、默认/可空、周期/cron/enabled 枚举及约束、五条种子具体值 |
-| report_record | report_record_id 主键语义；report_config_id 关联 report_config；idempotency_key 唯一 | 十八字段类型、状态约束、外键删除策略、时间精度、快照/版本/幂等策略 |
-| report_metric | report_metric_id 主键语义；report_record_id 关联 report_record | 十字段类型、metric_code 维度与唯一性、数值精度/单位及 calc_rule/period_type 口径 |
+#### `report_config`（9字段）
 
-报告三表的 ORM、all.sql、`scripts/sql/bk/智能报告/report_module_ddl.sql` 是否一致未核验；不能仅凭字段数、文件名或循环引用认定一致或已建表。
+| 字段 | 类型／排序规则 | 可空 | 默认值／更新行为 | 说明 |
+| --- | --- | --- | --- | --- |
+| `report_config_id` | BIGINT | 否 | 自增 | 报告配置主键 ID。 主键（PK）。 |
+| `report_code` | VARCHAR(64) COLLATE utf8mb4_bin | 否 | —（未声明） | 报告代码（五类枚举，见 CHECK）。 |
+| `report_name` | VARCHAR(128) | 否 | —（未声明） | 报告名称。 |
+| `report_period` | VARCHAR(16) COLLATE utf8mb4_bin | 否 | 'week' | 报告周期：day/week/month。 |
+| `cron_expr` | VARCHAR(64) | 是 | NULL | 定时表达式（cron，按东八区配置）。 |
+| `enabled` | BOOLEAN | 否 | 1 | 是否启用：1 启用、0 停用。 |
+| `created_at` | DATETIME(3) | 否 | CURRENT_TIMESTAMP(3) | 记录创建时间，UTC。 |
+| `updated_at` | DATETIME(3) | 否 | CURRENT_TIMESTAMP(3)；ON UPDATE CURRENT_TIMESTAMP(3) | 记录最近更新时间，UTC。 |
+| `row_version` | INT | 否 | 1 | 并发版本号，每次业务修改递增。 |
 
+关联、索引和CHECK（本地DDL现有定义）：
+
+- `PRIMARY KEY (`report_config_id`)`。
+- `UNIQUE KEY `uq_report_config_code` (`report_code`)`。
+- `CONSTRAINT `ck_report_config_code` CHECK (`report_code` IN ('customer_overview','daily_report','weekly_report','mental_weekly','complaint_weekly'))`。
+- `CONSTRAINT `ck_report_config_period` CHECK (`report_period` IN ('day','week','month'))`。
+- `CONSTRAINT `ck_report_config_enabled` CHECK (`enabled` IN (0,1))`。
+- `CONSTRAINT `ck_report_config_row_version` CHECK (`row_version` >= 1)`。
+
+#### `report_record`（18字段）
+
+| 字段 | 类型／排序规则 | 可空 | 默认值／更新行为 | 说明 |
+| --- | --- | --- | --- | --- |
+| `report_record_id` | BIGINT | 否 | 自增 | 报告生成记录主键 ID。 主键（PK）。 |
+| `report_config_id` | BIGINT | 否 | —（未声明） | 报告配置 ID。 外键关联 report_config.report_config_id。 |
+| `report_code` | VARCHAR(64) COLLATE utf8mb4_bin | 否 | —（未声明） | 报告代码（冗余，便于按类型检索）。 |
+| `idempotency_key` | VARCHAR(128) COLLATE utf8mb4_bin | 否 | —（未声明） | 幂等键：report_code+时间窗+版本。 |
+| `start_time` | DATETIME(3) | 否 | —（未声明） | 统计起始时间（UTC）。 |
+| `end_time` | DATETIME(3) | 否 | —（未声明） | 统计截止时间（UTC），必须晚于起始。 |
+| `timezone` | VARCHAR(32) | 否 | 'UTC' | 统计口径时区。 |
+| `data_snapshot_at` | DATETIME(3) | 是 | NULL | 数据快照时间，用于指标可复算。 |
+| `report_version` | VARCHAR(32) COLLATE utf8mb4_bin | 否 | 'v1' | 报告生成版本，参与幂等键。 |
+| `source_record_count` | INT | 否 | 0 | 来源记录数，用于追溯与识别数据不足。 |
+| `report_content` | LONGTEXT | 是 | NULL | 报告正文（AI 生成的结构化文本）。 |
+| `metric_json` | JSON | 是 | NULL | 可复算指标快照（JSON）。 |
+| `status` | VARCHAR(32) COLLATE utf8mb4_bin | 否 | 'pending' | 状态：pending/running/success/failed。 |
+| `fail_reason` | TEXT | 是 | NULL | 失败原因。 |
+| `generated_at` | DATETIME(3) | 是 | NULL | 生成完成时间（UTC）。 |
+| `created_at` | DATETIME(3) | 否 | CURRENT_TIMESTAMP(3) | 记录创建时间，UTC。 |
+| `updated_at` | DATETIME(3) | 否 | CURRENT_TIMESTAMP(3)；ON UPDATE CURRENT_TIMESTAMP(3) | 记录最近更新时间，UTC。 |
+| `row_version` | INT | 否 | 1 | 并发版本号。 |
+
+关联、索引和CHECK（本地DDL现有定义）：
+
+- `PRIMARY KEY (`report_record_id`)`。
+- `UNIQUE KEY `uq_report_record_idempotency` (`idempotency_key`)`。
+- `KEY `idx_report_record_config` (`report_config_id`)`。
+- `KEY `idx_report_record_code_time` (`report_code`, `start_time`, `end_time`)`。
+- `KEY `idx_report_record_status` (`status`)`。
+- `CONSTRAINT `fk_report_record_config_id` FOREIGN KEY (`report_config_id`) REFERENCES `report_config` (`report_config_id`) ON DELETE RESTRICT ON UPDATE RESTRICT`。
+- `CONSTRAINT `ck_report_record_period` CHECK (`end_time` > `start_time`)`。
+- `CONSTRAINT `ck_report_record_status` CHECK (`status` IN ('pending','running','success','failed'))`。
+- `CONSTRAINT `ck_report_record_count` CHECK (`source_record_count` >= 0)`。
+- `CONSTRAINT `ck_report_record_row_version` CHECK (`row_version` >= 1)`。
+
+#### `report_metric`（10字段）
+
+| 字段 | 类型／排序规则 | 可空 | 默认值／更新行为 | 说明 |
+| --- | --- | --- | --- | --- |
+| `report_metric_id` | BIGINT | 否 | 自增 | 报告指标明细主键 ID。 主键（PK）。 |
+| `report_record_id` | BIGINT | 否 | —（未声明） | 所属报告记录 ID。 外键关联 report_record.report_record_id。 |
+| `metric_code` | VARCHAR(64) COLLATE utf8mb4_bin | 否 | —（未声明） | 指标代码。 |
+| `metric_name` | VARCHAR(128) | 否 | —（未声明） | 指标名称。 |
+| `metric_value` | DECIMAL(20,4) | 是 | NULL | 指标数值（数值型指标）。 |
+| `metric_text` | TEXT | 是 | NULL | 指标文本值（非数值型指标）。 |
+| `metric_unit` | VARCHAR(32) | 是 | NULL | 单位。 |
+| `calc_rule` | TEXT | 是 | NULL | 计算口径/规则说明，用于指标复算。 |
+| `period_type` | VARCHAR(16) COLLATE utf8mb4_bin | 是 | NULL | 周期类型：day/week/month。 |
+| `created_at` | DATETIME(3) | 否 | CURRENT_TIMESTAMP(3) | 记录创建时间，UTC。 |
+
+关联、索引和CHECK（本地DDL现有定义）：
+
+- `PRIMARY KEY (`report_metric_id`)`。
+- `KEY `idx_report_metric_record` (`report_record_id`)`。
+- `KEY `idx_report_metric_code` (`metric_code`)`。
+- `CONSTRAINT `fk_report_metric_record_id` FOREIGN KEY (`report_record_id`) REFERENCES `report_record` (`report_record_id`) ON DELETE RESTRICT ON UPDATE RESTRICT`。
+- `CONSTRAINT `ck_report_metric_value` CHECK (`metric_value` IS NOT NULL OR `metric_text` IS NOT NULL)`。
+- `CONSTRAINT `ck_report_metric_period` CHECK (`period_type` IS NULL OR `period_type` IN ('day','week','month'))`。
+
+
+#### 默认值、种子与本轮目标差异
+
+report_record.timezone的本地DDL默认值及旧GenerateReportRequest默认值目前均为UTC；这是存量定义，**目标业务默认值统一为北京时间Asia/Shanghai**。后续必须把请求Schema默认值及DDL／ORM业务时区默认值同步为Asia/Shanghai，应用也须显式写入该值；历史明确标为UTC的记录不批量改标签。时间戳列继续存UTC，二者含义不同。生成时区和窗口校验按第一章及第038项；本轮不以文档改动声称代码默认值已更改。
+
+| report_code | report_name | report_period | SQL当前cron／enabled | 已确认目标北京时间／启用条件 |
+| --- | --- | --- | --- | --- |
+| customer_overview | 全域客户经营分析报告 | week | `0 0 9 * * 5`／1 | 每周五17:00；按第042项适配实际调度方言并完成启用核验。 |
+| daily_report | 员工日报汇总报告（日） | day | `0 30 18 * * *`／1 | 每天17:00；同上。 |
+| weekly_report | 员工日报汇总报告（周） | week | `0 0 9 * * 5`／1 | 每周五17:00；同上。 |
+| mental_weekly | 学生心理健康周报 | week | `0 0 9 * * 5`／1 | 每周五17:00；匿名保护未就绪不得发布。 |
+| complaint_weekly | 投诉处理周报 | week | `0 0 9 * * 5`／1 | 每周五17:00；缺时限政策的指标按038标不可用。 |
+
+种子按report_code受控增量更新并保留row_version，不重跑DROP／INSERT覆盖既有配置；SQL的enabled=1不证明已有调度进程。业务目标沿用每日／周五17:00；实际调度、受控启用及现库差异仍由第042／073项核验。report_record.status为四状态；非负source_record_count不是业务人数，快照／计数含义见039。metric_value为DECIMAL(20,4)，不可计算时留NULL并用metric_text说明，禁止以0规避CHECK。指标多维唯一性、配置历史和JSON／明细同事务一致性仍分别依第043／044项，本轮不假称已有额外唯一键。
 
 ### 报告表清单、只读上游与关联关系
 
-#### 报告来源原统计（公共+客服+报告，未含研判）
+#### 报告相关表及只读上游（037同步口径）
 
 | 类别 | 表 | 归属 |
 | --- | --- | --- |
@@ -2535,11 +2731,11 @@ lecture_event 1:N event_signup (event_id)
 | 共享依赖 | `org_department`、`employee`、`customer_profile`、`student_profile` | 各业务模块 |
 | 客服（6） | `course_project`、`lecture_event`、`event_signup`、`faq`、`chat_session`、`chat_message` | 客服模块 |
 | 报告专属（3） | `report_config`、`report_record`、`report_metric` | 报告模块 |
-| 报告只读上游（6） | `customer_followup`、`customer_judgement`（未落地）、`employee_daily_report`、`mental_health_profile`、`mental_warning`、`service_ticket` | 企业 / 客户研判 / 学生 / 投诉模块 |
+| 报告只读上游 | `customer_followup`、`research_result`（经customer_info关联主档）、`employee_daily_report`、`mental_health_profile`、`mental_warning`、`service_ticket`；轮次指标另读service_ticket_record | 企业／客户研判／学生／投诉；共享customer_profile用于主档与范围关联 |
 
 本合并展开 **14 张相关表** 的完整字段（公共账号 5 + 客服 6 + 报告 3）；报告只读的 6 张上游表由对应业务模块维护，报告模块不持有其 ORM、不回写，本合并不展开其字段。
 
-统计校正：上一轮 16 张规划相关表加报告专属三表，本轮四模块为 19 张直接相关表。报告另列六张只读上游表，按目前名称集合与19表不重名，另行统计；其中 customer_judgement 明确未落地且与研判方案不一致。以上为文档范围，不是全项目物理表清点，不等于已有25张表或已展开所有表的完整类型定义。报告来源“14张完整字段”只是来源声称，报告三表当前只有字段摘要。
+统计口径：历史四模块直接相关19表为来源范围；当前六模块累计规划范围沿用本章末的36表。报告只读依赖与该范围有重合，不能再按“六上游”直接相加。research_result及customer_info复用已有研判设计，不额外建设customer_judgement；本轮已补齐报告三表37字段静态定义，但不代表36表均已建成或核验。
 
 #### 报告来源 ER 及上游消费关系
 
@@ -2558,13 +2754,13 @@ report_record.report_config_id ─► report_config.report_config_id
 report_metric.report_record_id ─► report_record.report_record_id
 
 报告模块（只读，不建 FK）：
-  customer_overview ◄── customer_profile、customer_followup、customer_judgement
+  customer_overview ◄── customer_profile、customer_followup、research_result → customer_info
   daily_report / weekly_report ◄── employee_daily_report
   mental_weekly ◄── mental_health_profile、mental_warning
-  complaint_weekly ◄── service_ticket
+  complaint_weekly ◄── service_ticket、service_ticket_record（轮次／历史事件）
 ```
 
-报告共享字段、专属表及上游消费的剩余差异统一见第十八章；上方字段摘要和关系图用于定位设计对象。
+报告37字段基线及上游消费契约已在本章和第八章补齐；物理落地、范围及历史一致性等剩余核验仍按第十八章对应条目管理。
 
 ### 企业 E4：15表依赖、公共结构、索引与关系
 
@@ -2716,7 +2912,7 @@ erDiagram
 | `education_level` | VARCHAR(32) | 是 | `NULL` | 客户学历层次。 |
 | `target_country_code` | VARCHAR(8) | 是 | `NULL` | 意向留学国家编码。 |
 | `source_channel` | VARCHAR(32) | 否 | `—` | 客户来源，如人工、客服留资或 CRM。 |
-| `source_reference` | VARCHAR(128) | 是 | `NULL` | 来源留资或研判任务引用。 |
+| `source_reference` | VARCHAR(128) | 是 | `NULL` | 后端类型化逻辑引用，规则同第八章033；不是知识库同名来源字段，不保存路径或联系方式。 |
 | `employee_id` | BIGINT | 是 | `NULL` | 当前顾问员工 ID，未分派时为空。 外键（FK）关联 employee.employee_id。 |
 | `department_id` | BIGINT | 否 | `—` | 当前客户管理部门 ID。 外键（FK）关联 org_department.department_id。 |
 | `status` | VARCHAR(32) | 否 | `'new'` | 客户状态：new、contacting、qualified、signed、lost。 |
@@ -3164,7 +3360,7 @@ erDiagram
 
 ### 累计表范围与对象版本
 
-六模块按表名去重的直接相关规划范围为36表（原19+企业学生22−共享5）；企业学生43条目标FK属于22表子范围。student_leave_request为停用结构／迁移参考，不计入目标事实表；course_project已包含在客服六表。报告customer_judgement仍为额外依赖，规划数不表示实存数。
+六模块按表名去重的直接相关规划范围为36表（原19+企业学生22−共享5）；企业学生43条目标FK属于22表子范围。student_leave_request为停用结构／迁移参考，不计入目标事实表；course_project已包含在客服六表。报告复用research_result／customer_info，不另计customer_judgement；规划数不表示实存数。
 
 提醒设置代次、预警API版本映射及各对象并发条件以第十六章联合契约为准。真实结构、版本和并行规格的剩余核对事项统一见第十八章。
 
@@ -3417,7 +3613,7 @@ student_shared与enterprise ORM只能投影已有唯一Table元数据；不能�
 
 1. 五接口逐项验证平台管理员/有效manager的允许分支、动作权限及部门范围，普通员工、匿名、客户、学生拒绝；配置拒绝仅有manager的员工；主管仅查看，生成/配置操作均拒绝；角色撤销、调部门及旧Token行为需验证。
 2. 同幂等键同口径复用、不同口径冲突；并发只生成一份，失败重试、进程重启及超时后的状态可追踪。
-3. 固定SQL只读真实上游，缺失customer_judgement/deal_amount不返回伪造成功指标；研判适配有去重、版本与客户关联规则。
+3. 固定SQL只读真实上游；研判按037消费research_result／customer_info并按038去重，缺上游明确不可用；本期排除无权威来源的金额指标，不建customer_judgement同义表或伪造deal_amount。
 4. 时间窗/时区、快照时点、规则/指标版本一致；正文数字与保存指标能对账。
 5. 心理报告在传入Dify之前完成约定脱敏，正文/元数据/日志等路径符合允许输出范围。
 6. 周期配置修改、定时触发与人工触发的幂等边界、多调度进程和任务恢复均有证据。
@@ -3558,7 +3754,7 @@ user_account 的准确约束为：identity_type=admin 时 employee_id、customer
 | 增强点 | 前提及设计约束 | 处理方式 |
 | --- | --- | --- |
 | 公开对话可选识别登录用户 | 保持匿名功能；有效 JWT 只能建立经服务端核验的关联，不信任前端 user_id | 需先约定访客与账号的独立映射方式，不直接覆盖历史 chat_session.user_id；无效 Token 不附带已登录身份或读取账号私密信息 |
-| 报名留资成为客户线索 | 需明确收集用途、负责人、客户归属、字段映射及幂等 | 调共享客户创建/匹配服务，以 source_reference 追溯报名；电话 token 仅用于受控匹配及候选提示，不自动把所有同号客户合并 |
+| 报名留资成为客户线索 | 当前关闭；未来须另行批准用途、可信操作者、归属及字段白名单 | 启用后由内部固定服务处理，引用event_signup:<id>，按稳定报名事件去重；电话token仅提示候选，不能由匿名会话自动建档 |
 | 报名审计 | 受控操作者标识、稳定业务事件和重试规则明确 | 可复用 operation_log，但不能把匿名访客伪装成员工/学生；现有审计操作者约束不适配时须先设计真实服务/访客记账方案 |
 | 报名通知顾问 | 顾问分派和事件归属已确定，通知表/发送器契约一致 | 使用稳定去重键；本地报名、线索、审计及通知事实按明确事务/异步事件边界处理，不重复消费 |
 | 将公开报名改为受保护接口 | 属于访问规则变更，需产品明确选择及前端兼容方案 | customer 下已有 event_signup.create，不代表 visitor 已被定义或获得权限；若引入 visitor，须新增可信身份/凭据及明确授权，不能只挂 require_permission 就宣称支持 |
@@ -3856,12 +4052,12 @@ student_profile.external_student_id 是教务外部编号，crm_student_id 是 C
 
 ### 2. 可选联动与使用边界
 
-- 客服报名→客户线索、研判来源→客户主档的自动或半自动转化，正文目前列为可选增强。未启用不能直接计为必需功能遗漏，也不能声称已形成完整获客转化链；若纳入范围，应补用途、确认、归属、候选匹配、幂等和事务约定。
+- 客服报名自动转线索、自动研判及自动建主档本期关闭，私有结果不反哺匿名客服；内部人员确认后的研判主档归并按第八章033执行并受未就绪依赖限制。未来自动联动须按034重新冻结授权和数据披露条件，不能声称已有完整获客转化链。
 - product与course_project当前默认独立，不强行补外键；若需要研判产品向课程推荐联动，应先明确映射业务规则，不能把同名/同类别视作可靠主外键关系。
 
 ## 十八、合并后的冲突与未确认事项
 
-本章是全文唯一的问题清单，按主题去重后共74项，序号001—074。历次旧清单、状态复核和重复展开已移除；已确认的业务选择、已完成的文档勘误不再列项。
+本章是全文唯一的问题清单，按主题去重后共74项，序号001—074。历次旧清单、状态复核和重复展开已移除。本轮仅处理031—040十项：设计规则已补入对应正文，原编号保留作实施核验索引，不再列为待用户确认的设计问题；其余001—030及041—074条目正文与状态保持不变。
 
 “待确认设计”表示规则或承载方式尚未冻结；“待实施核验”表示目标已明确，但仍有实现差距或缺少验证证据；条件性事项仅在启用对应能力或发现存量时适用。本文整理不代表已经修改代码、配置、DDL、数据库或部署服务。
 
@@ -4047,63 +4243,63 @@ customer_info.customer_id可空，customer_source.created_by可能是analyst而�
 
 ### 031. 研判结果双来源引用一致性
 
-状态：待确认设计／实施核验。
+状态：设计已明确，待实施核验。
 
-research_result.source_id与customer_info_id分别有引用，不能保证同源。需冻结组合约束或固定服务校验，并验证结果不会引用甲来源和乙来源结构化信息；历史、批量和重试路径均应一致。
+已冻结customer_info(id,source_id)组合唯一键及research_result(customer_info_id,source_id)组合外键，同序索引、RESTRICT策略和事务内派生／核对source_id规则见第八章“研判引用一致性与主档归并”，第九章已同步。单条、批量和重试共用固定服务；迁移须查出并隔离错配数据。验收需证明甲来源结果不能引用乙来源信息；第030项历史／执行版本仍保留原状态，本轮未安装真实FK。
 
 ### 032. 意向产品编码引用与生命周期
 
-状态：待确认设计。
+状态：设计已明确，待实施核验。
 
-customer_info.target_product_code声称关联product.product_code，但外键清单未闭合。需确定逻辑／物理引用、索引、未知编码、停用及删除策略，不把文字关联当已建FK。
+已冻结target_product_code为可空物理FK，双方VARCHAR(32)／utf8mb4_bin、索引及更新／删除RESTRICT；未知编码400、未提供NULL、新选停用产品409。产品code不可改名，停用保留历史，本期不物理删除。规则见第八章及第九章两表；验收覆盖大小写、未知／停用编码及历史可读，不以文字声明代替实际约束。
 
 ### 033. 来源到客户主档的类型化引用与归并
 
-状态：待确认设计／实施核验。
+状态：设计已明确，待实施核验。
 
-需冻结source_reference所指customer_info或research_result的实体类型、长度、稳定标识与幂等，逐项核对主档必填字段及真实字段映射。手机号token仅用于候选匹配，仍须受控确认、归属和事务后回填；不得把同号当身份认证或直接覆盖主档。raw_fields扩展字段白名单仍需与保护策略一并冻结。
+已冻结VARCHAR(128)类型化source_reference、三类实体前缀及后端稳定ID规则；逐项主档映射、必填项、预览确认、candidate核验、expected_version、customer_info回填、幂等与同事务审计见第八章033。手机号token只提示候选，已有主档默认不覆盖；raw_fields限三个受控扩展key。第007／010／022／025项的操作者、回执、原件保护及可信归属依赖保持原状态，未就绪不得执行归并；本轮不创建主档或迁移数据。
 
 ### 034. 匿名客服、研判与主档的可选业务联动
 
-状态：待确认是否启用／设计。
+状态：设计已明确；自动联动本期关闭，人工受控流程待实施核验。
 
-客服留资／报名转线索、研判来源建主档及私有结果反哺公开推荐均为可选增强。若启用，需确定用途、可信内部操作者／服务、负责人、关联确认、披露白名单、幂等与对账事务；访客标识不能调用受保护能力，内部结论不能直接交匿名会话。结构不变不等于获授权联动永不写主档。
+已明确关闭客服自动转线索／自动研判／自动建档及私有结果向匿名客服披露；仅授权内部人员可按033确认归并研判资料。六匿名客服接口不增加登录门槛，访客标识不能调用受保护能力。未来启用须有用途、可信操作者、负责人／范围、确认、披露白名单、幂等和对账；公开内容仅沿用课程／活动／FAQ原公开字段。产品到课程映射仍按第023项，本轮不启用消费者或新公开写入口。
 
 ### 035. 报告五接口完整Schema与路径匹配
 
-状态：待交付／实施核验。
+状态：设计已明确，待实施核验。
 
-configs GET／PUT路径及精确权限已补齐，不再列为未知；仍需完整请求／响应Schema、真实路由注册、权限依赖及错误路径。验证/report/list不被/report/{report_record_id}捕获，配置读写和管理员／主管动作范围按当前矩阵验收。
+第一章已补全五接口请求／响应字段、page分页、枚举、版本／时区／时间窗校验及报告应用错误信封；POST明确必填Idempotency-Key，默认北京时间Asia/Shanghai；静态路由在动态ID之前。保持平台管理员生成／配置、主管仅本部门只读，范围承载依第006项，异常适配依第009项。静态读取已见现有代码把/configs、/list放在动态路由之前，但仍需验证真实挂载、权限及失败路径，本轮不声称接口已验收。
 
 ### 036. 报告三表完整定义与单一DDL基线
 
-状态：待冻结／核验。
+状态：设计已明确；本地定义已静态核对，待实施核验。
 
-主文档仅保留9+18+10共37个字段名；cyl.md虽补充类型／约束线索，仍需逐项核对report_module_ddl.sql、all.sql、ORM及目标数据库，冻结可空、默认、索引、约束与种子。三表“全新无冲突”未经对象盘点，不得直接初始化或通过循环引用声称完整字段已存在。
+第九章已按本地DDL补齐report_config／report_record／report_metric的9+18+10字段、类型、可空、默认、索引、CHECK、外键及种子差异，指定all.sql为唯一全量结构基线、模块DDL受控抽取、ORM对齐。两份SQL的三表CREATE TABLE结构静态一致，ORM有对应字段／约束声明；未连接目标数据库。旧timezone默认UTC须目标化为北京时间Asia/Shanghai，UTC时间列存储不变；模块脚本含DROP不可当升级脚本。现库盘点、增量迁移及调度种子更新仍分别按第012／042／073项验证。
 
 ### 037. 报告研判与经营数据的上游消费契约
 
-状态：待确认设计／核验。
+状态：设计已明确，待实施核验。
 
-报告customer_judgement与目标research_result尚未适配，后者经customer_info可空关联主档；需冻结客户关联、产品／来源／版本选择及去重粒度。customer_profile.deal_amount无既有字段和权威业务来源，需决定排除／标不可用或另定金额来源、币种和精度。六只读上游须逐表列出真实字段、状态、时间列及可用版本，缺依赖不能伪造零值成功。
+第八章已列逐表字段／状态／时间／版本消费契约，研判统一research_result→customer_info→customer_profile，不建设customer_judgement同义表。窗口内每客户×产品取created_at／id最新结果，跨产品客户人数去重；未归并或缺历史数据明确标不可用。本期排除营收／成交金额等无权威来源指标，不新增deal_amount或以评分估金额。投诉轮次按需读取service_ticket_record，相关归属／历史依第025／026／030／055项；仍需真实数据取数和对账。
 
 ### 038. 五类报告指标字典、时间窗与缺失值
 
-状态：待确认设计。
+状态：设计已明确，待实施核验。
 
-需为每项指标明确来源、筛选、公式、单位、去重、分母、版本、默认自然／滚动周期、默认最近完整周期及显式时间窗校验，具体涵盖日报修订／作废、客户新增／流失、重复研判、投诉各轮处理及满意度分母。当前已有Asia/Shanghai业务时区、UTC存储目标和[start,end)边界，不再待问；触发17:00不等于统计窗口。分母0、缺上游／历史须标不可计算，迟到数据与跨周期比较采用同一口径。
+第八章已冻结metrics-v1的五类报告指标、公式／单位／分母／去重／缺失规则；默认北京时间Asia/Shanghai上一完整自然日／自然周（周一至周一），UTC存储、[start,end)，17:00仅触发。显式边界须成对、带偏移、合法精度且不在未来，日报按本地日期；分母0标not_computable，缺源／历史／授权或版本标unavailable，真实空集计数才为0。日报修订与作废、客户流失事件、重复研判、投诉每轮和有效评价分母已明确；第045／054—056／061项依赖仍待原项落实，不把字典当运行验收。
 
 ### 039. 多源快照一致性与复算范围
 
-状态：待确认设计／实施核验。
+状态：设计已明确，待实施核验。
 
-data_snapshot_at和source_record_count不能保证跨表一致。需冻结统计截点、事务隔离或快照策略、取数期间修改／迟到更新处理、历史输入保留及可复算范围，并用真实数据对账。
+第八章已冻结同实例InnoDB、独立REPEATABLE READ只读一致性事务跨表取数，data_snapshot_at仅为审计时间标签；冻结聚合基础输入、逐表去重行数、版本与摘要至metric_json保留区后结束读事务，再调模型。取数中修改及快照后迟到数据不混入原报告；已冻结后重试复用输入，新取数需新修订。复算承诺限冻结基础量及公式，不宣称能从当前表还原全部历史或重现相同模型正文；不保存个人心理ID／原文清单。真实隔离、并发更新及复算对账待验证，仍依第044／045项的发布／隐私保障。
 
 ### 040. 报告生成幂等键与并发复用
 
-状态：待确认设计／实施核验。
+状态：设计已明确，待实施核验。
 
-需明确幂等键生成方、传参位置、账号／范围、时间窗、指标及配置版本参与项，同键同口径复用、不同口径冲突、并发唯一约束和失败重试规则。仅有report_code及可选时间窗的请求说明不足以实现这些保证。
+第八章已分开客户端请求键与服务端业务生成键：请求按可信账号／动作命名空间、参数摘要及持久化回执绑定，省略窗口只在首次解析；业务键对类型、可信范围、完整UTC毫秒窗口、北京时间、指标／配置／模板／隐私版本及生成修订号作SHA-256，存现有唯一idempotency_key。事务竞争唯一约束，跨账号仅可在同授权范围复用业务报告；回放重新鉴权。同键不同参数409，failed原样回放，受控执行恢复复用冻结输入，重新取数须新修订且不新增公开force入口。第006／007／010／041／043／045项依赖未就绪时不得以进程内去重或假操作者代替保证，本轮不修改这些条目的状态。
 
 ### 041. 报告异步任务持久化、四状态与恢复
 
