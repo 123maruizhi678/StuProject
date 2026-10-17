@@ -7,7 +7,7 @@ import yaml
 from fastapi import Depends, HTTPException, status
 
 from app.config import settings
-from app.models.user_account import UserAccount
+from app.models.common.user_account import UserAccount
 
 
 @lru_cache(maxsize=1)
@@ -43,7 +43,7 @@ def permissions_for(identity_type: str) -> set[str]:
 
 def require_permission(permission: str) -> Callable:
     """FastAPI dependency that protects an endpoint with one permission."""
-    from app.core.auth import get_current_account
+    from app.core.common.auth import get_current_account
 
     def dependency(
         account: Annotated[UserAccount, Depends(get_current_account)],

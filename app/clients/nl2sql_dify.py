@@ -1,7 +1,7 @@
 """NL2SQL Dify Workflow 适配器：负责业务输入映射和 SQL 输出校验。"""
 
 from app.config import settings
-from app.core.dify import DifyHttpClient
+from app.core.common.dify import DifyHttpClient
 
 
 class NL2SQLDifyClient:

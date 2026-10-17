@@ -12,7 +12,7 @@
     - 精确权限不依赖未验证的 report.* 通配；report.mental_detail.read 默认不授。
 
 实现约束：
-    - 复用公共 JWT 账号上下文（app.core.auth.get_current_account），不建立
+    - 复用公共 JWT 账号上下文（app.core.common.auth.get_current_account），不建立
       第二套 JWT；角色、有效部门及数据范围由服务端读取，不信任前端或模型
       传入的角色/部门。
     - 平台管理员分支与 employee+manager 分支均需可到达；不得先强制
@@ -26,10 +26,10 @@ from typing import Annotated, Literal
 from fastapi import Depends
 from sqlalchemy.orm import Session
 
-from app.core.auth import get_current_account
+from app.core.common.auth import get_current_account
 from app.core.common.response import BusinessException, ResultCode
 from app.database import get_db
-from app.models.user_account import UserAccount
+from app.models.common.user_account import UserAccount
 from app.repositories.report.report_repository import load_employee_scope
 
 # 报告精确动作权限（不依赖 report.* 通配）。

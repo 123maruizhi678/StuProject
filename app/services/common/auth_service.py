@@ -3,11 +3,11 @@ from datetime import datetime, timedelta, timezone
 
 import jwt
 from pwdlib import PasswordHash
-from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.config import settings
-from app.models.user_account import UserAccount
+from app.models.common.user_account import UserAccount
+from app.repositories.common.account_repository import AccountRepository
 
 _password_hash = PasswordHash.recommended()
 _JWT_ALGORITHM = "HS256"
@@ -28,7 +28,7 @@ def verify_password(password: str, password_hash: str) -> bool:
 
 def authenticate(db: Session, username: str, password: str) -> UserAccount | None:
     """按用户名查询账号并验证密码；无效时返回 None。"""
-    account = db.scalar(select(UserAccount).where(UserAccount.username == username))
+    account = AccountRepository(db).get_by_username(username)
     if account is None or not verify_password(password, account.password_hash):
         return None
     return account

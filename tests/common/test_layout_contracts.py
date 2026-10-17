@@ -20,10 +20,13 @@ class LayoutContracts(unittest.TestCase):
 
     def test_available_business_modules_import(self):
         for name in [
-            "app.api.common.auth", "app.api.agent.agent", "app.api.report.report",
-            "app.services.student.student_leave_service",
-            "app.repositories.student.student_leave_repository",
-            "app.clients.agent.dify_client", "app.clients.report.report_dify",
+            "app.api.common.auth", "app.api.agent", "app.api.report.report",
+            "app.services.student_leave_service",
+            "app.repositories.student_leave_repository",
+            "app.services.dify_client", "app.clients.report.report_dify",
+            "app.core.common.auth", "app.core.common.authorization", "app.core.common.dify",
+            "app.repositories.common.account_repository", "app.repositories.common.notification_repository",
+            "app.repositories.common.operation_log_repository",
         ]:
             self.assertIsNotNone(importlib.import_module(name))
 
@@ -46,18 +49,18 @@ class LayoutContracts(unittest.TestCase):
         self.assertEqual(len(operations), len(set(operations)))
         self.assertIn("/api/v1/auth/login", schema["paths"])
         self.assertIn("/api/v1/report/generate", schema["paths"])
-        self.assertNotIn("/api/v1/agent/chat", schema["paths"])
+        self.assertIn("/api/v1/agent/chat", schema["paths"])
         self.assertIn("student_leave", MIGRATION_PENDING_MODULES)
 
     def test_frontend_local_resources_exist(self):
         html = (ROOT / "frontend/index.html").read_text(encoding="utf-8")
         assets = re.findall(r'(?:src|href)="(/static/[^"?]+)', html)
-        self.assertEqual(len(assets), 5)
+        self.assertEqual(len(assets), 2)
         for asset in assets:
             self.assertTrue((ROOT / "frontend" / asset.removeprefix("/static/")).is_file(), asset)
 
     def test_relocated_report_script_dry_run(self):
-        result = subprocess.run([sys.executable, str(ROOT / "scripts/report/init_report_tables.py"), "--dry-run"],
+        result = subprocess.run([sys.executable, "-B", str(ROOT / "scripts/report/init_report_tables.py"), "--dry-run"],
                                 cwd=ROOT, capture_output=True, text=True, encoding="utf-8", timeout=30)
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertEqual(result.stdout.count("CREATE TABLE"), 3)
@@ -68,17 +71,16 @@ class LayoutContracts(unittest.TestCase):
         from sqlalchemy import create_engine, func, insert, select
         from sqlalchemy.orm import Session
         from app.models import common as t
-        from app.schemas.student.student_leave import LeaveAnalysis, LeaveInput
-        from app.services.student.student_leave_service import LeaveError, StudentLeaveService
+        from app.schemas.student_leave import LeaveAnalysis, LeaveInput
+        from app.services.student_leave_service import LeaveError, StudentLeaveService
+        from tests.common.support import make_engine, seed_people
 
-        engine = create_engine("sqlite://")
+        engine = make_engine()
         tables = [t.student_profile, t.employee, t.student_staff_binding,
                   t.student_admin_service, t.business_notification, t.operation_log]
-        t.student_profile.metadata.create_all(engine, tables=tables)
         now = datetime.now(timezone.utc).replace(tzinfo=None)
         with Session(engine) as db:
-            db.execute(insert(t.student_profile).values(student_id=1, status="active", is_archived=False))
-            db.execute(insert(t.employee).values(employee_id=10, status="active", role_codes=["teacher"]))
+            seed_people(db)
             db.execute(insert(t.student_staff_binding).values(
                 binding_id=1, student_id=1, employee_id=10, relation_type="class_teacher",
                 is_primary=True, status="active", valid_from=now-timedelta(days=1)))

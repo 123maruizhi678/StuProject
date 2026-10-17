@@ -24,7 +24,7 @@ from app.models.agent import (
     Faq,
     LectureEvent,
 )
-from app.services.dify_client import get_dify_client
+from app.services.dify_client import AgentDifyError, get_dify_client
 
 # 业务状态常量
 EVENT_OPEN = "报名中"       # 活动可报名
@@ -39,18 +39,25 @@ def _fmt(dt: datetime | None) -> str:
 
 # ---------- 对话 ----------
 def run_chat(db: Session, session_id: str | None, user_id: str | None, message: str) -> dict:
-    """对话入口：确保会话 → 写 user 消息 → 调 Dify → 写 assistant 消息。"""
+    """取得回复后，在同一事务内保存会话及消息对；失败时回滚。"""
     message = (message or "").strip()
     if not message:
         raise BusinessException("消息不能为空", code=ResultCode.PARAM_ERROR)
 
-    sid = _ensure_session(db, session_id, user_id)
-    db.add(ChatMessage(session_id=sid, role="user", content=message, intent=""))
-
-    result = get_dify_client().chat(sid, message)
-
-    db.add(ChatMessage(session_id=sid, role="assistant", content=result.reply, intent=result.intent))
-    db.commit()
+    try:
+        sid = _ensure_session(db, session_id, user_id)
+        result = get_dify_client().chat(sid, message)
+        # 原模型未声明消息到会话的外键关系，显式保证真实库中的父行先存在。
+        db.flush()
+        db.add(ChatMessage(session_id=sid, role="user", content=message, intent=""))
+        db.add(ChatMessage(session_id=sid, role="assistant", content=result.reply, intent=result.intent))
+        db.commit()
+    except AgentDifyError as error:
+        db.rollback()
+        raise BusinessException(str(error), code=error.code) from None
+    except Exception:
+        db.rollback()
+        raise
 
     return {
         "session_id": sid,

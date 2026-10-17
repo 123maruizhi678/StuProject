@@ -6,8 +6,9 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.models.user_account import UserAccount
-from app.services.auth_service import decode_access_token
+from app.models.common.user_account import UserAccount
+from app.services.common.auth_service import decode_access_token
+from app.repositories.common.account_repository import AccountRepository
 
 _bearer = HTTPBearer(auto_error=False)
 
@@ -29,12 +30,12 @@ def get_current_account(
     if user_id is None:
         raise unauthorized
 
-    account = db.get(UserAccount, user_id)
+    account = AccountRepository(db).get_by_id(user_id)
     if account is None:
         raise unauthorized
 
     # Load lazily to avoid a module import cycle with permission dependencies.
-    from app.core.authorization import load_access_control
+    from app.core.common.authorization import load_access_control
 
     if account.identity_type not in load_access_control()["roles"]:
         raise HTTPException(

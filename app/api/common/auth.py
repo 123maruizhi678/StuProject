@@ -4,13 +4,13 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
-from app.core.auth import get_current_account
-from app.core.authorization import access_for, public_access
+from app.core.common.auth import get_current_account
+from app.core.common.authorization import access_for, public_access
 from app.core.common.response import success
 from app.database import get_db
-from app.models.user_account import UserAccount
-from app.schemas.auth import LoginRequest
-from app.services.auth_service import authenticate, create_access_token
+from app.models.common.user_account import UserAccount
+from app.schemas.common.auth import LoginRequest
+from app.services.common.auth_service import authenticate, create_access_token
 
 router = APIRouter(prefix="/auth", tags=["authentication"])
 

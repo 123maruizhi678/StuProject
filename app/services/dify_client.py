@@ -1,15 +1,29 @@
 
 
-"""客服 Agent 的 Dify Chatflow 客户端抽象与实现。
+"""客服 Agent 的 Dify Workflow 适配器。
 
 职责边界：Dify 只做「理解意图 + 生成话术」，不直接连业务库。
-当前阶段使用 MockDifyClient（关键词硬编码 7 大场景），Dify 就绪后
-将 .env 的 DIFY_CLIENT 切为 real，后端接口与数据流不变。
+Mock 仅用于明确选择的模拟模式；real 调用已发布 Workflow，不自动降级。
 """
 from dataclasses import dataclass
+import re
 from typing import Protocol
 
+import httpx
+
 from app.config import settings
+from app.core.common.dify import DifyHttpClient
+
+INTENTS = frozenset({"company_info", "business_query", "policy_query", "course_recommend", "event_query", "faq", "chat"})
+_ACTION_TYPES = {"event_query": "show_events", "course_recommend": "show_courses"}
+
+
+class AgentDifyError(RuntimeError):
+    """仅含可公开错误信息；调用方负责回滚业务事务。"""
+
+    def __init__(self, message: str, code: int = 503):
+        self.code = code
+        super().__init__(message)
 
 
 @dataclass
@@ -22,7 +36,7 @@ class ChatResult:
 
 
 class DifyClient(Protocol):
-    """客服 Chatflow 客户端接口（mock 与 real 均实现）。"""
+    """客服客户端接口（mock 与 real 均实现）。"""
 
     def chat(self, session_id: str, message: str) -> ChatResult: ...
 
@@ -61,10 +75,50 @@ class MockDifyClient:
 
 
 class RealDifyClient:
-    """Dify Chatflow 就绪后在此实现：走 Dify /chat-messages，返回 intent + reply + action。"""
+    """通过公共 HTTP 工具调用客服 Workflow 并校验 intent/reply。"""
 
-    def __init__(self) -> None:
-        raise NotImplementedError("Dify Chatflow 尚未接入，请将 .env 的 DIFY_CLIENT 设为 mock")
+    def __init__(self, http: DifyHttpClient | None = None) -> None:
+        self.http = http or DifyHttpClient(settings.DIFY_API_BASE, timeout=settings.DIFY_API_TIMEOUT_SECONDS)
+
+    def chat(self, session_id: str, message: str) -> ChatResult:
+        key = settings.DIFY_AGENT_API_KEY.get_secret_value()
+        if not key:
+            raise AgentDifyError("客服 Dify 应用尚未配置，请联系维护人员")
+
+        try:
+            response = self.http.post_json_sync(
+                "/workflows/run",
+                api_key=key,
+                payload={"inputs": {"query": message}, "response_mode": "blocking", "user": "visitor-" + session_id},
+            )
+        except httpx.HTTPStatusError as error:
+            if error.response.status_code in (401, 403):
+                raise AgentDifyError("客服 Dify 应用鉴权失败，请联系维护人员") from None
+            raise AgentDifyError("客服服务暂不可用，请稍后重试") from None
+        except httpx.RequestError:
+            # 结果可能已经在 Dify 生成；本适配器不自动重发。
+            raise AgentDifyError("客服连接失败或响应超时，请稍后核实") from None
+        except ValueError:
+            raise AgentDifyError("客服工作流返回了无法解析的结果", code=502) from None
+
+        data = response.get("data")
+        if not isinstance(data, dict) or data.get("status") != "succeeded":
+            raise AgentDifyError("客服工作流未成功完成", code=502)
+        outputs = data.get("outputs")
+        if not isinstance(outputs, dict):
+            raise AgentDifyError("客服工作流缺少输出结果", code=502)
+        intent, reply = outputs.get("intent"), outputs.get("reply")
+        if not isinstance(intent, str) or intent.strip() not in INTENTS:
+            raise AgentDifyError("客服工作流返回的意图不符合约定", code=502)
+        if not isinstance(reply, str):
+            raise AgentDifyError("客服工作流缺少有效回复", code=502)
+        reply = re.sub(r"<think\b[^>]*>.*?</think\s*>", "", reply, flags=re.DOTALL | re.IGNORECASE).strip()
+        if not reply or re.search(r"</?think\b", reply, re.IGNORECASE):
+            raise AgentDifyError("客服工作流缺少有效回复", code=502)
+        intent = intent.strip()
+        action_type = _ACTION_TYPES.get(intent)
+        action = {"type": action_type, "payload": {}} if action_type else None
+        return ChatResult(intent=intent, reply=reply, action=action)
 
 
 def get_dify_client() -> DifyClient:

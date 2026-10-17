@@ -23,7 +23,7 @@ from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.pool import StaticPool
 from sqlalchemy.schema import CreateTable
 
-from app.core.auth import get_current_account
+from app.core.common.auth import get_current_account
 from app.core.report import ReportAccess, ReportScope, resolve_report_access
 from app.database import get_db
 from app.main import app

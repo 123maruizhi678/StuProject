@@ -32,8 +32,11 @@ class Settings(BaseSettings):
     # 旧版 NL2SQL 通用密钥保留为兼容回退；新配置建议使用按场景密钥。
     DIFY_API_KEY: str = Field(default="", repr=False)
     DIFY_SQL_OUTPUT_KEY: str = "sql"
-    # Dify HTTP 请求超时秒数（NL2SQL / 报告工作流共用）。
+    # Dify HTTP 请求超时秒数（客服 / NL2SQL / 报告工作流共用）。
     DIFY_API_TIMEOUT_SECONDS: float = 60.0
+    # 客服独立应用；real 模式不自动回退为 mock。
+    DIFY_CLIENT: Literal["mock", "real"] = "mock"
+    DIFY_AGENT_API_KEY: SecretStr = Field(default=SecretStr(""), repr=False)
     # 学生统一 Workflow 应用密钥，从 .env 或同名系统环境变量读取。
     STUDENT_DIFY_KEY: SecretStr = Field(default=SecretStr(""), repr=False)
     # 学生会话及办理确认凭证使用独立签名密钥。

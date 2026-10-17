@@ -15,6 +15,7 @@ pages:
   login: {title: Login, route: /login, public: true}
   password_reset: {title: Password reset, route: /password-reset, public: true}
   account: {title: Account, route: /account, requires_auth: true}
+  agent: {title: 客服 Agent, route: /agent, public: true}
   admin_dashboard: {title: Admin console, route: /admin, requires_auth: true, permission: admin.dashboard}
   employee_dashboard: {title: Employee dashboard, route: /employee, requires_auth: true, permission: dashboard.employee}
   customer_dashboard: {title: Customer dashboard, route: /customer, requires_auth: true, permission: dashboard.customer}
@@ -23,6 +24,7 @@ pages:
   service_tickets: {title: Service tickets, route: /tickets, requires_auth: true, permission_any: [service_ticket.read, service_ticket.read_own, service_ticket.handle]}
   report: {title: 智能报告, route: /report, requires_auth: true, permission_any: [report.generate, report.read, report.config.read, report.config.write]}
 modules:
+  agent_center: {title: 客服 Agent, pages: [agent]}
   admin_workspace: {title: Administration, required_any: [admin.dashboard], pages: [admin_dashboard]}
   employee_workspace: {title: Employee workspace, required_any: [dashboard.employee], pages: [employee_dashboard]}
   customer_workspace: {title: Customer workspace, required_any: [dashboard.customer], pages: [customer_dashboard]}

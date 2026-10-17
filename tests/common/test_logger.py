@@ -22,6 +22,7 @@ class LoggerContractTests(unittest.TestCase):
             with (
                 patch.object(common_logger, "_initialized", False),
                 patch.object(common_logger, "LOG_FILE", logfile),
+                patch.object(common_logger.settings, "LOG_LEVEL", "INFO"),
                 patch.object(common_logger.logging, "getLogger", return_value=root),
             ):
                 try:
