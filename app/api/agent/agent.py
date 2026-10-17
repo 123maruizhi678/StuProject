@@ -1,19 +1,21 @@
 """客服 Agent 路由。
 
-对齐《接口设计文档》第三章（修改后）：
+对齐《开发文档/操作文档.md》第一章接口契约：
     POST /agent/chat            客服对话（含会话/消息落库）
     GET  /agent/events          活动列表
     GET  /agent/events/{id}     活动详情
-    POST /agent/events/signup   活动报名（校验 + 防重 + 事务）
+    POST /agent/events/signup   活动报名（校验 + 防重 + 行锁事务）
     GET  /agent/courses         课程列表
     GET  /agent/faq             FAQ 兜底查询
+
+六个接口均匿名开放，不要求 JWT、不新增必填幂等键或业务确认门槛。
 """
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 
 from app.core.response import BusinessException, ResponseModel, ResultCode, success
 from app.database import get_db
-from app.schemas.agent import (
+from app.schemas.agent.agent import (
     ChatData,
     ChatRequest,
     CourseItem,
@@ -22,7 +24,7 @@ from app.schemas.agent import (
     SignupData,
     SignupRequest,
 )
-from app.services import agent_service
+from app.services.agent import agent_service
 
 router = APIRouter(prefix="/agent", tags=["客服Agent"])
 

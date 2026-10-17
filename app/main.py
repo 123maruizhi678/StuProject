@@ -1,15 +1,26 @@
-"""FastAPI 应用入口：初始化、中间件、路由注册、全局异常处理。"""
+"""FastAPI 应用入口：初始化、中间件、路由注册、全局异常处理。
 
+本次提交范围：仅「客服Agent」模块。
+其他模块（登录鉴权 / 学生请假 S01 / 智能报告 / 企业智能助手）的导入与路由
+挂载已整体注释——模块文件均未删除，需要恢复时取消对应注释即可。
+"""
 from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.api.auth import router as auth_router
-from app.api.enterprise_student import router as enterprise_student_router
-from app.core.authorization import load_access_control, require_permission
+
+from app.api.agent import router as agent_router
+from app.core.authorization import load_access_control
 from app.core.logger import get_logger, init_logger
 from app.core.response import register_exception_handlers
-from app.database import dispose_db, get_db
-from app.api.student_leave import create_router as create_student_leave_router
+from app.database import dispose_db
+
+# ===== 本次不提交的模块，导入暂注释（恢复时取消注释）=====
+# from app.api.auth import router as auth_router
+# from app.api.student_leave import create_router as create_student_leave_router
+# from app.api import report
+# from app.api.enterprise_student import router as enterprise_student_router  # 模块尚未创建
+# from app.database import get_db  # 仅学生请假路由工厂需要
 
 init_logger()
 logger = get_logger(__name__)
@@ -36,25 +47,26 @@ app.add_middleware(
     allow_headers=["*"],
 )
 register_exception_handlers(app)
-app.include_router(auth_router, prefix="/api/v1")
-app.include_router(enterprise_student_router, prefix="/api/v1")
 
-# S01仅接入学生请假；登录和权限判断复用组长公共依赖。
-app.include_router(
-    create_student_leave_router(
-        require_permission("student.admin_service.create"), get_db
-    ),
-    prefix="/api/v1",
-)
+# ===== 本次不提交的模块，路由挂载暂注释（恢复时取消注释）=====
+# app.include_router(auth_router, prefix="/api/v1")
+# app.include_router(
+#     create_student_leave_router(
+#         require_permission("student.admin_service.create"), get_db
+#     ),
+#     prefix="/api/v1",
+# )
+# app.include_router(report.router, prefix="/api/v1")
+# app.include_router(enterprise_student_router, prefix="/api/v1")  # 模块尚未创建
 
-# 路由注册（各业务模块就绪后在此 include，挂载到 /api/v1）
-# from app.api import customer, agent, enterprise, student
+# 客服 Agent：对话（后端调 Dify）/ 活动 / 报名 / 课程 / FAQ
+app.include_router(agent_router, prefix="/api/v1")
+
+# 路由注册（其他业务模块就绪后在此 include，挂载到 /api/v1）
+# from app.api import customer, enterprise, student
 # app.include_router(customer.router, prefix="/api/v1")
-# app.include_router(agent.router, prefix="/api/v1")
 # app.include_router(enterprise.router, prefix="/api/v1")
 # app.include_router(student.router, prefix="/api/v1")
-from app.api import report
-app.include_router(report.router, prefix="/api/v1")
 
 
 @app.get("/")

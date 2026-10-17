@@ -1,6 +1,6 @@
 """客服 Agent 模块 ORM 模型。
 
-表（对应《客服Agent实现方案》第四章 / scripts/sql/all.sql）：
+表（对应《开发文档/操作文档.md》及 scripts/sql 基线）：
     - CourseProject  课程项目
     - LectureEvent   讲座活动
     - EventSignup    活动报名
@@ -8,7 +8,7 @@
     - ChatSession    客服会话
     - ChatMessage    客服消息
 
-由 scripts/init_db.py 自动导入并建表。
+建表由 scripts/sql 下的迁移 / 初始化脚本负责，本模块不自动建表。
 """
 from datetime import datetime
 
@@ -19,7 +19,6 @@ from sqlalchemy import (
     JSON,
     String,
     Text,
-    UniqueConstraint,
     func,
 )
 from sqlalchemy.orm import Mapped, mapped_column
@@ -67,10 +66,13 @@ class LectureEvent(Base):
 
 
 class EventSignup(Base):
-    """活动报名表。"""
+    """活动报名表。
+
+    去重策略为状态式（status=有效 唯一），不建 (event_id, customer_phone)
+    数据库唯一约束——否则用户取消报名后重新报名会撞唯一索引。
+    """
 
     __tablename__ = "event_signup"
-    __table_args__ = (UniqueConstraint("event_id", "customer_phone", name="uk_event_phone"),)
 
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True, comment="主键，自增")
     event_id: Mapped[int] = mapped_column(BigInteger, nullable=False, comment="活动ID")
