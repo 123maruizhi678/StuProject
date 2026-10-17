@@ -1,4 +1,4 @@
-import { API, readSession, clearSession } from "./api.js";
+import { API, readSession, clearSession, publishAuthEvent } from "./api.js";
 import { MODULES, canAccess, moduleEntry } from "./modules.js";
 
 const $ = selector => document.querySelector(selector);
@@ -22,7 +22,8 @@ function notify(message) {
 function moduleStatus(module) {
   if (state.loading) return ["同步中", "loading"];
   if (!canAccess(module, state.access)) return [state.user ? "未授权" : "需登录", "locked"];
-  return module.delivered ? ["可访问", "available"] : ["待接入", "pending"];
+  if (!module.delivered) return ["待接入", "pending"];
+  return module.apiReady ? ["可访问", "available"] : ["待联调", "pending"];
 }
 
 function renderModules() {
@@ -59,7 +60,9 @@ function renderAccess() {
   const role = state.user ? identities[state.user.identity_type] || state.user.identity_type : "访客";
   $("#overview-identity").textContent = role;
   $("#overview-account").textContent = state.user ? `账号 ID · ${state.user.user_id}` : "公开访问模式";
-  $("#overview-modules").replaceChildren(document.createTextNode(state.loading ? "—" : String(MODULES.filter(module => canAccess(module, state.access)).length).padStart(2, "0")), element("em", "", " / 05"));
+  $("#overview-modules").replaceChildren(document.createTextNode(state.loading ? "—" : String(MODULES.filter(module => canAccess(module, state.access)).length).padStart(2, "0")), element("em", "", ` / ${String(MODULES.length).padStart(2, "0")}`));
+  $("#nav-module-count").textContent = String(MODULES.length).padStart(2, "0");
+  $("#module-count").textContent = String(MODULES.length).padStart(2, "0");
   $("#overview-pages").textContent = state.loading ? "—" : String(Object.keys(state.access.pages || {}).length).padStart(2, "0");
   $("#welcome-copy").textContent = state.user ? `${role}，欢迎回来。你的页面与模块权限已同步至工作台。` : "欢迎来到智教工作台。登录后，发现属于你的业务空间。";
   $("#login-link").hidden = Boolean(state.user);
@@ -179,7 +182,7 @@ async function syncAccess() {
   const active = readSession();
   if (active) expiryTimer = setTimeout(() => {
     clearSession();
-    window.dispatchEvent(new Event("auth:expired"));
+    publishAuthEvent("auth:expired");
   }, Math.min(active.expiresAt - Date.now(), 2147483647));
 }
 
@@ -190,6 +193,7 @@ $("#logout-button").addEventListener("click", () => {
   ++revision;
   clearTimeout(expiryTimer);
   clearSession();
+  publishAuthEvent();
   state.user = null;
   state.access = state.publicAccess;
   state.loading = false;
@@ -207,5 +211,6 @@ window.addEventListener("auth:expired", () => {
   render();
   notify("登录已失效，请重新登录。");
 });
+window.addEventListener("auth:changed", syncAccess);
 window.addEventListener("pageshow", event => { if (event.persisted) syncAccess(); });
 syncAccess();

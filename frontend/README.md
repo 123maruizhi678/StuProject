@@ -1,101 +1,79 @@
-# 公共登录与权限入口及各组页面接入方案
+# 前端模块与接入说明
 
-本前端使用原生 HTML、CSS、JavaScript，无 npm 构建步骤。公共入口采用深色科技风、青绿色强调色、侧栏导航和响应式卡片布局。当前只实现公共登录与权限入口；业务模块由各组员独立开发页面。
+本目录已合并下载目录的前端与项目原有公共入口、学生多页面版本。使用原生 HTML、CSS、JavaScript ES Modules，无 npm 构建步骤。下载目录保持原样。
 
-## 访问与目录
+## 启动与入口
 
-在项目根目录启动：
+在项目根目录运行：
 
 ```powershell
 conda run -n SST python -m uvicorn app.main:app --reload
 ```
 
-- `http://127.0.0.1:8000/`：主页面和业务模块目录。
-- `http://127.0.0.1:8000/login`：独立统一登录页面。
-- `http://127.0.0.1:8000/account`：当前身份和访问权限。
-- `http://127.0.0.1:8000/health`：JSON 服务状态。
+通过 `http://127.0.0.1:8000/` 进入统一权限工作台。`/login` 是统一登录页，`/account` 查看本人权限，`/health` 返回服务状态。业务页面均在 `/static/` 下，不支持直接双击 HTML。
 
-通过 FastAPI 访问页面，不直接双击 HTML，以便同源请求公共接口并加载 `/static` 资源。主入口和登录页本身可公开访问，敏感数据与操作仍由后端逐接口鉴权。
+## 模块划分
 
-```text
-frontend/
-  index.html                  主页面、业务入口和权限视图
-  common/login.html           独立登录页
-  css/common/style.css        公共科技风样式与移动端适配
-  js/common/
-    api.js                    公共请求、会话与错误处理
-    modules.js                五个业务模块的入口登记
-    app.js                    主入口、权限导航与页面装载
-    login.js                  登录交互
-  agent/                      客服组交付目录
-  customer/                   客户研判组交付目录
-  enterprise/                 企业助手组交付目录
-  student/                    学生助手组交付目录
-  report/                     智能报告组交付目录
-```
-
-业务页面目录按实际交付创建，当前没有创建空壳业务页面。已移除原主页面混合的业务实现、虚构业务数据、图表脚本、旧背景效果及旧报告前端，后端报告接口保留。
-
-## 公共功能与三个接口
-
-| 接口 | 页面用途 |
-| --- | --- |
-| `GET /api/v1/auth/public-access` | 未登录时取得公开页面与模块清单 |
-| `POST /api/v1/auth/login` | 提交账号密码，取得 access_token、token_type、expires_in |
-| `GET /api/v1/auth/me/access` | 携带 Bearer JWT，取得本人身份、权限、页面与模块 |
-
-成功响应读取 `code/message/data`。公共登录失败可能为实际 HTTP 401/403/422；业务接口也可能采用 HTTP 200 + 业务 code。`api.js` 同时处理两种错误约定，401 清除会话，403 显示拒绝提示，断网或超时提供可重试提示。
-
-Token 及有效期保存在同源 `sessionStorage`，不保存密码，不保存 Dify Key。退出只清除浏览器会话；当前后端没有注销或服务端撤销 Token 接口，不宣称退出会吊销已签发的 JWT。
-
-前端可见性依据后台清单；浏览器显示菜单不代表获得接口权限。公共认证采用账号实际 identity_type 映射 YAML 权限，报告主管等业务附加角色应由负责模块与公共权限清单协调接入，前端不会猜测或自行授予业务权限。
-
-## 组内页面接入
-
-| 模块 | 页面文件 | 样式/脚本目录 | 当前匹配的页面或模块标识 |
+| 模块 | 主页面 | 脚本 / 样式 | 当前接入范围 |
 | --- | --- | --- | --- |
-| 客服 Agent | `agent/agent.html` | `css/agent/`、`js/agent/` | agent / agent_center，公开访问 |
-| 客户研判 | `customer/customer.html` | `css/customer/`、`js/customer/` | customer_research，尚需负责人与公共权限策略对齐 |
-| 企业智能助手 | `enterprise/enterprise.html` | `css/enterprise/`、`js/enterprise/` | employee_dashboard / employee_workspace |
-| 学生智能助手 | `student/student-assistant.html` | `css/student/`、`js/student/` | student_dashboard / student_workspace |
-| 智能报告 | `report/report.html` | `css/report/`、`js/report/` | report / report_center |
+| 公共入口 | `index.html`、`common/login.html` | `js/common/`、`css/common/style.css` | 登录、会话、权限导航、iframe 装载 |
+| 客服 Agent | `agent/agent.html` | `js/agent/`、`css/agent/` | 对话、活动与报名、课程、FAQ；后端六接口已挂载 |
+| 客户研判 | `customer/customer.html` | `js/customer/`、`css/common/business.css` | 文本/文件研判、画像规则、记录页面；服务待联调 |
+| 企业智能助手 | `enterprise/enterprise.html` | `js/enterprise/`、`css/common/business.css` | 客户、日报、NL2SQL、指令、组织、新人指引、成绩、投诉页面；服务待联调 |
+| 学生智能助手 | `student/student-assistant.html` | `js/student/`、`css/student/student.css` | 保留新加入的学生多页面；服务待联调 |
+| 智能报告 | `report/report.html` | `js/report/`、`css/report/` | 列表、详情、异步生成、配置；后端五接口已挂载 |
+| 数据看板 | `dashboard/dashboard.html` | `js/dashboard/`、`css/common/business.css` | 指标、客户趋势、工单图表页面；服务待联调 |
 
-1. 各组实现自己的 HTML、CSS、JavaScript，不再把业务代码塞入公共 `app.js`。
-2. 页面复用 `/static/css/common/style.css` 的颜色变量及基础组件；模块样式使用独立类名或页面根节点限定作用域。
-3. 请求复用 `/static/js/common/api.js`，业务路径为相对于 `/api/v1` 的路径：
+统一登记文件为 `js/common/modules.js`。`delivered` 表示页面已交付，`apiReady` 表示当前后端接口已对接，两者分别维护。已授权但接口未就绪的模块显示“待联调”，保留子页面与标签浏览、禁用业务表单，并在请求层阻止历史接口调用；不生成虚构业务数据。
 
-   ```html
-   <link rel="stylesheet" href="/static/css/common/style.css">
-   <script type="module">
-     import { request } from "/static/js/common/api.js";
-     // 由业务组使用自己已实现的接口，例如 request("/report/configs")。
-   </script>
-   ```
+当前后端只装配客服、报告和公共认证接口。学生完整服务路由尚未合入；旧请假路由也因客户端缺失而暂未挂载。不要仅修改 `apiReady` 就声称完成接口联调，须先核对真实路由、字段、身份及动作权限。
 
-4. 在 `app/access_control.yaml` 确认页面/模块标识及角色权限。公共登记不会替业务接口授予权限，更不会自动创建业务路由。
-5. 在 `js/common/modules.js` 确认 entry、pageIds/moduleIds，并在页面实际交付后设置 `delivered: true`。当前五个模块都保持未交付状态，已授权但未交付的模块显示“待接入”；未授权模块显示“未授权”或“需登录”。
-6. 主页面先校验授权和本地页面地址，再在同源 iframe 中加载独立业务页面，也支持独立窗口。各组可以单独访问页面调试；业务接口依旧必须校验身份、动作及数据范围。
+客户研判目前未配置 `customer_research` 的公共页面/模块权限，因此工作台保持未授权；本轮没有新增或放宽角色权限。报告前端遵循公共接口返回的动作集合，部门主管角色还需后端将其报告权限同步到公共访问清单，前端不按员工身份猜测授权。
 
-公共文件由公共模块负责人维护，各业务负责人只修改自己的目录及约定的入口登记。客户研判等尚未配置的权限不能由前端临时放开。
+## 学生页面
 
-## 本轮后端配套
+`STUDENT_PAGES` 与模块登记共同维护在 `js/common/modules.js`；`js/common/student-shell.js` 复用此清单提供学生侧导航、图标和对话框。
 
-- 登录 API、JWT 认证、权限、Dify HTTP 工具、认证服务、登录 Schema 与账号模型迁入各层 common 包；调用方已同步改为新导入路径。
-- `app/repositories/common/account_repository.py` 提供按用户名和 ID 查询；认证回查会刷新账号状态。
-- `app/models/common` 整理现有 SQL 定义的12张共享表，使用唯一 `app.database.Base.metadata`；不自动建表或修改真实数据库。
-- `notification_repository.py`、`operation_log_repository.py` 与业务使用同一个 Session，不自行提交事务；学生请假已复用两者。通知仓储负责入队及已发布站内通知的本人读取，不启动投递任务；审计按真实操作者和幂等键存储回执。
-- 电话保护、通用日志脱敏功能本轮按要求暂不实施。现有日志生成工具保留，现有数据库密文字段仍按表结构映射。
-- 当前学生请假 Dify 适配器缺失，因此其 HTTP 路由仍暂未挂载；本轮请假联合测试使用虚构 Workflow。未恢复或部署其他业务模块及 Dify 应用。
+| 页面 | 功能 |
+| --- | --- |
+| `student/student-assistant.html` | 学习工作台与服务入口 |
+| `student/chat.html` | 智能咨询、办理预览与再次确认 |
+| `student/academics.html` | 课程、成绩、考试与截止日期 |
+| `student/leave.html` | 请假申请、查询与撤回 |
+| `student/tickets.html` | 投诉建议、沟通、确认与评价 |
+| `student/reminders.html` | 学业提醒与取消 |
+| `student/progress.html` | 文书、院校与签证进度 |
+| `student/care.html` | 情绪辅助记录 |
+| `student/notifications.html` | 站内通知与已读状态 |
+| `student/preview.html` | 下载目录原学生界面，供核对旧功能与字段，不作为正式入口 |
+
+新学生界面作为主入口，下载目录旧实现拆入 `js/student/student.js` 并由 `student/preview.html` 保留。旧页面里的固定学生名单已移除，等待真实本人身份和授权名单；不以写死 ID 模拟真实学生。
+
+兼容入口：`/student-assistant` 返回学生主页面；`student/login.html` 转到统一登录；`enterprise/index.html`、`research/index.html`、`report/index.html` 分别转到各自正式模块页。原重复的 `js/system.js`、`js/portal.js`、`css/system.css` 已整合到公共导航、学生样式与入口转接脚本。
+
+## 公共请求与身份
+
+- 所有模块复用 `js/common/api.js`，统一处理 HTTP 状态、`code/message/data` 信封、超时、401 和 403，支持 JSON、FormData 与幂等请求头。
+- 统一登录只向 `/api/v1/auth/login` 提交用户名密码，使用 `/auth/me/access` 获取真实权限；访客清单来自 `/auth/public-access`。
+- Token 和有效期仅存储于同源 `sessionStorage`；`tokenStore` 是对同一会话的兼容读取，不建立第二套认证。
+- 报告已移除 `report-token` / `report-me` 本地缓存及独立登录表单；旧本地缓存不会再被读取。
+- 同标签页工作台与 iframe 通过公共身份事件同步退出和失效；接口权限始终由后端逐接口校验。
+- 报告失败重试及学生办理适配器保留相同内容的幂等键；结果未确认时不自动重发。
+- 报告时间输入明确按北京时间 `+08:00` 提交，不受浏览器本地时区影响。
+
+## 共享资源与维护
+
+`css/common/business.css` 保留下载版本的独立业务页面视觉组件；仅由对应业务文档加载，不覆盖公共工作台或学生样式。`js/common/charts.js` 是共享 SVG 图表库，`effects.js` 是可选动效，`ui.js` 是旧业务页面通用 DOM 组件。各业务样式均通过独立 iframe 文档隔离。
+
+新增模块功能应放在自身 `js/<module>/`、`css/<module>/` 和页面目录；不要再次集中到公共 `app.js`。旧单页内的重复客服/报告实现由独立模块取代，旧 `/meta` 探测和重复顶层 API 客户端不再加载。
 
 ## 验证
 
 ```powershell
-# 项目 Python 环境即可运行，不要求额外安装 pytest
-python -B -m unittest discover -s tests/common -p "test_*.py"
-# 原生 JavaScript 契约回归，无 npm 依赖
 node --test tests/common/test_frontend.mjs
+python -B -m unittest discover -s tests/common -p "test_*.py"
 ```
 
-隔离测试只使用虚构账号、SQLite 内存库和虚构 Workflow。真实浏览器检查覆盖错误密码、登录/权限同步、退出、401失效、断网、非法跳转和桌面/手机布局。实际业务环境仍需使用已存在的统一账号登录；测试账号不会写入真实数据库。
+前端回归覆盖统一认证、权限与返回地址、模块入口与静态依赖、公共上传请求、报告幂等重试和北京时间转换。浏览器联调使用虚构接口响应，不写真实数据库、不调用真实 Dify；这与真实业务环境端到端验收分别记录。
 
-本轮验证结果：公共 Python 回归39项、前端 JavaScript 回归8项、真实浏览器检查11项全部通过；浏览器检查还验证了已登记独立页面在主入口中的装载。没有执行真实 Dify 调用或改写真实数据库。
+本次整合验证：39 项公共 Python 回归、14 项前端契约回归、32 个 JavaScript 文件语法检查通过；本地 Edge 浏览器隔离联调覆盖公开客服、报告登录和重试、模块权限、业务标签切换、学生服务页面、旧入口跳转及 390px 手机布局。浏览器回归脚本为 `tests/common/test_frontend_browser.mjs`，可通过 `PLAYWRIGHT_MODULE` 和 `BROWSER_EXECUTABLE` 指定本机已有的 Playwright 与浏览器。

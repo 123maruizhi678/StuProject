@@ -113,6 +113,12 @@ def login_page():
     return FileResponse(FRONTEND_DIR / "common" / "login.html")
 
 
+@app.get("/student-assistant", include_in_schema=False)
+def student_workspace_page():
+    """兼容学生模块原独立入口；业务接口仍单独校验权限。"""
+    return FileResponse(FRONTEND_DIR / "student" / "student-assistant.html")
+
+
 # 学生路由沿用小组HTTP 200 + code信封；仅修正这些路由的OpenAPI描述。
 from fastapi.openapi.utils import get_openapi
 

@@ -1,11 +1,31 @@
 /** 原生 Node 测试公共前端逻辑；不依赖 npm 包、浏览器或外部服务。 */
 import assert from "node:assert/strict";
 import { beforeEach, test } from "node:test";
-import { readFile } from "node:fs/promises";
+import { readFile, readdir, access } from "node:fs/promises";
+import { resolve, dirname, relative } from "node:path";
+import { fileURLToPath } from "node:url";
 
 const load = async path => import(`data:text/javascript;base64,${Buffer.from(await readFile(new URL(path, import.meta.url), "utf8")).toString("base64")}`);
 const api = await load("../../frontend/js/common/api.js");
 const modules = await load("../../frontend/js/common/modules.js");
+
+async function loadTree(path) {
+  const file = new URL(path, import.meta.url);
+  let source = await readFile(file, "utf8");
+  for (const match of [...source.matchAll(/from\s+["'](\.[^"']+)["']/g)]) {
+    const dependency = await moduleUrl(new URL(match[1], file));
+    source = source.replace(match[0], `from "${dependency}"`);
+  }
+  return import(`data:text/javascript;base64,${Buffer.from(source).toString("base64")}`);
+}
+
+async function moduleUrl(file) {
+  let source = await readFile(file, "utf8");
+  for (const match of [...source.matchAll(/from\s+["'](\.[^"']+)["']/g)]) {
+    source = source.replace(match[0], `from "${await moduleUrl(new URL(match[1], file))}"`);
+  }
+  return `data:text/javascript;base64,${Buffer.from(source).toString("base64")}`;
+}
 
 beforeEach(() => {
   const storage = new Map();
@@ -90,4 +110,101 @@ test("返回地址和业务页面必须位于本站允许的位置", () => {
   assert.equal(modules.moduleEntry({ entry: "https://outside.test/a.html" }), null);
   assert.equal(modules.moduleEntry({ entry: "/static/js/common/api.js" }), null);
   assert.equal(modules.moduleEntry({ entry: "/static/report/report.html" }), "/static/report/report.html");
+  assert.equal(modules.safeReturnPath("/static/student/leave.html?tab=pending"), "/static/student/leave.html?tab=pending");
+  assert.equal(modules.safeReturnPath("/static/student/login.html"), "/");
+  assert.equal(modules.safeReturnPath("/static/missing.html"), "/");
+});
+
+test("模块登记、学生导航、所有页面和脚本的本地依赖均存在", async () => {
+  const frontend = fileURLToPath(new URL("../../frontend/", import.meta.url));
+  async function walk(directory) {
+    const entries = await readdir(directory, { withFileTypes: true });
+    const files = await Promise.all(entries.map(item => item.isDirectory() ? walk(resolve(directory, item.name)) : resolve(directory, item.name)));
+    return files.flat();
+  }
+  assert.equal(new Set(modules.MODULES.map(item => item.id)).size, modules.MODULES.length);
+  for (const item of modules.MODULES) {
+    assert.equal(item.delivered, true);
+    await access(resolve(frontend, item.entry.slice("/static/".length)));
+  }
+  for (const item of modules.STUDENT_PAGES) await access(resolve(frontend, item[3].slice("/static/".length)));
+  for (const file of await walk(frontend)) {
+    if (!/\.(html|js)$/.test(file)) continue;
+    const source = await readFile(file, "utf8");
+    assert.doesNotMatch(source, /^(?:<{7}|={7}|>{7})(?: |$)/m, relative(frontend, file));
+    const references = file.endsWith(".html")
+      ? [...source.matchAll(/(?:src|href)=["']([^"'#?]+)[^"']*["']/g)].map(match => match[1])
+      : [...source.matchAll(/(?:from\s*|import\s*\()["'](\.[^"']+)["']/g)].map(match => match[1]);
+    for (const reference of references) {
+      if (/^https?:/.test(reference)) continue;
+      if (reference.startsWith("/") && !reference.startsWith("/static/")) continue;
+      const target = reference.startsWith("/static/") ? resolve(frontend, reference.slice(8)) : resolve(dirname(file), reference);
+      await assert.doesNotReject(access(target), `${relative(frontend, file)} -> ${reference}`);
+    }
+  }
+});
+
+test("统一请求保留上传表单、幂等请求头和当前登录身份", async () => {
+  api.saveSession({ access_token: "fake-token", token_type: "bearer", expires_in: 60 });
+  const body = new FormData();
+  body.append("file", new Blob(["fictional upload"]), "fake.txt");
+  globalThis.fetch = async (url, options) => {
+    assert.equal(url, "/api/v1/customer/judge");
+    assert.equal(options.body, body);
+    assert.equal(options.headers["Content-Type"], undefined);
+    assert.equal(options.headers["Idempotency-Key"], "fake-upload-key");
+    assert.equal(options.headers.Authorization, "Bearer fake-token");
+    return reply(200, { code: 0, data: {} });
+  };
+  await api.request("/customer/judge", { method: "POST", body, headers: { "Idempotency-Key": "fake-upload-key" } });
+});
+
+test("401 同步到同源工作台及 iframe", async () => {
+  const parent = window;
+  parent.frames = [];
+  const child = new EventTarget();
+  child.parent = parent;
+  child.location = parent.location;
+  child.frames = [];
+  parent.frames.push(child);
+  let rootEvents = 0, childEvents = 0;
+  parent.addEventListener("auth:expired", () => rootEvents++);
+  child.addEventListener("auth:expired", () => childEvents++);
+  globalThis.window = child;
+  globalThis.fetch = async () => reply(200, { code: 401, message: "invalid", data: null });
+  await assert.rejects(api.API.myAccess, error => error.code === 401);
+  assert.deepEqual([rootEvents, childEvents], [1, 1]);
+});
+
+test("待联调模块阻止旧接口调用", async () => {
+  const adapter = await loadTree("../../frontend/js/common/module-api.js");
+  globalThis.fetch = async () => { assert.fail("未就绪模块不应发起网络请求"); };
+  await assert.rejects(adapter.API.post("/student/leave", { student_id: 1 }), error => error.code === 503);
+  await assert.rejects(adapter.API.get("/enterprise/customers"), error => error.code === 503);
+  await assert.rejects(adapter.API.get("/dashboard/overview"), error => error.code === 503);
+});
+
+test("报告失败重试复用幂等键，受理成功后下次操作换键", async () => {
+  const report = await loadTree("../../frontend/js/report/report-api.js");
+  const keys = [];
+  const generator = report.createReportGenerator(async (method, path, body, headers) => {
+    assert.equal(method, "POST");
+    assert.equal(path, "/report/generate");
+    keys.push(headers["Idempotency-Key"]);
+    if (keys.length === 1) throw new Error("fictional network failure");
+    return { report_record_id: 7, status: "pending" };
+  });
+  const body = { report_code: "daily_report" };
+  await assert.rejects(generator.generate(body));
+  await generator.generate(body);
+  await generator.generate(body);
+  assert.equal(keys[0], keys[1]);
+  assert.notEqual(keys[1], keys[2]);
+});
+
+test("北京时间转换不受运行机器时区影响", async () => {
+  const report = await loadTree("../../frontend/js/report/report-api.js");
+  assert.equal(report.toBeijingIso("2026-10-17T09:30"), "2026-10-17T09:30:00+08:00");
+  assert.equal(report.toBeijingIso("2026-10-17T09:30:15"), "2026-10-17T09:30:15+08:00");
+  assert.throws(() => report.toBeijingIso("invalid"));
 });

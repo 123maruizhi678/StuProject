@@ -13,6 +13,22 @@ export function clearSession() {
   sessionStorage.removeItem(SESSION_KEY);
 }
 
+/** 同一标签页中的工作台与业务 iframe 同步身份事件。 */
+export function publishAuthEvent(name = "auth:changed") {
+  let root = window;
+  try {
+    while (root.parent && root.parent !== root && root.parent.location.origin === window.location.origin) root = root.parent;
+  } catch { /* 跨域父页面不参与会话同步。 */ }
+  function dispatch(target) {
+    try {
+      if (target.location.origin !== window.location.origin) return;
+      target.dispatchEvent(new Event(name));
+      for (let index = 0; index < (target.frames?.length || 0); index++) dispatch(target.frames[index]);
+    } catch { /* 跳过跨域或已卸载的 iframe。 */ }
+  }
+  dispatch(root);
+}
+
 export function readSession() {
   try {
     const value = JSON.parse(sessionStorage.getItem(SESSION_KEY));
@@ -34,18 +50,25 @@ export function saveSession(data) {
   }));
 }
 
-export async function request(path, { method = "GET", body, authenticated = true } = {}) {
+/** 兼容学生模块的会话读取；令牌仍由统一登录按有效期保存。 */
+export const tokenStore = Object.freeze({
+  get: () => readSession()?.accessToken || null,
+  clear: () => { clearSession(); publishAuthEvent(); },
+});
+
+export async function request(path, { method = "GET", body, authenticated = true, headers: extraHeaders = {}, timeoutMs = 15000 } = {}) {
   if (!path.startsWith("/") || path.startsWith("//") || path.includes("\\")) throw new ApiError("无效的接口路径。");
-  const headers = { Accept: "application/json" };
+  const headers = { ...extraHeaders, Accept: "application/json" };
   const session = authenticated ? readSession() : null;
   if (session) headers.Authorization = `Bearer ${session.accessToken}`;
-  if (body !== undefined) headers["Content-Type"] = "application/json";
+  const form = typeof FormData !== "undefined" && body instanceof FormData;
+  if (body !== undefined && !form) headers["Content-Type"] = "application/json";
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 15000);
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
   let response, result;
   try {
     response = await fetch(`/api/v1${path}`, {
-      method, headers, body: body === undefined ? undefined : JSON.stringify(body),
+      method, headers, body: body === undefined ? undefined : form ? body : JSON.stringify(body),
       signal: controller.signal, credentials: "same-origin", cache: "no-store",
     });
     result = await response.json();
@@ -57,13 +80,13 @@ export async function request(path, { method = "GET", body, authenticated = true
   const code = response.ok && Number.isInteger(result?.code) ? result.code : response.status;
   if (code === 401 && authenticated) {
     clearSession();
-    window.dispatchEvent(new Event("auth:expired"));
+    publishAuthEvent("auth:expired");
   }
   if (!response.ok || code !== 0) {
     let message = result?.message || (typeof result?.detail === "string" ? result.detail : "请求失败，请稍后重试。");
     if (code === 401) message = authenticated ? "登录已失效，请重新登录。" : "账号或密码不正确。";
     if (code === 403) message = "当前账号没有访问权限。";
-    if (code === 422) message = "请检查账号和密码的填写格式。";
+    if (code === 422) message = path === "/auth/login" ? "请检查账号和密码的填写格式。" : "请检查提交内容的填写格式。";
     throw new ApiError(message, code);
   }
   if (!Object.hasOwn(result, "data")) throw new ApiError("服务响应格式不正确。");
