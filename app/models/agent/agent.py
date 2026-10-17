@@ -8,7 +8,7 @@
     - ChatSession    客服会话
     - ChatMessage    客服消息
 
-由 scripts/init_db.py 自动导入并建表。
+复用公共 Base；导入模型不会自动建表。
 """
 from datetime import datetime
 

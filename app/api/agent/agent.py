@@ -22,7 +22,7 @@ from app.schemas.agent import (
     SignupData,
     SignupRequest,
 )
-from app.services import agent_service
+from app.services.agent import agent_service
 
 router = APIRouter(prefix="/agent", tags=["客服Agent"])
 

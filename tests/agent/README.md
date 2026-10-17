@@ -1,5 +1,32 @@
 # 客服 Agent 后端接入与验证
 
+## 文件结构
+
+依据操作文档第七章的客服文件职责，沿用项目“技术层 → 业务模块”的目录约定，客服代码归入各层的 `agent` 包：
+
+```text
+app/
+├── api/agent/
+│   ├── __init__.py          导出 router，供唯一应用入口挂载
+│   └── agent.py             六个匿名 HTTP 接口
+├── services/agent/
+│   ├── __init__.py
+│   ├── agent_service.py     对话、活动、报名、课程及 FAQ 业务
+│   └── dify_client.py       客服专属 mock / real Workflow 适配器
+├── models/agent/
+│   ├── __init__.py          导出六张业务表模型
+│   └── agent.py             六张业务表 ORM 映射
+└── schemas/agent/
+    ├── __init__.py          导出请求与响应模型
+    └── agent.py             客服请求/响应字段与校验
+```
+
+业务服务从 `app.services.agent` 导入 `agent_service`，Dify 客户端从 `app.services.agent.dify_client` 导入。接口、模型和 Schema 包保留 `app.api.agent`、`app.models.agent`、`app.schemas.agent` 的公开导入入口。公共配置、数据库、日志、响应和 Dify HTTP 工具继续使用原公共模块。
+
+前端已独立放在 `frontend/agent/`、`frontend/js/agent/`、`frontend/css/agent/`，测试位于 `tests/agent/`，SQL 历史资产位于 `scripts/sql/bk/客服Agent/`。操作文档另列的客服 DSL、知识库、种子和联调脚本仍按原交付状态管理，本次目录调整不生成这些业务资产。
+
+## HTTP 接口
+
 客服后端六接口已在唯一 `app/main.py` 挂载，保持允许匿名访问：
 
 | 方法 | 路径 | 功能 |

@@ -24,7 +24,7 @@ from app.models.agent import (
     Faq,
     LectureEvent,
 )
-from app.services.dify_client import AgentDifyError, get_dify_client
+from app.services.agent.dify_client import AgentDifyError, get_dify_client
 
 # 业务状态常量
 EVENT_OPEN = "报名中"       # 活动可报名

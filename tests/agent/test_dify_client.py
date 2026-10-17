@@ -8,7 +8,7 @@ from pydantic import SecretStr
 
 from app.config import settings
 from app.core.common.dify import DifyHttpClient
-from app.services.dify_client import AgentDifyError, MockDifyClient, RealDifyClient, get_dify_client
+from app.services.agent.dify_client import AgentDifyError, MockDifyClient, RealDifyClient, get_dify_client
 
 
 def succeeded(intent="chat", reply="虚构回复", **extra):

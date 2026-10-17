@@ -13,8 +13,8 @@ from app.core.common.response import BusinessException
 from app.database import get_db
 from app.main import app
 from app.models.agent import ChatMessage, ChatSession, EventSignup, LectureEvent
-from app.services import agent_service
-from app.services.dify_client import RealDifyClient
+from app.services.agent import agent_service
+from app.services.agent.dify_client import RealDifyClient
 from fastapi.testclient import TestClient
 from tests.agent.support import make_engine, seed_catalog
 

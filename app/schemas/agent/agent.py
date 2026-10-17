@@ -1,4 +1,4 @@
-"""客服 Agent 请求 / 响应模型。"""
+"""客服 Agent 模块的请求 / 响应模型。"""
 from pydantic import BaseModel, Field
 
 

@@ -1,6 +1,6 @@
 
 
-"""客服 Agent 的 Dify Workflow 适配器。
+"""客服 Agent 专属的 Dify Workflow 适配器。
 
 职责边界：Dify 只做「理解意图 + 生成话术」，不直接连业务库。
 Mock 仅用于明确选择的模拟模式；real 调用已发布 Workflow，不自动降级。

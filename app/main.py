@@ -16,10 +16,9 @@ init_logger()
 logger = get_logger(__name__)
 
 # 仍停留在历史扁平布局、尚未迁入按业务模块分包结构的模块（目录架构归位中）。
-# 智能报告已迁入 app/api/report 包，不在此列。
-# 此集合只跟踪目录迁移；客服路由已挂载，不代表其中模块均未启用。
+# 客服和智能报告已迁入各技术层的 agent/report 包，不在此列。
+# 此集合只跟踪目录迁移，不代表其中模块均未启用。
 MIGRATION_PENDING_MODULES = {
-    "agent",
     "customer",
     "enterprise",
     "enterprise_student",

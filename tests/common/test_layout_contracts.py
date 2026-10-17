@@ -20,10 +20,12 @@ class LayoutContracts(unittest.TestCase):
 
     def test_available_business_modules_import(self):
         for name in [
-            "app.api.common.auth", "app.api.agent", "app.api.report.report",
+            "app.api.common.auth", "app.api.agent.agent", "app.api.report.report",
+            "app.models.agent.agent", "app.schemas.agent.agent",
+            "app.services.agent.agent_service",
             "app.services.student_leave_service",
             "app.repositories.student_leave_repository",
-            "app.services.dify_client", "app.clients.report.report_dify",
+            "app.services.agent.dify_client", "app.clients.report.report_dify",
             "app.core.common.auth", "app.core.common.authorization", "app.core.common.dify",
             "app.repositories.common.account_repository", "app.repositories.common.notification_repository",
             "app.repositories.common.operation_log_repository",
@@ -51,6 +53,7 @@ class LayoutContracts(unittest.TestCase):
         self.assertIn("/api/v1/report/generate", schema["paths"])
         self.assertIn("/api/v1/agent/chat", schema["paths"])
         self.assertIn("student_leave", MIGRATION_PENDING_MODULES)
+        self.assertNotIn("agent", MIGRATION_PENDING_MODULES)
 
     def test_frontend_local_resources_exist(self):
         html = (ROOT / "frontend/index.html").read_text(encoding="utf-8")
