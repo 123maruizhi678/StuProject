@@ -4,11 +4,12 @@ from typing import Literal
 from pydantic import Field, SecretStr, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 BASE_DIR = Path(__file__).resolve().parent.parent
+ENV_FILE = str(BASE_DIR / ".env")
 
 
 class Settings(BaseSettings):
-    model_config = SettingsConfigDict(env_file=str(BASE_DIR / ".env.sample"), env_file_encoding="utf-8", extra="ignore")
-    # 学生统一应用：真实密钥仅通过系统环境变量注入。
+    model_config = SettingsConfigDict(env_file=ENV_FILE, env_file_encoding="utf-8", extra="ignore")
+    # 学生统一应用：真实密钥通过本机 .env 或系统环境变量配置。
     STUDENT_DIFY_KEY: SecretStr = Field(default=SecretStr(''), repr=False)
     STUDENT_TOKEN_ISSUER: str = 'stuproject'
     STUDENT_ACTION_TTL_SECONDS: int = Field(default=300, ge=300, le=300)
@@ -65,10 +66,10 @@ class Settings(BaseSettings):
 
 
 class StudentLeaveDifySettings(BaseSettings):
-    """学生请假 Workflow 的专用连接配置，保留旧字段兼容，真实值仅通过系统环境变量注入。"""
+    """学生请假 Workflow 的专用连接配置，保留旧字段兼容。"""
 
     model_config = SettingsConfigDict(
-        env_file=str(BASE_DIR / ".env.sample"),
+        env_file=ENV_FILE,
         env_file_encoding="utf-8",
         extra="ignore",
     )

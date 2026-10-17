@@ -13,7 +13,7 @@
 - python scripts/student/init_student_assistant.py --dry-run（只读核验数据库）
 - python -m pytest tests/student -q
 
-页面 /login 使用统一账号登录，学生页面 /student-assistant。环境变量 AUTH_SECRET_KEY 负责公共JWT，STUDENT_ACTION_SECRET 只负责会话/确认签名；两者分别从启动环境注入，均不复用Dify Key。学生应用使用 DIFY_API_BASE、DIFY_API_TIMEOUT_SECONDS、STUDENT_DIFY_KEY，默认读取无密钥 .env.sample，不再加载 .env 或 .env.student.local。
+页面 /login 使用统一账号登录，学生页面 /student-assistant。环境变量 AUTH_SECRET_KEY 负责公共JWT，STUDENT_ACTION_SECRET 只负责会话/确认签名；两者分别在本机 .env 中配置或从启动环境注入，均不复用Dify Key。学生应用使用 DIFY_API_BASE、DIFY_API_TIMEOUT_SECONDS、STUDENT_DIFY_KEY，读取根目录 .env，同名系统环境变量优先。不加载 .env.student.local。
 
 SQL scripts/sql/student/20261017_student_tables.sql 为7张学生表的最终DDL，仅适用于对应表缺失且公共依赖已具备的场景；已有表必须先按最终DDL核对并迁移。发现旧 student_leave_request 或旧通知表时停止自动切换，按主键映射、状态映射及真实审批审计迁移，不能覆盖新增业务。
 
@@ -29,7 +29,7 @@ SQL scripts/sql/student/20261017_student_tables.sql 为7张学生表的最终DDL
 
 最终操作文档048规定本地权威不适用同步时 synced_at=NULL；源建表SQL中两张本地镜像表仍为NOT NULL。本模块模型及配套学生DDL按操作文档修正为可空，原开发文档未改。已有库需据此核对两列可空性。
 
-公共配置迁移：运行时读取根 .env.sample 的公共默认值，同名环境变量优先。真实数据库密码、JWT签名密钥、学生应用Key等只在启动终端或部署平台注入，不再保存 .env 文件。Windows PowerShell可在当前会话通过 $env:变量名 设置后再启动；模板禁止填写真实凭据。
+公共配置：运行时读取根目录 .env，同名系统环境变量优先。真实数据库密码、JWT签名密钥、学生应用Key等填写到被 Git 忽略的 .env，或在启动终端、部署平台注入。Windows PowerShell可在当前会话通过 $env:变量名 设置后再启动；公开示例 .env.example 禁止填写真实凭据。
 
 ## 本次交付
 

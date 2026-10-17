@@ -1,7 +1,8 @@
 """只读检查共享表及外键，不创建、修复或删除企业表。"""
-from sqlalchemy import Boolean, DateTime, Date, Numeric, LargeBinary, Integer, JSON, String, inspect
+from sqlalchemy import BINARY, VARBINARY, Boolean, DateTime, Date, Numeric, LargeBinary, Integer, JSON, String, inspect
 from sqlalchemy.exc import SQLAlchemyError
 
+from app.database import Base
 from app.models import common as shared
 
 
@@ -26,7 +27,9 @@ WRITE_TABLES = {"student_admin_service", "business_notification", "operation_log
 def _family(type_):
     if isinstance(type_, Boolean):
         return "integer"  # MySQL BOOLEAN 反射为 TINYINT。
-    for cls, name in ((Integer, "integer"), (DateTime, "datetime"), (Date, "date"), (Numeric, "numeric"), (LargeBinary, "binary"), (JSON, "json"), (String, "string")):
+    if isinstance(type_, (LargeBinary, BINARY, VARBINARY)):
+        return "binary"  # MySQL VARBINARY/BINARY 与通用 LargeBinary 都存储字节。
+    for cls, name in ((Integer, "integer"), (DateTime, "datetime"), (Date, "date"), (Numeric, "numeric"), (JSON, "json"), (String, "string")):
         if isinstance(type_, cls):
             return name
     return type(type_).__name__.lower()
@@ -40,7 +43,7 @@ def check_student_schema(connection, feature):
         if name not in existing:
             issues.append(f"missing_table:{name}")
             continue
-        expected = shared.metadata.tables[name]
+        expected = Base.metadata.tables[name]
         columns = {c["name"]: c for c in inspector.get_columns(name)}
         tables[name] = {"columns": {n: str(c["type"]) for n, c in columns.items()},
                         "foreign_keys": inspector.get_foreign_keys(name)}
