@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>客服Agent</title>
+  <link rel="stylesheet" href="../css/agent/agent.css" />
+</head>
+<body>
+  <div class="layout">
+    <!-- 左侧：对话 -->
+    <section class="chat-panel">
+      <header class="chat-header">
+        <h1>留学顾问 · 在线客服</h1>
+        <span id="session-badge" class="session-badge">新会话</span>
+      </header>
+      <div id="messages" class="messages" aria-live="polite"></div>
+      <form id="chat-form" class="chat-input">
+        <input id="chat-text" type="text" placeholder="请输入问题，如：最近有什么讲座？" autocomplete="off" required />
+        <button type="submit">发送</button>
+      </form>
+    </section>
+
+    <!-- 右侧：课程 / 活动 / FAQ -->
+    <aside class="side-panel">
+      <nav class="tabs">
+        <button class="tab active" data-tab="events">活动</button>
+        <button class="tab" data-tab="courses">课程</button>
+        <button class="tab" data-tab="faq">FAQ</button>
+      </nav>
+
+      <div id="tab-events" class="tab-panel active">
+        <div class="panel-toolbar">
+          <select id="event-status">
+            <option value="">全部状态</option>
+            <option value="报名中">报名中</option>
+            <option value="已满">已满</option>
+            <option value="已结束">已结束</option>
+          </select>
+          <button id="refresh-events" class="ghost">刷新</button>
+        </div>
+        <ul id="event-list" class="card-list"></ul>
+      </div>
+
+      <div id="tab-courses" class="tab-panel">
+        <div class="panel-toolbar">
+          <select id="course-category">
+            <option value="">全部类别</option>
+            <option value="留学申请">留学申请</option>
+            <option value="背景提升">背景提升</option>
+            <option value="语言培训">语言培训</option>
+          </select>
+          <button id="refresh-courses" class="ghost">刷新</button>
+        </div>
+        <ul id="course-list" class="card-list"></ul>
+      </div>
+
+      <div id="tab-faq" class="tab-panel">
+        <div class="panel-toolbar">
+          <input id="faq-keyword" type="text" placeholder="输入问题关键词" />
+          <button id="search-faq" class="ghost">查询</button>
+        </div>
+        <div id="faq-result" class="faq-result"></div>
+      </div>
+    </aside>
+  </div>
+
+  <!-- 报名弹窗 -->
+  <dialog id="signup-dialog">
+    <form id="signup-form" method="dialog">
+      <h2 id="signup-title">活动报名</h2>
+      <input type="hidden" id="signup-event-id" />
+      <label>姓名<input id="signup-name" type="text" required /></label>
+      <label>手机号<input id="signup-phone" type="tel" required /></label>
+      <label>备注（选填）<input id="signup-info" type="text" /></label>
+      <div class="dialog-actions">
+        <button type="button" id="signup-cancel" class="ghost">取消</button>
+        <button type="submit" id="signup-confirm">确认报名</button>
+      </div>
+    </form>
+  </dialog>
+
+  <div id="toast" class="toast" hidden></div>
+  <script src="../js/agent/agent.js"></script>
+</body>
+</html>
