@@ -9,7 +9,7 @@ from fastapi import APIRouter, Depends, File, Form, UploadFile
 from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 
-from app.core.common.auth import AccountContext
+from app.models.common.user_account import UserAccount as AccountContext
 from app.core.common.authorization import require_permission
 from app.core.common.response import success
 from app.database import get_db

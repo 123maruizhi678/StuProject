@@ -34,6 +34,11 @@ class Settings(BaseSettings):
     DIFY_SQL_OUTPUT_KEY: str = "sql"
     # Dify HTTP 请求超时秒数（客服 / NL2SQL / 报告工作流共用）。
     DIFY_API_TIMEOUT_SECONDS: float = 60.0
+    # 客户研判独立字段抽取 Workflow；空密钥保留确定性解析能力。
+    CUSTOMER_EXTRACT_DIFY_API_KEY: SecretStr = Field(default=SecretStr(""), repr=False)
+    CUSTOMER_EXTRACT_DIFY_API_BASE: str = ""
+    CUSTOMER_EXTRACT_DIFY_APP_ID: str = ""
+    CUSTOMER_EXTRACT_DIFY_TIMEOUT_SECONDS: float = Field(default=60.0, gt=0, le=300)
     # 客服独立应用；real 模式不自动回退为 mock。
     DIFY_CLIENT: Literal["mock", "real"] = "mock"
     DIFY_AGENT_API_KEY: SecretStr = Field(default=SecretStr(""), repr=False)

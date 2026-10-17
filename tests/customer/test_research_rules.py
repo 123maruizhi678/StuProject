@@ -89,3 +89,7 @@ def test_empty_conditions_not_matched():
     rule = {"match_logic": "all", "conditions": [], "score_rules": []}
     matched, mf, ur, score = _evaluate(rule, _info(age=30))
     assert matched is False
+
+
+def test_numeric_score_exact_threshold_counted_once():
+    assert _compute_score([{"field": "work_years", "points": {"5": 20, "3": 10}}], _info(work_years=5)) == 20
