@@ -4,12 +4,10 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.api.auth import router as auth_router
-from app.api.enterprise_student import router as enterprise_student_router
 from app.core.authorization import load_access_control, require_permission
 from app.core.logger import get_logger, init_logger
 from app.core.response import register_exception_handlers
 from app.database import dispose_db, get_db
-from app.api.student_leave import create_router as create_student_leave_router
 
 init_logger()
 logger = get_logger(__name__)
@@ -37,15 +35,11 @@ app.add_middleware(
 )
 register_exception_handlers(app)
 app.include_router(auth_router, prefix="/api/v1")
-app.include_router(enterprise_student_router, prefix="/api/v1")
 
-# S01仅接入学生请假；登录和权限判断复用组长公共依赖。
-app.include_router(
-    create_student_leave_router(
-        require_permission("student.admin_service.create"), get_db
-    ),
-    prefix="/api/v1",
-)
+# 学生所有业务共用唯一入口，企业页面调用同一组协作接口。
+from app.api.student.student import router as student_router, internal_router
+app.include_router(student_router)
+app.include_router(internal_router)
 
 # 路由注册（各业务模块就绪后在此 include，挂载到 /api/v1）
 # from app.api import customer, agent, enterprise, student
@@ -101,3 +95,16 @@ def student_openapi():
 
 
 app.openapi = student_openapi
+
+
+from pathlib import Path
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
+FRONTEND_ROOT=Path(__file__).resolve().parents[1]/'frontend'
+app.mount('/static', StaticFiles(directory=FRONTEND_ROOT),name='static')
+@app.get('/student-assistant',include_in_schema=False)
+def student_page():
+    return FileResponse(FRONTEND_ROOT/'student/student-assistant.html')
+@app.get('/login',include_in_schema=False)
+def login_page():
+    return FileResponse(FRONTEND_ROOT/'common/login.html')

@@ -1,12 +1,12 @@
-"""应用配置：从公共.env.sample默认值和系统环境变量读取日志、数据库和各业务 Dify 应用设置。"""
+"""应用配置：从 .env.sample 默认值和系统环境变量读取日志、数据库和各业务 Dify 应用设置。"""
 
 from pathlib import Path
 
 from typing import Literal
-from pydantic import Field, SecretStr
+from pydantic import Field, SecretStr, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-# 公共模板只保存默认值；真实凭据通过同名环境变量注入。
+# 项目根目录；公共模板提供默认值，同名系统环境变量优先。
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 
@@ -16,6 +16,40 @@ class Settings(BaseSettings):
         env_file_encoding="utf-8",
         extra="ignore",
     )
+
+    # 学生统一应用：真实密钥仅通过系统环境变量注入。
+    STUDENT_DIFY_KEY: SecretStr = Field(default=SecretStr(''), repr=False)
+    STUDENT_TOKEN_ISSUER: str = 'stuproject'
+    STUDENT_ACTION_TTL_SECONDS: int = Field(default=300, ge=300, le=300)
+    STUDENT_ANALYSIS_VERSION: str = 'student-assistant-v1'
+    STUDENT_HTTP_TIMEOUT: float = Field(default=30, gt=0, le=120)
+    STUDENT_QUERY_BACKEND: Literal['local','group'] = 'local'
+    STUDENT_NL2SQL_URL: str = ''
+    STUDENT_NL2SQL_TOKEN: str = Field(default='', repr=False)
+    STUDENT_EDUCATION_URL: str = ''
+    STUDENT_EDUCATION_TOKEN: str = Field(default='', repr=False)
+    STUDENT_CRM_URL: str = ''
+    STUDENT_CRM_TOKEN: str = Field(default='', repr=False)
+    STUDENT_SYNC_TOKEN: SecretStr = Field(default=SecretStr(''), repr=False)
+    STUDENT_NOTIFICATION_MAX_ATTEMPTS: int = Field(default=5, ge=1, le=20)
+    STUDENT_NOTIFICATION_LEASE_SECONDS: int = Field(default=60, ge=60, le=60)
+    STUDENT_NOTIFICATION_URL: str = ''
+    STUDENT_NOTIFICATION_TOKEN: str = Field(default='', repr=False)
+    STUDENT_SYNC_INTERVAL_SECONDS: int = Field(default=300, ge=30)
+    STUDENT_KNOWLEDGE_FILE: Path = BASE_DIR / 'dify/student/knowledge.json'
+    STUDENT_ACTION_SECRET: str = Field(default="", repr=False)
+    STUDENT_SYNC_ENABLED: bool = False
+    STUDENT_SYNC_ALLOWED_SOURCES: list[str] = []
+    STUDENT_SYNC_ALLOWED_STUDENT_IDS: list[int] = []
+    STUDENT_COURSES_FILE: Path = BASE_DIR / "app" / "student_courses.json"
+    STUDENT_LEAVE_ASSIGNMENT_SCOPES: dict[int, list[int]] = {}
+    STUDENT_WARNING_ASSIGNER_IDS: list[int] = []
+    STUDENT_WARNING_ASSIGNMENT_SCOPES: dict[int, list[int]] = {}
+
+    @field_validator('STUDENT_COURSES_FILE','STUDENT_KNOWLEDGE_FILE')
+    @classmethod
+    def student_paths(cls,value):
+        return value if value.is_absolute() else BASE_DIR/value
 
     # 日志
     LOG_LEVEL: str = "INFO"
@@ -51,7 +85,7 @@ class Settings(BaseSettings):
 
 
 class StudentLeaveDifySettings(BaseSettings):
-    """学生请假 Workflow 的专用连接配置，使用独立 API Key 和版本标识。"""
+    """学生请假 Workflow 的专用连接配置，保留旧字段兼容，真实值仅通过系统环境变量注入。"""
 
     model_config = SettingsConfigDict(
         env_file=str(BASE_DIR / ".env.sample"),
