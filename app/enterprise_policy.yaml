@@ -1,0 +1,14 @@
+# 连续自然小时；新增／重开应由共享工单创建服务冻结到轮次记录。
+version: enterprise-sla-v1
+timezone: Asia/Shanghai
+scan_seconds: 300
+reminder_round_hours: 24
+notification_lease_seconds: 60
+retry_minutes: [1, 5, 15, 60, 240]
+ticket_sla:
+  complaint:
+    normal: {response_hours: 24, resolution_hours: 72}
+    high: {response_hours: 4, resolution_hours: 24}
+  suggestion:
+    normal: {response_hours: 48, resolution_hours: 120}
+    high: {response_hours: 24, resolution_hours: 72}

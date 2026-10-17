@@ -33,14 +33,10 @@ class LayoutContracts(unittest.TestCase):
             self.assertIsNotNone(importlib.import_module(name))
 
     def test_canonical_shared_columns_match_existing_sql(self):
-        import sqlglot
-        from sqlglot import exp
+        from tests.common.sql_contract import columns_for
         from app.models import common
-        sql = (ROOT / "scripts/sql/all.sql").read_text(encoding="utf-8-sig")
         for name in ("org_department", "customer_profile", "student_score", "service_ticket", "service_ticket_record"):
-            ddl = re.search(r"CREATE TABLE `?" + name + r"`?\s*\(.*?;", sql, re.S).group()
-            parsed = sqlglot.parse_one(ddl, read="mysql")
-            expected = [column.name for column in parsed.this.expressions if isinstance(column, exp.ColumnDef)]
+            expected = list(columns_for(name))
             self.assertEqual(list(getattr(common, name).columns.keys()), expected, name)
 
     def test_application_openapi_has_unique_operations(self):
@@ -52,6 +48,8 @@ class LayoutContracts(unittest.TestCase):
         self.assertIn("/api/v1/auth/login", schema["paths"])
         self.assertIn("/api/v1/report/generate", schema["paths"])
         self.assertIn("/api/v1/agent/chat", schema["paths"])
+        self.assertIn("/api/v1/enterprise/customer", schema["paths"])
+        self.assertNotIn("enterprise", MIGRATION_PENDING_MODULES)
         self.assertIn("student_leave", MIGRATION_PENDING_MODULES)
         self.assertNotIn("agent", MIGRATION_PENDING_MODULES)
 

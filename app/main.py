@@ -16,11 +16,10 @@ init_logger()
 logger = get_logger(__name__)
 
 # 仍停留在历史扁平布局、尚未迁入按业务模块分包结构的模块（目录架构归位中）。
-# 客服和智能报告已迁入各技术层的 agent/report 包，不在此列。
+# 客服、智能报告和企业接口已迁入各技术层的业务包，不在此列。
 # 此集合只跟踪目录迁移，不代表其中模块均未启用。
 MIGRATION_PENDING_MODULES = {
     "customer",
-    "enterprise",
     "enterprise_student",
     "student",
     "student_leave",
@@ -49,6 +48,13 @@ app.add_middleware(
 )
 register_exception_handlers(app)
 app.include_router(auth_router, prefix="/api/v1")
+
+# 企业管理和配套开户接口复用本项目的唯一认证、数据库及共享映射。
+from app.api.enterprise.enterprise import router as enterprise_router
+from app.api.common.account_registration import router as account_registration_router
+
+app.include_router(enterprise_router, prefix="/api/v1")
+app.include_router(account_registration_router, prefix="/api/v1")
 
 # 客服六接口允许匿名访问；业务数据读写由客服服务负责。
 from app.api.agent import router as agent_router
@@ -80,9 +86,8 @@ except ModuleNotFoundError as exc:
     logger.warning("student_leave 路由暂未挂载（迁移中）：%s", exc.name)
 
 # 路由注册（各业务模块就绪后在此 include，挂载到 /api/v1）
-# from app.api import customer, enterprise, student
+# from app.api import customer, student
 # app.include_router(customer.router, prefix="/api/v1")
-# app.include_router(enterprise.router, prefix="/api/v1")
 # app.include_router(student.router, prefix="/api/v1")
 
 # 智能报告：已按业务模块分包迁入 app/api/report，五接口挂载到 /api/v1/report。
@@ -116,6 +121,33 @@ def login_page():
 def student_workspace_page():
     """兼容学生模块原独立入口；业务接口仍单独校验权限。"""
     return FileResponse(FRONTEND_DIR / "student" / "student-assistant.html")
+
+
+@app.get("/enterprise", include_in_schema=False)
+def enterprise_workspace_page():
+    return FileResponse(FRONTEND_DIR / "enterprise" / "enterprise.html")
+
+
+@app.get("/admin/accounts", include_in_schema=False)
+def admin_accounts_page():
+    return FileResponse(FRONTEND_DIR / "admin" / "accounts.html", headers={"Cache-Control": "no-store"})
+
+
+@app.get("/admin", include_in_schema=False)
+def admin_page():
+    from fastapi.responses import RedirectResponse
+    return RedirectResponse("/admin/accounts")
+
+
+from fastapi import Depends
+from fastapi.responses import JSONResponse
+from app.core.common.admin_authorization import require_platform_admin
+
+
+@app.get("/api/v1/admin/openapi.json", include_in_schema=False)
+def admin_openapi(operator=Depends(require_platform_admin)):
+    from app.core.common.admin_openapi import build_admin_openapi
+    return JSONResponse(build_admin_openapi(app), headers={"Cache-Control": "no-store"})
 
 
 # 学生路由沿用小组HTTP 200 + code信封；仅修正这些路由的OpenAPI描述。

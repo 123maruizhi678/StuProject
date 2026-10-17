@@ -1,0 +1,14 @@
+{
+  "version": "enterprise-local-v1",
+  "baseline": "开发文档/操作文档_数据库建表语句.sql",
+  "new_tables": ["enterprise_course", "enterprise_student_course"],
+  "shared_changes": {
+    "customer_followup": ["schedule_operation_id BIGINT NULL：当前安排代次成功审计ID", "schedule_base_at DATETIME(6) NULL：当前安排提醒基准UTC"],
+    "service_ticket_record": ["sla_snapshot JSON NULL：每轮版本化时限和事件快照"],
+    "student_academic_event": ["synced_at可空：local事实不伪造同步；复用原event_version，API使用expected_event_version"],
+    "student_application_progress": ["row_version INTEGER NOT NULL DEFAULT 1：并发版本", "synced_at可空：local事实不伪造同步"]
+  },
+  "local_source_mapping": "source_system=local；external_*使用local:随机UUID，不代表外部同步成功",
+  "consumers": ["企业固定服务", "学生模块未来按本人范围读取唯一共享事实"],
+  "execution": "先创建两个课程表，再补共享字段；仅缺失对象执行，DDL分步提交，禁止清库"
+}

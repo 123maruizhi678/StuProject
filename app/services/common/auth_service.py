@@ -31,6 +31,8 @@ def authenticate(db: Session, username: str, password: str) -> UserAccount | Non
     account = AccountRepository(db).get_by_username(username)
     if account is None or not verify_password(password, account.password_hash):
         return None
+    from app.core.common.account_state import ensure_account_active
+    ensure_account_active(db, account)
     return account
 
 
