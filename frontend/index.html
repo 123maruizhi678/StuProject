@@ -1,28 +1,16 @@
 <!doctype html>
 <html lang="zh-CN">
 <head>
-  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>StuProject · 公共入口</title>
-  <link rel="stylesheet" href="/static/css/common/style.css">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#080e1a">
+  <meta name="description" content="星桥智能服务平台，连接学习、服务与每一个重要节点。">
+  <title>系统总览 · 星桥 NEXUS</title>
+  <link rel="stylesheet" href="/static/css/system.css">
+  <script type="module" src="/static/js/portal.js"></script>
 </head>
-<body>
-  <main class="shell landing">
-    <section class="intro">
-      <a class="brand" href="/"><span class="brand-mark">S</span> StuProject <span class="brand-label">公共基础能力</span></a>
-      <div class="eyebrow">IDENTITY &amp; ACCESS</div>
-      <h1>一个账号，<br>连接你的工作。</h1>
-      <p class="lead">统一登录，查看属于你的功能权限。<br>让每一次访问都有清晰的边界。</p>
-      <a class="button primary" href="/login">进入账号登录 <span aria-hidden="true">↗</span></a>
-      <div class="intro-footer"><span class="status-dot"></span> 公共登录与权限入口</div>
-    </section>
-    <section class="landing-details">
-      <span class="section-kicker">公共服务</span>
-      <h2>身份与权限，统一管理</h2>
-      <div class="feature"><span>01</span><div><h3>账号登录</h3><p>使用已开通的账号安全登录。</p></div></div>
-      <div class="feature"><span>02</span><div><h3>本人权限</h3><p>查看当前身份可以使用的功能。</p></div></div>
-      <div class="feature"><span>03</span><div><h3>权限随职责更新</h3><p>角色调整后，访问权限同步生效。</p></div></div>
-      <p class="muted small">如需开通账号或调整职责，请联系平台管理员。</p>
-    </section>
-  </main>
+<body data-module="portal">
+  <div id="app"></div>
+  <noscript><p style="padding:32px;color:#e9f0fb">请启用 JavaScript 后使用本系统。</p></noscript>
 </body>
 </html>
