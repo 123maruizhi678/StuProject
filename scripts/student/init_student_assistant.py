@@ -57,7 +57,7 @@ if __name__=='__main__':
             print(json.dumps(report,ensure_ascii=False))
             raise SystemExit(0 if report['compatible'] else 1)
         except __import__('sqlalchemy').exc.SQLAlchemyError:
-            print(json.dumps({'compatible':False,'error':'DATABASE_UNAVAILABLE','message':'数据库连接或认证失败，请核对启动环境变量及.env.sample模板；未执行任何DDL。'},ensure_ascii=False))
+            print(json.dumps({'compatible':False,'error':'DATABASE_UNAVAILABLE','message':'数据库连接或认证失败，请核对启动环境变量及.env配置；未执行任何DDL。'},ensure_ascii=False))
             raise SystemExit(2)
         finally:
             engine.dispose()

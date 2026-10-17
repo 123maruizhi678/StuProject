@@ -1,4 +1,4 @@
-"""使用公共.env.sample和环境变量，通过统一应用入口启动。"""
+"""使用本机 .env 和环境变量，通过统一应用入口启动。"""
 from pathlib import Path
 import argparse,sys
 ROOT=Path(__file__).resolve().parents[2]
