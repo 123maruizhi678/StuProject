@@ -3,6 +3,8 @@
 from pathlib import Path
 
 from typing import Literal
+
+from pydantic import Field, SecretStr
 from pydantic import Field, SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -20,6 +22,11 @@ class Settings(BaseSettings):
     # 日志
     LOG_LEVEL: str = "INFO"
     LOG_DIR: str = ""
+    # 访问策略 YAML（app/access_control.yaml），由 authorization.load_access_control 读取
+    ACCESS_CONTROL_FILE: Path = BASE_DIR / "app" / "access_control.yaml"
+    # JWT 配置：AUTH_SECRET_KEY 至少 32 字节，未配置时登录签发会报明确错误
+    AUTH_SECRET_KEY: str = Field(default="", repr=False)
+    AUTH_TOKEN_EXPIRE_MINUTES: int = Field(default=120, ge=1)
     # DB_* 字段共同指定 MySQL 连接目标和认证信息。
     DB_HOST: str = "localhost"
     DB_PORT: int = 3306
@@ -41,6 +48,15 @@ class Settings(BaseSettings):
     AUTH_SECRET_KEY: str = Field(default="", repr=False)
     AUTH_TOKEN_EXPIRE_MINUTES: int = Field(default=120, ge=1)
     ACCESS_CONTROL_FILE: Path = BASE_DIR / "app" / "access_control.yaml"
+    DIFY_API_TIMEOUT_SECONDS: float = 60.0
+    # NL2SQL Workflow
+    DIFY_NL2SQL_API_KEY: str = Field(default="", repr=False)
+    DIFY_NL2SQL_OUTPUT_KEY: str = ""
+    DIFY_SQL_OUTPUT_KEY: str = "sql"  # 旧版 NL2SQL 输出字段兼容项
+    # 客服 Agent Workflow：DIFY_CLIENT=mock 使用关键词硬编码，=real 走 Dify /workflows/run
+    DIFY_CLIENT: str = "mock"
+    DIFY_AGENT_API_KEY: str = Field(default="", repr=False)
+    # 企业智能助手（课程/成绩）配置
     ENTERPRISE_COURSES_FILE: Path = BASE_DIR / "app" / "enterprise_courses.yaml"
     # local 表示本机成绩表为测试事实源；外部只读权威模式拒绝所有本地写入。
     ENTERPRISE_SCORE_AUTHORITY: Literal["local", "external_readonly"] = "local"
@@ -59,6 +75,7 @@ class StudentLeaveDifySettings(BaseSettings):
         extra="ignore",
     )
 
+    STUDENT_DIFY_LEAVE_BASE: str = "http://127.0.0.1/v1"
     STUDENT_DIFY_LEAVE_KEY: SecretStr = Field(default=SecretStr(""), repr=False)
     STUDENT_DIFY_LEAVE_TIMEOUT: float = 60.0
     STUDENT_DIFY_LEAVE_VERSION: str = "student-leave-v1"
