@@ -11,7 +11,7 @@ from typing import Any, List, Optional
 
 from pypdf import PdfReader
 
-from app.core.common.response import BadRequestError, NotFoundError
+from app.services.customer.errors import BadRequestError, NotFoundError
 
 # 允许落入 customer_info 的受控字段白名单
 _INFO_FIELDS = (
