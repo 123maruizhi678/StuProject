@@ -4,12 +4,12 @@
     - 全局唯一初始化（init_logger 幂等，重复调用安全）
     - 日志等级由 .env 的 LOG_LEVEL 控制（可变）
     - 日志目录默认 <项目根>/app/logs，可由 .env 的 LOG_DIR 覆盖
-    - 同时输出到控制台与 app/logs/app.log（按天滚动，保留 15 天）
+    - 同时输出到控制台与 app/logs/<启动日期>.log
     - 任意模块通过 get_logger(__name__) 获取 logger
     - 在 main.py 最开始调用 init_logger() 完成加载
 
 使用：
-    from app.core.logger import get_logger
+    from app.core.common.logger import get_logger
     logger = get_logger(__name__)
     logger.info("启动完成")
 """
@@ -21,7 +21,7 @@ from app.config import LOG_DIR, settings
 
 # 确保日志目录存在
 LOG_DIR.mkdir(parents=True, exist_ok=True)
-# 日志文件名按日期：YYYY-MM-DD.log（每天一个文件，自动留存历史）
+# 日志文件名使用模块加载日期：YYYY-MM-DD.log（运行中不自动切换日期）
 LOG_FILE = LOG_DIR / f"{date.today():%Y-%m-%d}.log"
 
 LOG_FORMAT = "%(asctime)s | %(levelname)-8s | %(name)s:%(lineno)d | %(message)s"

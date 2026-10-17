@@ -24,7 +24,7 @@ from fastapi import APIRouter, BackgroundTasks, Depends, Header, Query, Request
 from sqlalchemy.orm import Session
 
 from app.core.report import ReportAccess, require_report_action
-from app.core.response import BusinessException, ResultCode, success
+from app.core.common.response import BusinessException, ResultCode, success
 from app.database import get_db
 from app.schemas.report import (
     REPORT_CODES,

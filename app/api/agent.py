@@ -11,7 +11,7 @@
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 
-from app.core.response import BusinessException, ResponseModel, ResultCode, success
+from app.core.common.response import BusinessException, ResponseModel, ResultCode, success
 from app.database import get_db
 from app.schemas.agent import (
     ChatData,

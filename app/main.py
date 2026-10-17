@@ -5,8 +5,8 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.api.auth import router as auth_router
 from app.core.authorization import load_access_control, require_permission
-from app.core.logger import get_logger, init_logger
-from app.core.response import register_exception_handlers
+from app.core.common.logger import get_logger, init_logger
+from app.core.common.response import register_exception_handlers, success
 from app.database import dispose_db, get_db
 
 init_logger()
@@ -87,7 +87,7 @@ app.include_router(report_router, prefix="/api/v1")
 @app.get("/")
 def root():
     """提供公开的根路径服务状态响应。"""
-    return {"code": 0, "message": "success", "data": {"service": "StuProject"}}
+    return success({"service": "StuProject"})
 
 
 # 学生路由沿用小组HTTP 200 + code信封；仅修正这些路由的OpenAPI描述。

@@ -22,7 +22,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy.schema import CreateTable
 
 from app.clients.report import ReportDifyError, ReportModelOutcomeUnknown
-from app.core.response import BusinessException
+from app.core.common.response import BusinessException
 from app.core.report import ReportAccess, ReportScope
 from app.models.report import REPORT_TABLES, ReportConfig, ReportRecord
 from app.schemas.report import GenerateReportRequest

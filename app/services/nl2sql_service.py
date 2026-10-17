@@ -4,7 +4,7 @@ from fastapi.concurrency import run_in_threadpool
 from sqlalchemy import text
 
 from app.clients.nl2sql_dify import NL2SQLDifyClient
-from app.core.response import ResultCode, fail, success
+from app.core.common.response import ResultCode, fail, success
 from app.database import engine
 
 
