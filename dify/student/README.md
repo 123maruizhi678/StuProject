@@ -23,6 +23,26 @@ SQL scripts/sql/student/20261017_student_tables.sql 为7张学生表的最终DDL
 
 ## 验证边界
 
+### mental 空对象修复
+
+学生助手在普通聊天、课程建议、反馈摘要和情绪分析中均须返回完整的 mental 对象。
+LLM 节点已开启结构化输出，JSON Schema 由后端 ChatDecision 契约生成，强制包含
+emotion_tag、emotion_score、risk_level、trigger_reason；运行 ID 仍由后端从真实 Dify 响应填入。
+提示词同时要求所有模式输出 trigger_reason，高风险须提供非空依据。
+不在后端伪造缺失分值或低风险，也不因输出校验失败自动重复调用模型。
+原生严格模式要求对象的所有属性均列为必填；parameters 使用空对象、请假、工单、提醒
+四种白名单对象的联合 Schema，保持查询参数为空，不允许模型加入身份或审批字段。
+
+修改契约或提示词后运行 `python scripts/student/export_student_workflow.py`，同步 DSL。
+部署时更新现有应用的系统提示词和结构化输出 Schema，保留已绑定的模型并发布；
+也可导入新版 DSL，重新绑定模型、发布并更新对应的应用 Key。
+仓库 DSL 的模型是占位值，不能直接覆盖线上已选的真实模型后就发布。
+局域网客户端应使用可访问的服务器地址，例如 `http://192.168.5.12/v1`；
+API 页面若显示 `127.0.0.1`，该地址只指向客户端本机。
+
+本地回归不代表已发布版本更新成功。发布后须通过现有学生客户端分别真实调用
+普通聊天、课程建议、反馈摘要及情绪分析，确认 workflow_run_id、完整输出与后端校验均通过。
+
 回归使用SQLite隔离库和明确模型替身；不代表MySQL真实库、Dify供应商/模型绑定或企业页面已经联调。DSL供应商和模型仍为文档指定占位，需要部署时替换并发布。
 
 模型调用前持久化轮次占位；未知结果不自动重发，python scripts/student/run_student_tasks.py --pending-models 可列出待核实轮次。核实应依据Dify运行记录和原回执，不能直接删除占位重发。学生会话及心理跟进历史永久保留。
