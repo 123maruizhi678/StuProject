@@ -15,7 +15,7 @@ from datetime import datetime
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.core.response import BusinessException, ResultCode
+from app.core.common.response import BusinessException, ResultCode
 from app.models.agent import (
     ChatMessage,
     ChatSession,

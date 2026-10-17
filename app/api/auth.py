@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 
 from app.core.auth import get_current_account
 from app.core.authorization import access_for, public_access
-from app.core.response import success
+from app.core.common.response import success
 from app.database import get_db
 from app.models.user_account import UserAccount
 from app.schemas.auth import LoginRequest

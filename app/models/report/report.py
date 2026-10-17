@@ -1,16 +1,21 @@
 """智能报告模块 ORM 模型。
 
-本文件定义智能报告模块专属的三张表，与 SQL 脚本保持一致：
-    - scripts/sql/bk/智能报告/report_module_ddl.sql（模块建表脚本）
-    - scripts/sql/all.sql（全量脚本，定义完全一致）
+本文件定义智能报告模块的表映射，与 SQL 脚本保持一致：
+    - scripts/sql/all.sql（全量结构唯一主基线）
+    - scripts/sql/bk/智能报告/report_module_ddl.sql（模块建表脚本，受控抽取件）
 
-    - ReportConfig  报告配置表
-    - ReportRecord  报告生成记录表
-    - ReportMetric  报告指标明细表
+    - ReportConfig  报告配置表（9 字段，已部署）
+    - ReportRecord  报告生成记录表（18 字段，已部署）
+    - ReportMetric  报告指标明细表（10 字段，已部署）
+    - ReportTask    报告执行任务表（041 拟新增，尚未部署；仅声明映射，
+                     不纳入 REPORT_TABLES，初始化脚本不创建）
 
-所有字段均有中文数据库注释；下面的 Python 注释解释关键建表语句。
-时间统一存 UTC、精确到毫秒 DATETIME(3)；代码/状态/幂等键使用 utf8mb4_bin
-排序规则，普通文本使用表默认 utf8mb4_0900_ai_ci。
+所有字段均有中文数据库注释；时间统一存 UTC、精确到毫秒 DATETIME(3)；
+代码/状态/幂等键使用 utf8mb4_bin 排序规则，普通文本使用表默认
+utf8mb4_0900_ai_ci。
+
+范围（006）与审计（043）等目标增量字段不在此声明：新增表字段须开发评审，
+未部署前不得写入本文件或据此声称已建表。
 """
 from datetime import datetime, timezone
 from decimal import Decimal
@@ -295,16 +300,101 @@ class ReportMetric(CreatedAtMixin, Base):
         String(32), nullable=True, comment="单位。"
     )
     calc_rule: Mapped[str | None] = mapped_column(
-        Text, nullable=True, comment="计算口径/规则说明，用于指标复算。"
+        Text, nullable=True, comment="计算口径/规则说明，用于指标可复算。"
     )
     period_type: Mapped[str | None] = mapped_column(
         binary_string(16), nullable=True, comment="周期类型：day/week/month。"
     )
 
 
-# 建表脚本显式传入这三张表，防止其他组员新增的模型被顺带创建。
+class ReportTask(UpdatedAtMixin, Base):
+    """报告执行任务表（041 拟新增，尚未部署）。
+
+    报告原三表继续保留；report_record.status 仍为对外四状态投影，执行所有权
+    以本任务为准。任务为执行基础设施，不新建第四张报告结果表。
+    本映射仅声明目标结构：纳入 REPORT_TASK_TABLE 供未来受控增量建表使用，
+    当前初始化脚本不创建、运行时不依赖；report_task 未部署时执行所有权
+    回退为 report_record 行版本栅栏（见 app/tasks/report/report_tasks.py）。
+    """
+
+    __tablename__ = "report_task"
+    __table_args__ = (
+        UniqueConstraint("report_record_id", name="uq_report_task_record"),
+        UniqueConstraint("idempotency_key", name="uq_report_task_idempotency"),
+        CheckConstraint(
+            "status IN ('pending','running','success','failed')",
+            name="ck_report_task_status",
+        ),
+        CheckConstraint("attempt_count >= 0", name="ck_report_task_attempt"),
+        CheckConstraint("row_version >= 1", name="ck_report_task_row_version"),
+        Index("idx_report_task_status_lease", "status", "lease_expires_at"),
+        {**TABLE_OPTIONS, "comment": "报告执行任务表（拟新增）"},
+    )
+    report_task_id: Mapped[int] = mapped_column(
+        BigInteger,
+        primary_key=True,
+        autoincrement=True,
+        comment="报告执行任务主键ID",
+    )
+    report_record_id: Mapped[int] = mapped_column(
+        BigInteger,
+        ForeignKey(
+            "report_record.report_record_id",
+            name="fk_report_task_record_id",
+            ondelete="RESTRICT",
+            onupdate="RESTRICT",
+        ),
+        nullable=False,
+        comment="所属报告记录ID，外键关联 report_record.report_record_id。",
+    )
+    report_code: Mapped[str] = mapped_column(
+        binary_string(64), nullable=False, comment="报告代码，与关联记录一致。"
+    )
+    idempotency_key: Mapped[str] = mapped_column(
+        binary_string(128),
+        nullable=False,
+        comment="报告业务键，与关联记录一致。",
+    )
+    status: Mapped[str] = mapped_column(
+        binary_string(32),
+        nullable=False,
+        server_default=text("'pending'"),
+        comment="任务状态：pending/running/success/failed。",
+    )
+    lease_owner: Mapped[str | None] = mapped_column(
+        String(128), nullable=True, comment="当前租约持有者标识。"
+    )
+    lease_expires_at: Mapped[datetime | None] = mapped_column(
+        report_timestamp(), nullable=True, comment="租约截止时间（UTC）。"
+    )
+    attempt_count: Mapped[int] = mapped_column(
+        Integer,
+        nullable=False,
+        server_default=text("0"),
+        comment="执行尝试计数；不参与业务键。",
+    )
+    last_error: Mapped[str | None] = mapped_column(
+        Text, nullable=True, comment="最近一次脱敏错误说明。"
+    )
+    model_checkpoint: Mapped[dict[str, Any] | None] = mapped_column(
+        JSON,
+        nullable=True,
+        comment="受控模型调用检查点：调用阶段、可信workflow_run_id及受保护结果回执引用；不写Key或原业务文本。",
+    )
+    row_version: Mapped[int] = mapped_column(
+        Integer,
+        nullable=False,
+        server_default=text("1"),
+        comment="并发版本号。",
+    )
+
+
+# 建表脚本显式传入这三张已部署表，防止其他组员新增的模型被顺带创建。
 REPORT_TABLES = (
     ReportConfig.__table__,
     ReportRecord.__table__,
     ReportMetric.__table__,
 )
+
+# 041 拟新增执行任务表；尚未部署，仅在未来受控增量中使用。
+REPORT_TASK_TABLE = ReportTask.__table__
