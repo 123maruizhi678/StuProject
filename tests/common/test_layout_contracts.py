@@ -46,15 +46,18 @@ class LayoutContracts(unittest.TestCase):
         self.assertEqual(len(operations), len(set(operations)))
         self.assertIn("/api/v1/auth/login", schema["paths"])
         self.assertIn("/api/v1/report/generate", schema["paths"])
-        self.assertNotIn("/api/v1/agent/chat", schema["paths"])
+        self.assertIn("/api/v1/agent/chat", schema["paths"])
         self.assertIn("student_leave", MIGRATION_PENDING_MODULES)
 
     def test_frontend_local_resources_exist(self):
         html = (ROOT / "frontend/index.html").read_text(encoding="utf-8")
         assets = re.findall(r'(?:src|href)="(/static/[^"?]+)', html)
-        self.assertEqual(len(assets), 5)
+        self.assertEqual(len(assets), 2)
         for asset in assets:
             self.assertTrue((ROOT / "frontend" / asset.removeprefix("/static/")).is_file(), asset)
+        agent = (ROOT / "frontend" / "agent" / "agent.html").read_text(encoding="utf-8")
+        self.assertIn("../js/agent/agent-api.js", agent)
+        self.assertTrue((ROOT / "frontend" / "agent" / "index.html").is_file())
 
     def test_relocated_report_script_dry_run(self):
         result = subprocess.run([sys.executable, str(ROOT / "scripts/report/init_report_tables.py"), "--dry-run"],

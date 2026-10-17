@@ -3,6 +3,7 @@
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from app.api.agent import router as agent_router
 from app.api.auth import router as auth_router
 from app.core.authorization import load_access_control, require_permission
 from app.core.common.logger import get_logger, init_logger
@@ -46,6 +47,7 @@ app.add_middleware(
 )
 register_exception_handlers(app)
 app.include_router(auth_router, prefix="/api/v1")
+app.include_router(agent_router, prefix="/api/v1")
 
 # enterprise_student 仍为历史扁平模块且尚未就绪：缺失时不阻塞应用装配，
 # 迁移归位后随 MIGRATION_PENDING_MODULES 收敛移除本兼容分支。

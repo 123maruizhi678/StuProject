@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#07111f">
+  <title>客服 Agent · 粤教服务</title>
+  <link rel="stylesheet" href="../css/agent/agent.css">
+</head>
+<body class="ca-app">
+  <main class="ca-shell">
+    <section class="ca-chat" aria-label="智能客服对话">
+      <header class="ca-topbar">
+        <div class="ca-brand">
+          <div class="ca-mark" aria-hidden="true"><span></span><span></span><span></span></div>
+          <div><p class="ca-eyebrow">YUEJIAO · SERVICE DESK</p><h1>智能客服</h1></div>
+        </div>
+        <div class="ca-top-meta"><span class="ca-status"><i></i><span id="connection-label">正在连接</span></span><span id="session-badge" class="ca-session">新会话</span></div>
+      </header>
+
+      <div class="ca-context"><span class="ca-spark" aria-hidden="true">✦</span><div><strong>你好，我是粤教智能客服</strong><p>我可以协助你了解留学服务、课程与近期活动。</p></div></div>
+      <div id="messages" class="ca-messages" aria-live="polite" aria-relevant="additions text">
+        <article class="ca-message ca-message-assistant"><div class="ca-avatar" aria-hidden="true">AI</div><div class="ca-bubble"><p>你好！有什么可以帮你？你可以问我课程、留学服务或近期活动。</p><time>现在</time></div></article>
+      </div>
+      <div class="ca-composer-wrap">
+        <div class="ca-suggestions" aria-label="快捷提问">
+          <button type="button" class="ca-chip" data-prompt="近期有什么活动？">近期有什么活动？</button>
+          <button type="button" class="ca-chip" data-prompt="有哪些课程可以了解？">了解课程</button>
+          <button type="button" class="ca-chip" data-prompt="留学申请服务包括什么？">留学申请服务</button>
+        </div>
+        <form id="chat-form" class="ca-composer">
+          <label class="ca-sr-only" for="chat-text">输入你的问题</label>
+          <textarea id="chat-text" rows="1" maxlength="2000" placeholder="输入问题，按 Enter 发送" required></textarea>
+          <button id="send-button" class="ca-send" type="submit" aria-label="发送消息"><span>发送</span><b aria-hidden="true">↑</b></button>
+        </form>
+        <p class="ca-footnote">AI 回复仅供参考 · 请勿在对话中填写敏感个人信息</p>
+      </div>
+    </section>
+
+    <aside class="ca-side" aria-label="服务信息">
+      <div class="ca-side-heading"><div><p class="ca-eyebrow">SERVICE CENTER</p><h2>服务速览</h2></div><span class="ca-orbit" aria-hidden="true">✳</span></div>
+      <nav class="ca-tabs" aria-label="服务内容">
+        <button class="ca-tab is-active" type="button" data-tab="events" aria-selected="true">活动</button>
+        <button class="ca-tab" type="button" data-tab="courses" aria-selected="false">课程</button>
+        <button class="ca-tab" type="button" data-tab="faq" aria-selected="false">常见问题</button>
+      </nav>
+      <section id="panel-events" class="ca-panel is-active" aria-label="活动">
+        <div class="ca-panel-tools"><div><h3>近期活动</h3><p>发现适合你的分享与讲座</p></div><button id="refresh-events" class="ca-icon-button" type="button" aria-label="刷新活动">↻</button></div>
+        <label class="ca-sr-only" for="event-status">活动状态</label><select id="event-status" class="ca-select"><option value="">所有状态</option><option value="报名中">报名中</option><option value="已满">已满</option><option value="已结束">已结束</option></select>
+        <div id="event-state" class="ca-state" role="status">正在获取活动…</div><ul id="event-list" class="ca-list"></ul>
+      </section>
+      <section id="panel-courses" class="ca-panel" aria-label="课程" hidden>
+        <div class="ca-panel-tools"><div><h3>课程项目</h3><p>按方向浏览已上架课程</p></div><button id="refresh-courses" class="ca-icon-button" type="button" aria-label="刷新课程">↻</button></div>
+        <label class="ca-sr-only" for="course-category">课程类别</label><select id="course-category" class="ca-select"><option value="">全部类别</option><option value="留学申请">留学申请</option><option value="背景提升">背景提升</option><option value="语言培训">语言培训</option></select>
+        <div id="course-state" class="ca-state" role="status">选择课程类别或刷新列表</div><ul id="course-list" class="ca-list"></ul>
+      </section>
+      <section id="panel-faq" class="ca-panel" aria-label="常见问题" hidden>
+        <div class="ca-panel-tools"><div><h3>常见问题</h3><p>从服务知识库中查找答案</p></div></div>
+        <form id="faq-form" class="ca-search"><label class="ca-sr-only" for="faq-keyword">问题关键词</label><input id="faq-keyword" maxlength="200" placeholder="输入关键词搜索"><button type="submit" aria-label="搜索">⌕</button></form>
+        <div id="faq-state" class="ca-state">输入关键词开始查询</div><article id="faq-result" class="ca-faq" hidden></article>
+      </section>
+      <footer class="ca-side-footer"><span class="ca-footer-dot"></span><span>在线服务 · 随时为你解答</span></footer>
+    </aside>
+  </main>
+  <dialog id="signup-dialog" class="ca-dialog">
+    <form id="signup-form">
+      <button id="signup-close" class="ca-dialog-close" type="button" aria-label="关闭">×</button>
+      <p class="ca-eyebrow">EVENT REGISTRATION</p><h2>活动报名</h2><p id="signup-event-title" class="ca-dialog-description"></p>
+      <input id="signup-event-id" type="hidden">
+      <label>姓名<input id="signup-name" maxlength="64" autocomplete="name" required></label>
+      <label>手机号<input id="signup-phone" type="tel" maxlength="32" autocomplete="tel" required></label>
+      <label>备注 <span>选填</span><input id="signup-note" maxlength="200" placeholder="补充信息"></label>
+      <p id="signup-error" class="ca-form-error" role="alert" hidden></p>
+      <button id="signup-submit" class="ca-primary-button" type="submit">提交报名</button>
+    </form>
+  </dialog>
+  <div id="toast" class="ca-toast" role="status" aria-live="polite" hidden></div>
+  <script src="../js/agent/agent-api.js"></script>
+  <script src="../js/agent/agent.js"></script>
+</body>
+</html>
