@@ -1,60 +1,28 @@
-<!DOCTYPE html>
-<html lang="zh-CN" data-theme="dark">
+<!doctype html>
+<html lang="zh-CN">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>粤教服务智能业务平台</title>
-  <meta name="description" content="面向潜在客户、企业员工和留学生的一体化智能业务平台">
-  <link rel="stylesheet" href="/static/css/style.css?v=2">
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>StuProject · 公共入口</title>
+  <link rel="stylesheet" href="/static/css/common/style.css">
 </head>
 <body>
-  <!-- 背景氛围层：电影感粒子 + 视频槽 + 极光微动 + 点阵网格 + 噪点 -->
-  <div class="bg" aria-hidden="true">
-    <canvas class="bg-canvas" id="bgCanvas"></canvas>
-    <video class="bg-video" id="bgVideo" muted loop autoplay playsinline preload="auto"></video>
-    <div class="bg-grid"></div>
-    <div class="bg-aurora a1"></div>
-    <div class="bg-aurora a2"></div>
-    <div class="bg-aurora a3"></div>
-    <div class="bg-noise"></div>
-  </div>
-
-  <div class="app">
-    <aside class="sidebar">
-      <div class="brand">
-        <div class="logo">粤</div>
-        <div>
-          <div class="name">粤教服务</div>
-          <div class="sub">智能业务平台</div>
-        </div>
-      </div>
-      <nav class="nav" id="nav">
-        <button class="nav-item active" data-route="dashboard"><span class="ico">📊</span>数据看板</button>
-        <button class="nav-item" data-route="judge"><span class="ico">🎯</span>客户研判</button>
-        <button class="nav-item" data-route="agent"><span class="ico">💬</span>客服 Agent</button>
-        <button class="nav-item" data-route="enterprise"><span class="ico">🏢</span>企业智能助手</button>
-        <button class="nav-item" data-route="student"><span class="ico">🎓</span>学生智能助手</button>
-        <button class="nav-item" data-route="report"><span class="ico">📑</span>智能报告</button>
-      </nav>
-      <div class="foot">粤教服务 · 智能业务平台 v1.0</div>
-    </aside>
-
-    <div class="main">
-      <header class="topbar">
-        <div class="title" id="pageTitle">数据看板</div>
-        <div class="spacer"></div>
-        <span class="badge neutral" id="difyBadge">AI 能力：本地</span>
-        <button class="btn sm" id="themeBtn" title="切换深浅色">🌓</button>
-      </header>
-      <main class="content" id="app"></main>
-    </div>
-  </div>
-
-  <div class="toast-wrap" id="toasts"></div>
-
-  <script src="/static/js/api.js?v=2"></script>
-  <script src="/static/js/charts.js?v=2"></script>
-  <script src="/static/js/effects.js?v=2"></script>
-  <script src="/static/js/app.js?v=2"></script>
+  <main class="shell landing">
+    <section class="intro">
+      <a class="brand" href="/"><span class="brand-mark">S</span> StuProject <span class="brand-label">公共基础能力</span></a>
+      <div class="eyebrow">IDENTITY &amp; ACCESS</div>
+      <h1>一个账号，<br>连接你的工作。</h1>
+      <p class="lead">统一登录，查看属于你的功能权限。<br>让每一次访问都有清晰的边界。</p>
+      <a class="button primary" href="/login">进入账号登录 <span aria-hidden="true">↗</span></a>
+      <div class="intro-footer"><span class="status-dot"></span> 公共登录与权限入口</div>
+    </section>
+    <section class="landing-details">
+      <span class="section-kicker">公共服务</span>
+      <h2>身份与权限，统一管理</h2>
+      <div class="feature"><span>01</span><div><h3>账号登录</h3><p>使用已开通的账号安全登录。</p></div></div>
+      <div class="feature"><span>02</span><div><h3>本人权限</h3><p>查看当前身份可以使用的功能。</p></div></div>
+      <div class="feature"><span>03</span><div><h3>权限随职责更新</h3><p>角色调整后，访问权限同步生效。</p></div></div>
+      <p class="muted small">如需开通账号或调整职责，请联系平台管理员。</p>
+    </section>
+  </main>
 </body>
 </html>

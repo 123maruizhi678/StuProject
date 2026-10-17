@@ -1,0 +1,95 @@
+D:\AI\StuProject\
+├── .env                        # 本机真实环境配置（勿提交）
+├── .env.example                # 无密钥的统一模板
+├── .gitignore                  # 忽略 __pycache__、日志、.env
+├── environment.yml             # SST 依赖环境（已移除未用的 httpx2）
+├── README.md                   # 项目根说明：启动/开通账号/验证
+├── AGENTS.md                   # 约定：忽略「业务文档」目录
+│
+├── app\                        # 后端唯一入口
+│   ├── __init__.py             # Python 包初始化
+│   ├── main.py                 # 唯一应用装配：路由挂载、静态页、异常处理器
+│   ├── config.py               # 唯一配置加载（pydantic-settings 读 .env）
+│   ├── database.py             # 唯一 Base/engine/Session/get_db
+│   ├── access_control.yaml     # 统一权限与访问策略（4 身份 × 8 员工角色）
+│   ├── README.md               # 后端说明：接口、模块接入方式
+│   │
+│   ├── api\                    # HTTP 接入层
+│   │   └── common\
+│   │       ├── __init__.py
+│   │       └── auth.py         # 三个接口：login / public-access / me/access
+│   │
+│   ├── core\                   # 公共技术约束
+│   │   └── common\
+│   │       ├── __init__.py
+│   │       ├── auth.py         # 统一 JWT 身份依赖 get_current_account
+│   │       ├── authorization.py# 策略加载、权限计算、require_permission、access_for
+│   │       ├── response.py     # 统一信封 + 异常出口（HTTP 状态/业务信封分流）
+│   │       ├── logger.py       # 日志初始化 + 敏感字段脱敏
+│   │       └── dify.py         # 通用 Dify HTTP 传输（同步/异步）
+│   │
+│   ├── schemas\                # 请求/响应契约
+│   │   └── common\
+│   │       ├── __init__.py
+│   │       └── auth.py         # LoginRequest / TokenResponse / AccessResponse…
+│   │
+│   ├── services\               # 业务编排
+│   │   └── common\
+│   │       ├── __init__.py
+│   │       ├── auth_service.py # Argon2 密码、HS256 JWT 签发/解析、认证
+│   │       └── account_service.py # 受控账号开通（账号+审计同事务）
+│   │
+│   ├── repositories\           # 参数化数据访问
+│   │   └── common\
+│   │       ├── __init__.py
+│   │       └── account_repository.py # 账号/主档查询、resolve_context 有效上下文
+│   │
+│   ├── models\                 # ORM/Table 唯一映射（六张共享表）
+│   │   └── common\
+│   │       ├── __init__.py
+│   │       ├── user_account.py     # 统一账号（ORM）
+│   │       ├── employee.py         # 员工主档（Table）
+│   │       ├── org_department.py   # 部门（Table）
+│   │       ├── customer_profile.py # 客户主档（Table）
+│   │       ├── student_profile.py  # 学生主档（Table）
+│   │       └── operation_log.py    # 操作审计（Table，含 actor_account_id）
+│   │
+│   └── logs\                  # 运行日志（按天滚动，git 忽略）
+│
+├── frontend\                  # 前端资源
+│   ├── index.html             # 站点总入口（公共入口页）
+│   ├── common\
+│   │   └── login.html         # 登录 / 本人权限页面
+│   ├── css\common\
+│   │   └── style.css          # 公共样式
+│   ├── js\common\
+│   │   ├── api.js             # 请求工具 + token 存储 + 错误码映射
+│   │   └── app.js             # 登录、本人权限交互逻辑
+│   └── assets\README.md       # 静态素材说明
+│
+├── scripts\                   # 开发辅助脚本
+│   ├── common\
+│   │   ├── check_shared_schema.py # 只读核对共享表结构（可应用审计增量）
+│   │   └── create_account.py      # 受控终端开通账号（无默认密码/公开注册）
+│   └── sql\
+│       ├── README.md
+│       └── common\
+│           ├── 001_common_schema.sql           # 共享表基线 DDL
+│           ├── 20261017_account_audit_actor.sql# 审计 actor_account_id 增量
+│           └── README.md
+│
+├── tests\                     # 测试（隔离内存库，39 项全通过）
+│   └── common\
+│       ├── __init__.py
+│       ├── support.py                    # 隔离 SQLite 测试基类
+│       ├── test_auth.py                  # 密码/JWT 攻击面/真实身份
+│       ├── test_authorization.py         # 权限矩阵/逐接口依赖/策略失效
+│       ├── test_accounts.py              # 受控开通/审计/事务回滚
+│       ├── test_response.py              # 统一信封/异常脱敏
+│       ├── test_dify.py                  # Dify HTTP 传输
+│       └── test_cross_module_contracts.py# 装配/DDL 列核对/前端资源
+│
+└── 开发文档\
+    ├── 操作文档.md                    # 模块规格来源
+    ├── 操作文档_数据库建表语句.sql     # 六张共享表 DDL 权威来源
+    └── 项目目录架构_最终汇总.md         # 目录归位与职责边界
