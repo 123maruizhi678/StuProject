@@ -10,11 +10,12 @@ ROOT=Path(__file__).resolve().parents[2]
 
 
 class CommonContractTests(unittest.TestCase):
-    def test_only_common_business_routes_are_mounted(self):
+    def test_common_and_student_business_routes_are_mounted(self):
         from app.main import app
         paths=app.openapi()["paths"]
         expected={"/api/v1/auth/login","/api/v1/auth/public-access","/api/v1/auth/me/access","/health"}
-        self.assertEqual(set(paths),expected)
+        self.assertTrue(expected.issubset(paths))
+        self.assertTrue(all(path in expected or path.startswith(("/api/v1/student/", "/api/v1/internal/student/")) for path in paths))
         operation_ids=[v["operationId"] for methods in paths.values() for v in methods.values() if isinstance(v,dict) and "operationId" in v]
         self.assertEqual(len(operation_ids),len(set(operation_ids)))
 

@@ -10,7 +10,7 @@ export class ApiError extends Error {
   constructor(message, code) { super(message); this.code = code; }
 }
 
-export async function request(path, {method = "GET", body, authenticated = false} = {}) {
+export async function request(path, {method = "GET", body, authenticated = false, idempotencyKey} = {}) {
   const headers = {"Accept": "application/json"};
   if (body !== undefined) headers["Content-Type"] = "application/json";
   if (authenticated) {
@@ -18,6 +18,7 @@ export async function request(path, {method = "GET", body, authenticated = false
     if (!token) throw new ApiError("请先登录。", 401);
     headers.Authorization = "Bearer " + token;
   }
+  if (idempotencyKey) headers["Idempotency-Key"] = idempotencyKey;
   let response;
   try {
     response = await fetch("/api/v1" + path, {

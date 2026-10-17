@@ -49,3 +49,14 @@ def login_page():
 @app.get("/health", tags=["公共服务"])
 def health():
     return success({"service": "StuProject", "module": "common"})
+
+
+# 学生模块共用公共认证、异常信封与唯一应用入口。
+from app.api.student.student import router as student_router, internal_router
+app.include_router(student_router)
+app.include_router(internal_router)
+
+
+@app.get("/student-assistant", include_in_schema=False)
+def student_page():
+    return FileResponse(BASE_DIR / "frontend" / "student" / "student-assistant.html")

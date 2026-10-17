@@ -60,6 +60,7 @@ employee_roles:
     - enterprise.customer.update
     - enterprise.customer.status
     - enterprise.customer.archive
+    - student.progress.maintain
     - enterprise.customer.followup
   manager:
     permissions:
@@ -68,8 +69,10 @@ employee_roles:
     - enterprise.customer.update
     - enterprise.customer.status
     - enterprise.customer.archive
+    - student.progress.maintain
     - enterprise.customer.followup
     - enterprise.customer.assign
+    - student.admin_service.assign
     - enterprise.daily.summary
     - enterprise.ticket.read
     - enterprise.ticket.assign
@@ -91,6 +94,7 @@ employee_roles:
     permissions:
     - enterprise.student.read
     - enterprise.score.read
+    - student.academic.maintain
     - enterprise.score.write
     - enterprise.score.void
   admin:
@@ -113,6 +117,10 @@ employee_roles:
     permissions:
     - customer.rule.read
 pages:
+  student_assistant:
+    title: 学生助手
+    route: /student-assistant
+    permission: dashboard.student
   home:
     title: 公共入口
     route: /
@@ -153,6 +161,8 @@ modules:
     required_any:
     - report.read
   student:
-    title: 学生能力（由学生模块提供）
+    title: 学生助手
+    pages:
+    - student_assistant
     required_any:
     - dashboard.student

@@ -23,7 +23,7 @@ class AuthCase(unittest.TestCase):
         self.secret_patch = patch("app.config.settings.AUTH_SECRET_KEY", "unit-test-secret-not-a-real-key-123456789-123456789-123456789-123456789")
         self.secret_patch.start()
         self.engine = create_engine("sqlite://", connect_args={"check_same_thread": False}, poolclass=StaticPool)
-        Base.metadata.create_all(self.engine)
+        Base.metadata.create_all(self.engine, tables=[Base.metadata.tables[name] for name in ("org_department", "employee", "customer_profile", "student_profile", "user_account", "operation_log")])
         with Session(self.engine) as db:
             db.execute(insert(org_department).values(department_id=10, department_code="D10", department_name="测试部门"))
             roles = {20:["employee"], 21:["manager"], 22:["admin"], 23:["teacher"],
