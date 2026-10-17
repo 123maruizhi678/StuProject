@@ -34,3 +34,7 @@ SQL scripts/sql/student/20261017_student_tables.sql 为7张学生表的最终DDL
 ## 本次交付
 
 状态：开发完成，待联调验收。已与 main 公共登录及权限实现合并，公共与学生隔离回归66项通过。请导入 student_assistant.yml，在 Dify 内绑定有效模型并发布，将应用 Key 注入 STUDENT_DIFY_KEY；不得将真实凭据写入模板。MySQL连接、真实模型调用、企业页面审批与定时通知需要部署后联合验证。学生页面与公共登录共用当前会话凭据；业务请求携带幂等键。
+
+## 公共表由组长提供
+
+本次学生交付不包含 app/models/common 的新增或修改。运行前须接入组长提供的公共映射，并由公共包导出 student_staff_binding、student_score、student_admin_service、service_ticket、service_ticket_record、business_notification；全部复用 app.database.Base.metadata。公共映射未接入的单独学生包不能独立启动。此前66项回归是在完整公共映射具备时通过，移交后须在组长环境重新验证。
