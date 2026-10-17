@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>账号登录 · StuProject</title>
+  <link rel="stylesheet" href="/static/css/common/style.css">
+  <script type="module" src="/static/js/common/app.js"></script>
+</head>
+<body>
+  <main class="shell">
+    <section class="intro">
+      <a class="brand" href="/"><span class="brand-mark">S</span> StuProject <span class="brand-label">公共基础能力</span></a>
+      <div class="eyebrow">YOUR WORKSPACE, CONNECTED</div>
+      <h1>从这里，<br>开始今天的工作。</h1>
+      <p class="lead">你的账号、你的身份、你的权限。<br>在同一个入口清晰呈现。</p>
+      <div class="intro-footer"><span class="status-dot"></span> 统一身份 · 按需授权</div>
+    </section>
+    <section class="content">
+      <div id="login-panel" class="form-card">
+        <span class="section-kicker">欢迎回来</span>
+        <h2>账号登录</h2>
+        <p class="muted">请输入平台管理员为你开通的账号。</p>
+        <form id="login-form">
+          <label for="username">用户名</label>
+          <input id="username" name="username" type="text" autocomplete="username" maxlength="64" required placeholder="输入用户名">
+          <label for="password">密码</label>
+          <div class="password-field">
+            <input id="password" name="password" type="password" autocomplete="current-password" maxlength="256" required placeholder="输入密码">
+            <button id="toggle-password" class="text-button" type="button" aria-controls="password" aria-pressed="false">显示</button>
+          </div>
+          <button id="login-button" type="submit" class="button primary full">登录 <span aria-hidden="true">→</span></button>
+        </form>
+        <p id="login-status" class="message" role="status" aria-live="polite"></p>
+        <p class="small muted">账号由平台管理员开通。如需帮助，请联系管理员。</p>
+      </div>
+      <div id="account-panel" class="account-card" hidden>
+        <div class="account-heading"><div><span class="section-kicker">当前账号</span><h2>本人权限</h2></div><button id="logout-button" class="button secondary" type="button">退出登录</button></div>
+        <div class="identity-summary"><span id="identity-label" class="badge"></span><span id="account-label" class="muted small"></span></div>
+        <p id="role-label" class="muted small"></p>
+        <div class="section-heading"><h3>功能权限</h3><button id="refresh-button" class="text-button" type="button">刷新权限</button></div>
+        <div id="permissions" class="permission-list"></div>
+        <h3>可用模块</h3><ul id="modules" class="module-list"></ul>
+        <p id="account-status" class="message" role="status" aria-live="polite"></p>
+        <p class="small muted">这里展示当前账号的功能权限。具体业务中的可见记录以实时授权为准。</p>
+      </div>
+    </section>
+  </main>
+</body>
+</html>
