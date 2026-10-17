@@ -14,5 +14,5 @@ with app.app_context():
     for tenant in tenants:
         defaults=db.session.query(TenantDefaultModel).filter_by(tenant_id=tenant.id).all()
         result['workspaces'].append({'id':tenant.id,'models':[{'provider':m.provider_name,'model':m.model_name,'type':m.model_type} for m in defaults],
-          'enterprise_apps':[{'id':a.id,'name':a.name} for a in db.session.query(App).filter(App.tenant_id==tenant.id,App.name.like('StuProject-企业-%')).all()]})
+          'enterprise_apps':[{'id':a.id,'name':a.name,'workflow_id':a.workflow_id,'enable_api':a.enable_api,'enable_site':a.enable_site} for a in db.session.query(App).filter(App.tenant_id==tenant.id,App.name.like('%StuProject-企业-%')).all()]})
     print('INVENTORY_JSON='+json.dumps(result,ensure_ascii=False))

@@ -56,10 +56,9 @@ class Settings(BaseSettings):
     STUDENT_SCORE_DIFY_KEY: str = Field(default="", repr=False)
 
     # Enterprise module configuration; uses the sole root .env.
-    ENTERPRISE_EXTRACT_DIFY_API_KEY: str = Field(default="", repr=False)
-    ENTERPRISE_NL2SQL_DIFY_API_KEY: str = Field(default="", repr=False)
-    ENTERPRISE_KNOWLEDGE_DIFY_API_KEY: str = Field(default="", repr=False)
-    ENTERPRISE_SUMMARY_DIFY_API_KEY: str = Field(default="", repr=False)
+    # 四类企业场景共享一个已发布 Workflow，以 scene 分流。
+    ENTERPRISE_DIFY_API_BASE: str = ""
+    ENTERPRISE_DIFY_API_KEY: str = Field(default="", repr=False)
     ENTERPRISE_DIFY_CONTRACT_VERSION: str = "enterprise-v1"
     ENTERPRISE_CONFIRM_SECRET: str = Field(default="", repr=False)
     ENTERPRISE_PHONE_ENCRYPTION_KEY: str = Field(default="", repr=False)

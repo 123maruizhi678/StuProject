@@ -8,8 +8,10 @@ from app.config import BASE_DIR,settings
 from app.database import engine
 
 def main():
-    path=BASE_DIR/'.env.enterprise.local';current={**dotenv_values(BASE_DIR/'.env'),**dotenv_values(path)}
-    incoming=json.loads((BASE_DIR/'.env.enterprise-runtime').read_text(encoding='utf-8'))['config']
+    path=BASE_DIR/'.env';current=dotenv_values(path)
+    runtime=json.loads((BASE_DIR/'.runtime/enterprise-unified/deployment.json').read_text(encoding='utf-8'))['config']
+    incoming={name:runtime[name] for name in ('ENTERPRISE_DIFY_API_KEY','ENTERPRISE_DIFY_CONTRACT_VERSION')}
+    incoming['ENTERPRISE_DIFY_API_BASE']=runtime.get('ENTERPRISE_DIFY_API_BASE','http://127.0.0.1/v1')
     generated={}
     for key in ['AUTH_SECRET_KEY','ENTERPRISE_CONFIRM_SECRET','ENTERPRISE_PHONE_LOOKUP_SECRET']:
         if not current.get(key):generated[key]=secrets.token_urlsafe(48)
@@ -28,8 +30,8 @@ def main():
         for table,fields in columns.items():
             conn.exec_driver_sql('GRANT SELECT ('+','.join('`'+f+'`' for f in fields)+') ON `'+settings.DB_NAME+'`.`'+table+'` TO %s@\'localhost\'',(user,))
     generated.update(incoming,ENTERPRISE_READ_DB_USER=user,ENTERPRISE_READ_DB_PASSWORD=password)
-    # 本机已有Dify在80端口。只更新API公共地址及本次新应用Key。
-    generated['DIFY_API_BASE']='http://127.0.0.1/v1'
+    # 本机Dify在80端口；只更新企业专用地址，不覆盖其他模块公共地址。
+    generated['ENTERPRISE_DIFY_API_BASE']='http://127.0.0.1/v1'
     for key,value in generated.items():set_key(str(path),key,value,quote_mode='always')
     print(json.dumps({'configured_names':sorted(generated),'readonly_user':user,'secrets_printed':False}))
 if __name__=='__main__':main()

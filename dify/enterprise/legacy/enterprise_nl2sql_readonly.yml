@@ -1,16 +1,21 @@
+app:
+  description: StuProject企业管理模块 enterprise-v1；仅业务候选及已授权输入，不具备数据库写入工具
+  icon: 🤖
+  icon_background: '#E0E7FF'
+  mode: workflow
+  name: StuProject-企业-query
+  use_icon_as_answer_icon: false
+dependencies:
+- current_identifier: null
+  type: marketplace
+  value:
+    marketplace_plugin_unique_identifier: langgenius/deepseek:0.0.24@9e12eef09973667f0eaf4f082af883167e1de88740b22e71e71488d020c3778a
+    version: null
 kind: app
 version: 0.5.0
-dependencies: []
-app:
-  name: StuProject-企业-query
-  description: StuProject企业管理模块 enterprise-v1；仅业务候选及已授权输入，不具备数据库写入工具
-  mode: workflow
-  icon: 🏢
-  icon_background: '#E0E7FF'
-  use_icon_as_answer_icon: false
 workflow:
-  environment_variables: []
   conversation_variables: []
+  environment_variables: []
   features:
     file_upload:
       enabled: false
@@ -20,89 +25,119 @@ workflow:
       enabled: false
     suggested_questions_after_answer:
       enabled: false
+    text_to_speech:
+      enabled: false
+      language: ''
+      voice: ''
   graph:
+    edges:
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: start
+        targetType: llm
+      id: start-llm
+      source: start
+      sourceHandle: source
+      target: llm
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: llm
+        targetType: code
+      id: llm-validate
+      source: llm
+      sourceHandle: source
+      target: validate
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: code
+        targetType: end
+      id: validate-end
+      source: validate
+      sourceHandle: source
+      target: end
+      targetHandle: target
+      type: custom
+      zIndex: 0
     nodes:
-    - id: start
-      type: custom
-      position:
-        x: 50
-        y: 200
-      positionAbsolute:
-        x: 50
-        y: 200
-      width: 260
-      height: 100
-      sourcePosition: right
-      targetPosition: left
-      data:
-        type: start
+    - data:
+        selected: false
         title: 授权输入
-        selected: false
+        type: start
         variables:
-        - variable: question
-          label: question
-          type: paragraph
-          required: true
+        - label: question
           max_length: 60000
           options: []
-        - variable: schema_context
-          label: schema_context
-          type: paragraph
           required: true
+          type: paragraph
+          variable: question
+        - label: schema_context
           max_length: 60000
           options: []
-        - variable: dialect
-          label: dialect
-          type: paragraph
           required: true
+          type: paragraph
+          variable: schema_context
+        - label: dialect
           max_length: 60000
           options: []
-        - variable: query_constraints
-          label: query_constraints
-          type: paragraph
           required: true
+          type: paragraph
+          variable: dialect
+        - label: query_constraints
           max_length: 60000
           options: []
-        - variable: bound_filters
-          label: bound_filters
-          type: paragraph
           required: true
+          type: paragraph
+          variable: query_constraints
+        - label: bound_filters
           max_length: 60000
           options: []
-        - variable: schema_version
-          label: schema_version
-          type: paragraph
           required: true
+          type: paragraph
+          variable: bound_filters
+        - label: schema_version
           max_length: 60000
           options: []
-        - variable: contract_version
-          label: contract_version
-          type: paragraph
           required: true
+          type: paragraph
+          variable: schema_version
+        - label: contract_version
           max_length: 60000
           options: []
-    - id: llm
-      type: custom
+          required: true
+          type: paragraph
+          variable: contract_version
+      height: 100
+      id: start
       position:
-        x: 380
+        x: 50
         y: 200
       positionAbsolute:
-        x: 380
+        x: 50
         y: 200
-      width: 260
-      height: 100
       sourcePosition: right
       targetPosition: left
-      data:
-        type: llm
-        title: 企业query
-        selected: false
+      type: custom
+      width: 260
+    - data:
+        context:
+          enabled: false
+          variable_selector: []
+        memory: null
         model:
-          provider: langgenius/deepseek/deepseek
-          name: deepseek-flash
-          mode: chat
           completion_params:
             temperature: 0.1
+          mode: chat
+          name: deepseek-flash
+          provider: langgenius/deepseek/deepseek
         prompt_template:
         - id: system
           role: system
@@ -122,29 +157,24 @@ workflow:
             schema_version: {{#start.schema_version#}}
 
             contract_version: {{#start.contract_version#}}'
-        context:
-          enabled: false
-          variable_selector: []
+        selected: false
+        title: 企业query
+        type: llm
         vision:
           enabled: false
-        memory: null
-    - id: validate
-      type: custom
+      height: 100
+      id: llm
       position:
-        x: 710
+        x: 380
         y: 200
       positionAbsolute:
-        x: 710
+        x: 380
         y: 200
-      width: 260
-      height: 100
       sourcePosition: right
       targetPosition: left
-      data:
-        type: code
-        title: 结果契约校验
-        selected: false
-        code_language: python3
+      type: custom
+      width: 260
+    - data:
         code: "import json, re\ndef main(raw: str) -> dict:\n    text = re.sub(r\"\
           <think>[\\s\\S]*?</think>\", \"\", raw, flags=re.I).strip()\n    if text.startswith(\"\
           ```\"):\n        text = text.split(\"\\n\",1)[1].rsplit(\"```\",1)[0].strip()\n\
@@ -159,75 +189,55 @@ workflow:
           \   if not isinstance(result.get('referenced_columns'),list):\n        raise\
           \ ValueError(\"Invalid referenced_columns output type\")\n    return {\"\
           result\":result}\n"
-        variables:
-        - variable: raw
-          value_selector:
-          - llm
-          - text
+        code_language: python3
         outputs:
           result:
-            type: object
             children: null
-    - id: end
+            type: object
+        selected: false
+        title: 结果契约校验
+        type: code
+        variables:
+        - value_selector:
+          - llm
+          - text
+          variable: raw
+      height: 100
+      id: validate
+      position:
+        x: 710
+        y: 200
+      positionAbsolute:
+        x: 710
+        y: 200
+      sourcePosition: right
+      targetPosition: left
       type: custom
+      width: 260
+    - data:
+        outputs:
+        - value_selector:
+          - validate
+          - result
+          value_type: object
+          variable: query_result
+        selected: false
+        title: 结构化输出
+        type: end
+      height: 100
+      id: end
       position:
         x: 1040
         y: 200
       positionAbsolute:
         x: 1040
         y: 200
-      width: 260
-      height: 100
       sourcePosition: right
       targetPosition: left
-      data:
-        type: end
-        title: 结构化输出
-        selected: false
-        outputs:
-        - variable: query_result
-          value_selector:
-          - validate
-          - result
-          value_type: object
-    edges:
-    - id: start-llm
-      source: start
-      target: llm
-      sourceHandle: source
-      targetHandle: target
       type: custom
-      data:
-        sourceType: start
-        targetType: llm
-        isInIteration: false
-        isInLoop: false
-      zIndex: 0
-    - id: llm-validate
-      source: llm
-      target: validate
-      sourceHandle: source
-      targetHandle: target
-      type: custom
-      data:
-        sourceType: llm
-        targetType: code
-        isInIteration: false
-        isInLoop: false
-      zIndex: 0
-    - id: validate-end
-      source: validate
-      target: end
-      sourceHandle: source
-      targetHandle: target
-      type: custom
-      data:
-        sourceType: code
-        targetType: end
-        isInIteration: false
-        isInLoop: false
-      zIndex: 0
+      width: 260
     viewport:
       x: 0
       y: 0
       zoom: 0.7
+  rag_pipeline_variables: []

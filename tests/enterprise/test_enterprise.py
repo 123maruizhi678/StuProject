@@ -96,11 +96,11 @@ class EnterpriseTests(unittest.TestCase):
         from app.clients.enterprise import enterprise_dify
         class Transport:
             def post_json_sync(self,path,*,api_key,payload):
-                context=json.loads(payload['inputs']['context'])
+                context=json.loads(payload['inputs']['payload'])['context']
                 self.context=context
-                return {'data':{'status':'succeeded','outputs':{'result':{'contract_version':'enterprise-v1'}}}}
+                return {'data':{'status':'succeeded','outputs':{'scene':'extract','result':{'contract_version':'enterprise-v1','action':'daily.create','target':{},'fields':{},'missing_fields':[],'needs_clarification':False}}}}
         transport=Transport()
-        with patch.object(enterprise_dify,'settings',SimpleNamespace(ENTERPRISE_EXTRACT_DIFY_API_KEY='unit-test-key',ENTERPRISE_DIFY_CONTRACT_VERSION='enterprise-v1')):
+        with patch.object(enterprise_dify,'settings',SimpleNamespace(ENTERPRISE_DIFY_API_KEY='unit-test-key',ENTERPRISE_DIFY_CONTRACT_VERSION='enterprise-v1')):
             enterprise_dify.EnterpriseDifyClient(transport).run('extract',{'context':{'targets':[{'report_date':date(2026,10,17),'created_at':datetime(2026,10,17,1,2,3)}]}},50)
         self.assertEqual(transport.context['targets'][0]['report_date'],'2026-10-17')
         self.assertEqual(transport.context['targets'][0]['created_at'],'2026-10-17T01:02:03')
