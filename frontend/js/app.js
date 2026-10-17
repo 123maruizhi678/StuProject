@@ -264,98 +264,10 @@
      客服 Agent
      ============================================================ */
   async function pageAgent(root) {
-    root.innerHTML = `
-      <div class="grid" style="grid-template-columns: 1.5fr 1fr">
-        <div class="card" style="padding:0">
-          <div class="chat-box" style="border:none;height:560px">
-            <div class="chat-msgs" id="aMsgs">
-              <div class="msg bot">哈喽～我是「粤小助」🙋 留学申请、语言培训、留学政策、活动报名都可以问我哦！</div>
-            </div>
-            <div class="quick-chips" id="aChips"></div>
-            <div class="chat-input">
-              <textarea class="input" id="aInput" placeholder="输入你的问题…"></textarea>
-              <button class="btn primary" id="aSend">发送</button>
-            </div>
-          </div>
-        </div>
-        <div>
-          <div class="card"><h3>近期活动</h3><div id="aEvents"><span class="spin"></span></div></div>
-          <div class="card"><h3>课程项目</h3><div id="aCourses"><span class="spin"></span></div></div>
-        </div>
-      </div>`;
-
-    const chips = ["你们公司有哪些留学项目？", "英国留学政策是怎样的？", "雅思7分冲刺班推荐", "近期有什么活动？", "留学申请流程是什么？", "服务费用大概多少？"];
-    $("#aChips").innerHTML = chips.map((c) => `<button class="chip">${esc(c)}</button>`).join("");
-    $$("#aChips .chip").forEach((ch) => ch.addEventListener("click", () => { $("#aInput").value = ch.textContent; send(); }));
-
-    const addMsg = (text, who, tag) => {
-      const box = $("#aMsgs");
-      const m = document.createElement("div");
-      m.className = "msg " + who;
-      m.textContent = text;
-      if (tag) { const t = document.createElement("div"); t.className = "tag"; t.textContent = tag; m.prepend(t); }
-      box.appendChild(m);
-      box.scrollTop = box.scrollHeight;
-      return m;
-    };
-
-    async function send() {
-      const input = $("#aInput");
-      const text = input.value.trim();
-      if (!text) return;
-      addMsg(text, "user");
-      input.value = "";
-      const pending = addMsg("思考中…", "bot");
-      try {
-        const res = await API.post("/agent/chat", { user_id: "guest", message: text });
-        const tagMap = { company_info: "公司信息", business_query: "业务查询", policy_query: "政策查询",
-          course_recommend: "课程推荐", event_signup: "活动报名", faq: "常见问题", chitchat: "闲聊" };
-        pending.remove();
-        addMsg(res.reply || "（无回复）", "bot", tagMap[res.intent] || res.intent);
-        if (res.events && res.events.length) renderEvents(res.events);
-        if (res.recommendations && res.recommendations.length) renderCourses(res.recommendations);
-      } catch (e) { pending.remove(); addMsg("出错了：" + e.message, "bot"); }
-    }
-    $("#aSend").addEventListener("click", send);
-    $("#aInput").addEventListener("keydown", (e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } });
-
-    async function renderEvents(override) {
-      try {
-        const events = override || await API.get("/agent/events");
-        $("#aEvents").innerHTML = events.length ? events.map((ev) => `
-          <div class="card" style="box-shadow:none;border-color:var(--border);margin-top:10px">
-            <div><b>${esc(ev.event_name)}</b></div>
-            <div class="small muted">🕒 ${esc(ev.time)} · 📍 ${esc(ev.location)} · 名额 ${ev.capacity}</div>
-            <button class="btn sm primary mt-12" data-signup="${ev.event_id}">在线报名</button>
-          </div>`).join("") : `<div class="empty">暂无活动</div>`;
-        $$("#aEvents [data-signup]").forEach((b) => b.addEventListener("click", () => signup(b.dataset.signup, b)));
-      } catch (e) { $("#aEvents").innerHTML = `<div class="empty">${esc(e.message)}</div>`; }
-    }
-    async function renderCourses(override) {
-      try {
-        const courses = override || await API.get("/agent/courses");
-        $("#aCourses").innerHTML = courses.length ? courses.map((c) => `
-          <div class="card" style="box-shadow:none;border-color:var(--border);margin-top:10px">
-            <div><b>${esc(c.course_name)}</b> <span class="badge blue">${esc(c.category)}</span></div>
-            <div class="small muted">${esc(c.target_audience || "")} · ${esc(c.target_country || "")}</div>
-            <div class="small">${esc(c.description || "")}</div>
-          </div>`).join("") : `<div class="empty">暂无课程</div>`;
-      } catch (e) { $("#aCourses").innerHTML = `<div class="empty">${esc(e.message)}</div>`; }
-    }
-    async function signup(eventId, btn) {
-      const name = prompt("请输入您的姓名：");
-      if (!name) return;
-      const phone = prompt("请输入您的手机号：");
-      if (!phone) return;
-      btn.disabled = true;
-      try {
-        const res = await API.post("/agent/events/signup", { event_id: Number(eventId), customer_info: { name, phone } });
-        toast(`报名成功：${res.event_name}`);
-        addMsg(`已为您完成「${res.event_name}」报名 ✅（${name}）`, "bot", "活动报名");
-      } catch (e) { toast(e.message, "err"); }
-      finally { btn.disabled = false; }
-    }
-    renderEvents(); renderCourses();
+    root.innerHTML = `<div class="card" style="height:calc(100vh - 205px);min-height:500px;padding:0;overflow:hidden;border-radius:14px">
+      <iframe src="/static/agent/agent.html" title="客服 Agent" loading="eager"
+        style="display:block;width:100%;height:100%;border:0;background:#07111f"></iframe>
+    </div>`;
   }
 
   /* ============================================================

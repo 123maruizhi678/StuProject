@@ -1,233 +1,299 @@
-/** 客服 Agent 前端：对话 / 活动 / 课程 / FAQ / 报名。
- * 对应后端六个匿名接口（前缀 /api/v1）：
- *   POST /agent/chat、GET /agent/events、GET /agent/events/{id}、
- *   POST /agent/events/signup、GET /agent/courses、GET /agent/faq
- * 统一响应信封 {code, message, data}；code=0 成功。
- */
+/* Customer Agent UI; isolated to this iframe document. */
 (function () {
   "use strict";
-
-  var API = "/api/v1";
-  var sessionId = null;
+  if (document.documentElement.dataset.caReady === "true") return;
+  document.documentElement.dataset.caReady = "true";
 
   var $ = function (id) { return document.getElementById(id); };
+  var api = window.CustomerAgentAPI;
+  var sessionId = sessionStorage.getItem("customer-agent-session") || null;
+  var busy = false;
+  var lastFailedMessage = "";
+  var toastTimer;
 
-  // ---------- 通用 ----------
-  function toast(text, isError) {
+  function setConnection(online) {
+    var status = document.querySelector(".ca-status");
+    status.classList.toggle("is-online", online);
+    status.classList.toggle("is-offline", !online);
+    $("connection-label").textContent = online ? "服务已连接" : "服务暂不可用";
+  }
+  function toast(message, isError) {
     var el = $("toast");
-    el.textContent = text;
-    el.className = "toast" + (isError ? " error" : "");
+    el.textContent = message;
+    el.classList.toggle("is-error", Boolean(isError));
     el.hidden = false;
-    clearTimeout(el._timer);
-    el._timer = setTimeout(function () { el.hidden = true; }, 2600);
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { el.hidden = true; }, 3200);
   }
-
-  function api(path, options) {
-    return fetch(API + path, {
-      method: (options && options.method) || "GET",
-      headers: { "Content-Type": "application/json" },
-      body: options && options.body ? JSON.stringify(options.body) : undefined,
-    })
-      .then(function (res) { return res.json(); })
-      .then(function (envelope) {
-        if (!envelope || envelope.code !== 0) {
-          throw new Error((envelope && envelope.message) || "请求失败");
-        }
-        return envelope.data;
-      });
-  }
-
-  function addMessage(role, text) {
-    var box = $("messages");
-    var div = document.createElement("div");
-    div.className = "msg " + role;
-    div.textContent = text;
-    box.appendChild(div);
-    box.scrollTop = box.scrollHeight;
-  }
-
-  // ---------- 对话 ----------
-  function sendChat(message) {
-    addMessage("user", message);
-    var thinking = document.createElement("div");
-    thinking.className = "msg assistant";
-    thinking.textContent = "正在输入…";
-    $("messages").appendChild(thinking);
-
-    return api("/agent/chat", {
-      method: "POST",
-      body: { session_id: sessionId, message: message },
-    })
-      .then(function (data) {
-        sessionId = data.session_id;
-        $("session-badge").textContent = "会话 " + data.session_id.slice(0, 8);
-        thinking.remove();
-        addMessage("assistant", data.reply || "");
-        if (data.need_action && data.action) {
-          handleAction(data.action);
-        }
-      })
-      .catch(function (err) {
-        thinking.remove();
-        addMessage("system", "发送失败：" + err.message);
-      });
-  }
-
-  function handleAction(action) {
-    if (action.type === "show_events") {
-      switchTab("events");
-      loadEvents();
-    } else if (action.type === "show_courses") {
-      switchTab("courses");
-      loadCourses();
+  function appendMessage(role, text, options) {
+    options = options || {};
+    var row = document.createElement("article");
+    row.className = "ca-message ca-message-" + role + (options.pending ? " ca-pending" : "");
+    var avatar = document.createElement("div");
+    avatar.className = "ca-avatar";
+    avatar.setAttribute("aria-hidden", "true");
+    avatar.textContent = role === "user" ? "你" : role === "system" ? "!" : "AI";
+    var bubble = document.createElement("div");
+    bubble.className = "ca-bubble";
+    var p = document.createElement("p");
+    p.textContent = text;
+    bubble.appendChild(p);
+    if (options.pending) {
+      var dots = document.createElement("span");
+      dots.className = "ca-dots";
+      dots.setAttribute("aria-label", "正在等待回复");
+      for (var i = 0; i < 3; i++) dots.appendChild(document.createElement("i"));
+      bubble.appendChild(dots);
     }
+    if (options.retry) {
+      var retry = document.createElement("button");
+      retry.className = "ca-retry";
+      retry.type = "button";
+      retry.textContent = "重试发送";
+      retry.addEventListener("click", function () { sendChat(options.retry); });
+      bubble.appendChild(retry);
+    }
+    if (role !== "system") {
+      var time = document.createElement("time");
+      time.dateTime = new Date().toISOString();
+      time.textContent = new Intl.DateTimeFormat("zh-CN", { hour: "2-digit", minute: "2-digit" }).format(new Date());
+      bubble.appendChild(time);
+    }
+    row.appendChild(avatar);
+    row.appendChild(bubble);
+    $("messages").appendChild(row);
+    $("messages").scrollTop = $("messages").scrollHeight;
+    return row;
+  }
+  function setPanelState(name, text, error) {
+    var state = $(name + "-state");
+    state.textContent = text || "";
+    state.classList.toggle("is-error", Boolean(error));
+    state.hidden = !text;
+  }
+  function updateSession(id) {
+    sessionId = id;
+    sessionStorage.setItem("customer-agent-session", id);
+    $("session-badge").textContent = "会话 " + id.slice(0, 8);
   }
 
-  $("chat-form").addEventListener("submit", function (e) {
-    e.preventDefault();
+  async function sendChat(value) {
     var input = $("chat-text");
-    var text = input.value.trim();
-    if (!text) return;
-    input.value = "";
-    sendChat(text);
-  });
-
-  // ---------- 活动 ----------
-  function loadEvents() {
-    var status = $("event-status").value;
-    api("/agent/events" + (status ? "?status=" + encodeURIComponent(status) : ""))
-      .then(renderEvents)
-      .catch(function (err) { toast(err.message, true); });
-  }
-
-  function renderEvents(list) {
-    var box = $("event-list");
-    box.innerHTML = "";
-    if (!list || !list.length) {
-      box.innerHTML = '<li class="card"><p>暂无活动</p></li>';
-      return;
+    var message = String(value == null ? input.value : value).trim();
+    if (!message || busy) return;
+    if (message.length > 2000) { toast("消息不能超过 2000 个字符", true); return; }
+    busy = true;
+    $("send-button").disabled = true;
+    if (value == null) input.value = "";
+    lastFailedMessage = "";
+    appendMessage("user", message);
+    var pending = appendMessage("assistant", "正在整理回复", { pending: true });
+    try {
+      var result = await api.chat({ session_id: sessionId, message: message });
+      if (!result || typeof result.reply !== "string") throw new Error("客服回复格式异常");
+      updateSession(result.session_id);
+      setConnection(true);
+      pending.remove();
+      appendMessage("assistant", result.reply || "客服暂时没有返回文字回复。");
+      if (result.need_action && result.action) handleAction(result.action);
+    } catch (error) {
+      pending.remove();
+      setConnection(false);
+      lastFailedMessage = message;
+      appendMessage("system", "发送失败：" + error.message, { retry: message });
+    } finally {
+      busy = false;
+      $("send-button").disabled = false;
+      input.focus();
     }
-    list.forEach(function (e) {
-      var li = document.createElement("li");
-      li.className = "card";
-      var open = e.status === "报名中" && (e.quota === 0 || e.signed_count < e.quota);
-      li.innerHTML =
-        "<h3></h3>" +
-        "<p>类型：" + esc(e.event_type) + " · 时间：" + esc(e.start_time) + "</p>" +
-        "<p>地点：" + esc(e.location) + "</p>" +
-        '<div class="meta"><span class="quota">' +
-        (e.quota === 0 ? "名额不限" : "名额 " + e.signed_count + "/" + e.quota) +
-        " · " + esc(e.status) + "</span></div>";
-      li.querySelector("h3").textContent = e.event_name;
-      var btn = document.createElement("button");
-      btn.textContent = "报名";
-      btn.disabled = !open;
-      btn.addEventListener("click", function () { openSignup(e); });
-      li.querySelector(".meta").appendChild(btn);
-      box.appendChild(li);
-    });
+  }
+  function handleAction(action) {
+    if (!action || typeof action.type !== "string") return;
+    if (action.type === "show_events") { switchTab("events"); loadEvents(); }
+    if (action.type === "show_courses") { switchTab("courses"); loadCourses(); }
   }
 
+  function clearList(id) { while ($(id).firstChild) $(id).removeChild($(id).firstChild); }
+  function addText(parent, tag, className, text) {
+    var el = document.createElement(tag);
+    if (className) el.className = className;
+    el.textContent = text == null || text === "" ? "—" : String(text);
+    parent.appendChild(el);
+    return el;
+  }
+  function makeCard(title, lines, tag) {
+    var li = document.createElement("li");
+    li.className = "ca-card";
+    addText(li, "h4", "", title);
+    lines.forEach(function (line) { addText(li, "p", "", line); });
+    var meta = document.createElement("div");
+    meta.className = "ca-card-meta";
+    addText(meta, "span", "ca-tag", tag);
+    li.appendChild(meta);
+    return { card: li, meta: meta };
+  }
+  async function loadEvents() {
+    setPanelState("event", "正在获取活动…");
+    clearList("event-list");
+    try {
+      var list = await api.events($("event-status").value);
+      if (!Array.isArray(list)) throw new Error("活动列表格式异常");
+      setConnection(true);
+      setPanelState("event", list.length ? "" : "当前没有符合条件的活动");
+      list.forEach(function (event) {
+        var card = makeCard(event.event_name, [
+          (event.event_type || "活动") + " · " + (event.start_time || "时间待定"),
+          "地点：" + (event.location || "待确认"),
+          event.quota === 0 ? "名额不限" : "名额：" + event.signed_count + " / " + event.quota
+        ], event.status || "状态待确认");
+        var canSignup = event.status === "报名中" && (!event.quota || event.signed_count < event.quota);
+        var signup = document.createElement("button");
+        signup.type = "button";
+        signup.className = "ca-card-action";
+        signup.textContent = canSignup ? "立即报名" : "查看详情";
+        card.meta.appendChild(signup);
+        signup.addEventListener("click", function () {
+          if (canSignup) openSignup(event);
+          else showEventDetails(event.event_id, card.card, signup);
+        });
+        $("event-list").appendChild(card.card);
+      });
+    } catch (error) {
+      setConnection(false);
+      setPanelState("event", error.message, true);
+      var retry = document.createElement("button");
+      retry.type = "button"; retry.className = "ca-card-action"; retry.textContent = "重试";
+      retry.addEventListener("click", loadEvents);
+      $("event-state").appendChild(document.createTextNode(" "));
+      $("event-state").appendChild(retry);
+    }
+  }
+  async function showEventDetails(eventId, card, button) {
+    button.disabled = true;
+    try {
+      var event = await api.event(eventId);
+      var detail = document.createElement("p");
+      detail.textContent = "报名方式：" + (event.signup_method || "请联系工作人员");
+      card.appendChild(detail);
+      setConnection(true);
+    } catch (error) { toast(error.message, true); setConnection(false); }
+    finally { button.disabled = false; }
+  }
   function openSignup(event) {
-    $("signup-title").textContent = "报名：" + event.event_name;
     $("signup-event-id").value = event.event_id;
+    $("signup-event-title").textContent = event.event_name;
     $("signup-name").value = "";
     $("signup-phone").value = "";
-    $("signup-info").value = "";
+    $("signup-note").value = "";
+    $("signup-error").hidden = true;
+    $("signup-submit").disabled = false;
     $("signup-dialog").showModal();
+    $("signup-name").focus();
   }
-
-  $("signup-cancel").addEventListener("click", function () { $("signup-dialog").close(); });
-
-  $("signup-form").addEventListener("submit", function (e) {
-    e.preventDefault();
-    var payload = {
-      event_id: Number($("signup-event-id").value),
-      customer_name: $("signup-name").value.trim(),
-      customer_phone: $("signup-phone").value.trim(),
-    };
-    var info = $("signup-info").value.trim();
-    if (info) payload.customer_info = { note: info };
-
-    api("/agent/events/signup", { method: "POST", body: payload })
-      .then(function (data) {
-        $("signup-dialog").close();
-        toast("报名成功（单号 " + data.signup_id + "）");
-        loadEvents();
-      })
-      .catch(function (err) { toast(err.message, true); });
-  });
-
-  // ---------- 课程 ----------
-  function loadCourses() {
-    var category = $("course-category").value;
-    api("/agent/courses" + (category ? "?category=" + encodeURIComponent(category) : ""))
-      .then(renderCourses)
-      .catch(function (err) { toast(err.message, true); });
+  async function submitSignup(event) {
+    event.preventDefault();
+    var name = $("signup-name").value.trim();
+    var phone = $("signup-phone").value.trim();
+    var phonePattern = /^[+()\-\s\d]{6,32}$/;
+    if (!name || name.length > 64) { showSignupError("请输入有效姓名（最多 64 个字符）"); return; }
+    if (!phonePattern.test(phone)) { showSignupError("请检查手机号格式"); return; }
+    var body = { event_id: Number($("signup-event-id").value), customer_name: name, customer_phone: phone };
+    var note = $("signup-note").value.trim();
+    if (note) body.customer_info = { note: note };
+    $("signup-submit").disabled = true;
+    showSignupError("");
+    try {
+      var result = await api.signup(body);
+      $("signup-dialog").close();
+      setConnection(true);
+      toast("报名已提交 · 编号 " + result.signup_id, false);
+      loadEvents();
+    } catch (error) {
+      setConnection(false);
+      showSignupError(error.message);
+    } finally { $("signup-submit").disabled = false; }
   }
-
-  function renderCourses(list) {
-    var box = $("course-list");
-    box.innerHTML = "";
-    if (!list || !list.length) {
-      box.innerHTML = '<li class="card"><p>暂无课程</p></li>';
-      return;
-    }
-    list.forEach(function (c) {
-      var li = document.createElement("li");
-      li.className = "card";
-      li.innerHTML =
-        "<h3></h3>" +
-        "<p>类别：" + esc(c.category) + " · 适合：" + esc(c.target_audience) + "</p>" +
-        "<p>地点：" + esc(c.location) + " · 报名方式：" + esc(c.signup_method) + "</p>";
-      li.querySelector("h3").textContent = c.course_name;
-      box.appendChild(li);
-    });
+  function showSignupError(message) {
+    var el = $("signup-error");
+    el.textContent = message;
+    el.hidden = !message;
   }
-
-  // ---------- FAQ ----------
-  function searchFaq() {
-    var kw = $("faq-keyword").value.trim();
-    api("/agent/faq" + (kw ? "?question=" + encodeURIComponent(kw) : ""))
-      .then(function (data) {
-        $("faq-result").innerHTML =
-          "<h3></h3><div class='answer'></div>";
-        $("faq-result").querySelector("h3").textContent = data.question;
-        $("faq-result").querySelector(".answer").textContent = data.answer;
-      })
-      .catch(function (err) {
-        $("faq-result").innerHTML = '<p class="empty"></p>';
-        $("faq-result").querySelector(".empty").textContent = err.message;
+  async function loadCourses() {
+    setPanelState("course", "正在获取课程…");
+    clearList("course-list");
+    try {
+      var list = await api.courses($("course-category").value);
+      if (!Array.isArray(list)) throw new Error("课程列表格式异常");
+      setConnection(true);
+      setPanelState("course", list.length ? "" : "当前没有符合条件的课程");
+      list.forEach(function (course) {
+        var card = makeCard(course.course_name, [
+          (course.category || "课程") + " · 适合：" + (course.target_audience || "请咨询客服"),
+          course.description || "暂无课程简介",
+          "地点：" + (course.location || "请咨询") + " · 报名：" + (course.signup_method || "请咨询")
+        ], course.category || "课程");
+        card.meta.removeChild(card.meta.firstChild);
+        $("course-list").appendChild(card.card);
       });
+    } catch (error) {
+      setConnection(false);
+      setPanelState("course", error.message, true);
+      var retry = document.createElement("button");
+      retry.type = "button"; retry.className = "ca-card-action"; retry.textContent = "重试";
+      retry.addEventListener("click", loadCourses);
+      $("course-state").appendChild(document.createTextNode(" "));
+      $("course-state").appendChild(retry);
+    }
   }
-
-  // ---------- Tab 切换 ----------
+  async function searchFaq(event) {
+    event.preventDefault();
+    var question = $("faq-keyword").value.trim();
+    if (question.length > 200) { toast("关键词不能超过 200 个字符", true); return; }
+    $("faq-result").hidden = true;
+    setPanelState("faq", "正在搜索…");
+    try {
+      var result = await api.faq(question);
+      if (!result || typeof result.answer !== "string") throw new Error("FAQ 响应格式异常");
+      $("faq-result").replaceChildren();
+      addText($("faq-result"), "h4", "", result.question);
+      addText($("faq-result"), "p", "", result.answer);
+      $("faq-result").hidden = false;
+      setPanelState("faq", "");
+      setConnection(true);
+    } catch (error) { setPanelState("faq", error.message, true); setConnection(false); }
+  }
   function switchTab(name) {
-    document.querySelectorAll(".tab").forEach(function (t) {
-      t.classList.toggle("active", t.dataset.tab === name);
+    document.querySelectorAll(".ca-tab").forEach(function (tab) {
+      var active = tab.dataset.tab === name;
+      tab.classList.toggle("is-active", active);
+      tab.setAttribute("aria-selected", active ? "true" : "false");
     });
-    document.querySelectorAll(".tab-panel").forEach(function (p) {
-      p.classList.toggle("active", p.id === "tab-" + name);
+    ["events", "courses", "faq"].forEach(function (key) {
+      var panel = $("panel-" + key);
+      panel.hidden = key !== name;
+      panel.classList.toggle("is-active", key === name);
     });
+    if (name === "courses" && !$("course-list").childElementCount) loadCourses();
   }
 
-  document.querySelectorAll(".tab").forEach(function (t) {
-    t.addEventListener("click", function () { switchTab(t.dataset.tab); });
+  $("chat-form").addEventListener("submit", function (event) { event.preventDefault(); sendChat(); });
+  $("chat-text").addEventListener("keydown", function (event) {
+    if (event.key === "Enter" && !event.shiftKey) { event.preventDefault(); sendChat(); }
   });
-
+  $("chat-text").addEventListener("input", function () { this.style.height = "auto"; this.style.height = Math.min(this.scrollHeight, 112) + "px"; });
+  document.querySelectorAll(".ca-chip").forEach(function (chip) {
+    chip.addEventListener("click", function () { $("chat-text").value = chip.dataset.prompt; sendChat(); });
+  });
+  document.querySelectorAll(".ca-tab").forEach(function (tab) { tab.addEventListener("click", function () { switchTab(tab.dataset.tab); }); });
   $("refresh-events").addEventListener("click", loadEvents);
+  $("event-status").addEventListener("change", loadEvents);
   $("refresh-courses").addEventListener("click", loadCourses);
-  $("search-faq").addEventListener("click", searchFaq);
-  $("faq-keyword").addEventListener("keydown", function (e) {
-    if (e.key === "Enter") searchFaq();
-  });
+  $("course-category").addEventListener("change", loadCourses);
+  $("faq-form").addEventListener("submit", searchFaq);
+  $("signup-form").addEventListener("submit", submitSignup);
+  $("signup-close").addEventListener("click", function () { $("signup-dialog").close(); });
+  $("signup-dialog").addEventListener("click", function (event) { if (event.target === this) this.close(); });
 
-  function esc(text) {
-    return String(text == null ? "" : text).replace(/[&<>"']/g, function (ch) {
-      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[ch];
-    });
-  }
-
-  // 初始加载
+  if (sessionId) $("session-badge").textContent = "会话 " + sessionId.slice(0, 8);
   loadEvents();
 })();
