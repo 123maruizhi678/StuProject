@@ -1,4 +1,4 @@
-"""应用配置：从项目根目录 .env 读取日志、数据库和各业务 Dify 应用设置。"""
+"""应用配置：从公共.env.sample默认值和系统环境变量读取日志、数据库和各业务 Dify 应用设置。"""
 
 from pathlib import Path
 
@@ -6,13 +6,13 @@ from typing import Literal
 from pydantic import Field, SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-# 项目根目录（StuProject），.env 置于此
+# 公共模板只保存默认值；真实凭据通过同名环境变量注入。
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
-        env_file=str(BASE_DIR / ".env"),
+        env_file=str(BASE_DIR / ".env.sample"),
         env_file_encoding="utf-8",
         extra="ignore",
     )
@@ -24,7 +24,7 @@ class Settings(BaseSettings):
     DB_HOST: str = "localhost"
     DB_PORT: int = 3306
     DB_USER: str = "root"
-    DB_PASSWORD: str = Field(default="12345", repr=False)
+    DB_PASSWORD: str = Field(default="", repr=False)
     DB_NAME: str = "education_agent"
     DB_ECHO: bool = False
     # Dify API 地址；同一 Dify 服务下各应用可分别使用独立 API Key。
@@ -54,7 +54,7 @@ class StudentLeaveDifySettings(BaseSettings):
     """学生请假 Workflow 的专用连接配置，使用独立 API Key 和版本标识。"""
 
     model_config = SettingsConfigDict(
-        env_file=str(BASE_DIR / ".env"),
+        env_file=str(BASE_DIR / ".env.sample"),
         env_file_encoding="utf-8",
         extra="ignore",
     )
