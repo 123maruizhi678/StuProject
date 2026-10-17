@@ -1,16 +1,21 @@
+app:
+  description: StuProject企业管理模块 enterprise-v1；仅业务候选及已授权输入，不具备数据库写入工具
+  icon: 🤖
+  icon_background: '#E0E7FF'
+  mode: workflow
+  name: StuProject-企业-knowledge
+  use_icon_as_answer_icon: false
+dependencies:
+- current_identifier: null
+  type: marketplace
+  value:
+    marketplace_plugin_unique_identifier: langgenius/deepseek:0.0.24@9e12eef09973667f0eaf4f082af883167e1de88740b22e71e71488d020c3778a
+    version: null
 kind: app
 version: 0.5.0
-dependencies: []
-app:
-  name: StuProject-企业-knowledge
-  description: StuProject企业管理模块 enterprise-v1；仅业务候选及已授权输入，不具备数据库写入工具
-  mode: workflow
-  icon: 🏢
-  icon_background: '#E0E7FF'
-  use_icon_as_answer_icon: false
 workflow:
-  environment_variables: []
   conversation_variables: []
+  environment_variables: []
   features:
     file_upload:
       enabled: false
@@ -20,96 +25,174 @@ workflow:
       enabled: false
     suggested_questions_after_answer:
       enabled: false
+    text_to_speech:
+      enabled: false
+      language: ''
+      voice: ''
   graph:
+    edges:
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: start
+        targetType: if-else
+      id: start-knowledge-mode
+      source: start
+      sourceHandle: source
+      target: knowledge-mode
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: if-else
+        targetType: llm
+      id: knowledge-mode-llm-qa
+      source: knowledge-mode
+      sourceHandle: qa
+      target: llm-qa
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: llm
+        targetType: code
+      id: llm-qa-validate-qa
+      source: llm-qa
+      sourceHandle: source
+      target: validate-qa
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: code
+        targetType: end
+      id: validate-qa-end-qa
+      source: validate-qa
+      sourceHandle: source
+      target: end-qa
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: if-else
+        targetType: llm
+      id: knowledge-mode-llm-rag
+      source: knowledge-mode
+      sourceHandle: 'false'
+      target: llm-rag
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: llm
+        targetType: code
+      id: llm-rag-validate-rag
+      source: llm-rag
+      sourceHandle: source
+      target: validate-rag
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: code
+        targetType: end
+      id: validate-rag-end-rag
+      source: validate-rag
+      sourceHandle: source
+      target: end-rag
+      targetHandle: target
+      type: custom
+      zIndex: 0
     nodes:
-    - id: start
-      type: custom
-      position:
-        x: 50
-        y: 200
-      positionAbsolute:
-        x: 50
-        y: 200
-      width: 260
-      height: 100
-      sourcePosition: right
-      targetPosition: left
-      data:
-        type: start
+    - data:
+        selected: false
         title: 授权输入
-        selected: false
+        type: start
         variables:
-        - variable: question
-          label: question
-          type: paragraph
-          required: true
+        - label: question
           max_length: 60000
           options: []
-        - variable: mode
-          label: mode
-          type: paragraph
           required: true
+          type: paragraph
+          variable: question
+        - label: mode
           max_length: 60000
           options: []
-        - variable: candidates
-          label: candidates
-          type: paragraph
           required: true
+          type: paragraph
+          variable: mode
+        - label: candidates
           max_length: 60000
           options: []
-        - variable: contract_version
-          label: contract_version
-          type: paragraph
           required: true
+          type: paragraph
+          variable: candidates
+        - label: contract_version
           max_length: 60000
           options: []
-    - id: knowledge-mode
-      type: custom
+          required: true
+          type: paragraph
+          variable: contract_version
+      height: 100
+      id: start
       position:
-        x: 350
+        x: 50
         y: 200
       positionAbsolute:
-        x: 350
+        x: 50
         y: 200
-      width: 260
-      height: 100
       sourcePosition: right
       targetPosition: left
-      data:
-        type: if-else
-        title: QA／RAG分支
-        selected: false
+      type: custom
+      width: 260
+    - data:
         cases:
         - case_id: qa
-          logical_operator: and
           conditions:
-          - variable_selector:
+          - comparison_operator: is
+            value: qa
+            variable_selector:
             - start
             - mode
-            comparison_operator: is
-            value: qa
-    - id: llm-qa
-      type: custom
-      position:
-        x: 680
-        y: 80
-      positionAbsolute:
-        x: 680
-        y: 80
-      width: 260
+          logical_operator: and
+        selected: false
+        title: QA／RAG分支
+        type: if-else
       height: 100
+      id: knowledge-mode
+      position:
+        x: 350
+        y: 200
+      positionAbsolute:
+        x: 350
+        y: 200
       sourcePosition: right
       targetPosition: left
-      data:
-        type: llm
-        title: 标准FAQ匹配
-        selected: false
+      type: custom
+      width: 260
+    - data:
+        context:
+          enabled: false
+          variable_selector: []
+        memory: null
         model:
-          provider: langgenius/deepseek/deepseek
-          name: deepseek-flash
-          mode: chat
           completion_params:
             temperature: 0.1
+          mode: chat
+          name: deepseek-flash
+          provider: langgenius/deepseek/deepseek
         prompt_template:
         - id: system
           role: system
@@ -124,29 +207,24 @@ workflow:
             candidates: {{#start.candidates#}}
 
             contract_version: {{#start.contract_version#}}'
-        context:
-          enabled: false
-          variable_selector: []
+        selected: false
+        title: 标准FAQ匹配
+        type: llm
         vision:
           enabled: false
-        memory: null
-    - id: validate-qa
-      type: custom
+      height: 100
+      id: llm-qa
       position:
-        x: 1010
+        x: 680
         y: 80
       positionAbsolute:
-        x: 1010
+        x: 680
         y: 80
-      width: 260
-      height: 100
       sourcePosition: right
       targetPosition: left
-      data:
-        type: code
-        title: 结果契约校验
-        selected: false
-        code_language: python3
+      type: custom
+      width: 260
+    - data:
         code: "import json, re\ndef main(raw: str) -> dict:\n    text = re.sub(r\"\
           <think>[\\s\\S]*?</think>\", \"\", raw, flags=re.I).strip()\n    if text.startswith(\"\
           ```\"):\n        text = text.split(\"\\n\",1)[1].rsplit(\"```\",1)[0].strip()\n\
@@ -157,59 +235,64 @@ workflow:
           \        raise ValueError(\"Invalid citations output type\")\n    if not\
           \ isinstance(result.get('mode'),str):\n        raise ValueError(\"Invalid\
           \ mode output type\")\n    return {\"result\":result}\n"
-        variables:
-        - variable: raw
-          value_selector:
-          - llm-qa
-          - text
+        code_language: python3
         outputs:
           result:
-            type: object
             children: null
-    - id: end-qa
-      type: custom
+            type: object
+        selected: false
+        title: 结果契约校验
+        type: code
+        variables:
+        - value_selector:
+          - llm-qa
+          - text
+          variable: raw
+      height: 100
+      id: validate-qa
       position:
-        x: 1340
+        x: 1010
         y: 80
       positionAbsolute:
-        x: 1340
+        x: 1010
         y: 80
-      width: 260
-      height: 100
       sourcePosition: right
       targetPosition: left
-      data:
-        type: end
-        title: 结构化输出
-        selected: false
+      type: custom
+      width: 260
+    - data:
         outputs:
-        - variable: result
-          value_selector:
+        - value_selector:
           - validate-qa
           - result
           value_type: object
-    - id: llm-rag
-      type: custom
-      position:
-        x: 680
-        y: 420
-      positionAbsolute:
-        x: 680
-        y: 420
-      width: 260
+          variable: result
+        selected: false
+        title: 结构化输出
+        type: end
       height: 100
+      id: end-qa
+      position:
+        x: 1340
+        y: 80
+      positionAbsolute:
+        x: 1340
+        y: 80
       sourcePosition: right
       targetPosition: left
-      data:
-        type: llm
-        title: 授权文档片段回答
-        selected: false
+      type: custom
+      width: 260
+    - data:
+        context:
+          enabled: false
+          variable_selector: []
+        memory: null
         model:
-          provider: langgenius/deepseek/deepseek
-          name: deepseek-flash
-          mode: chat
           completion_params:
             temperature: 0.1
+          mode: chat
+          name: deepseek-flash
+          provider: langgenius/deepseek/deepseek
         prompt_template:
         - id: system
           role: system
@@ -224,29 +307,24 @@ workflow:
             candidates: {{#start.candidates#}}
 
             contract_version: {{#start.contract_version#}}'
-        context:
-          enabled: false
-          variable_selector: []
+        selected: false
+        title: 授权文档片段回答
+        type: llm
         vision:
           enabled: false
-        memory: null
-    - id: validate-rag
-      type: custom
+      height: 100
+      id: llm-rag
       position:
-        x: 1010
+        x: 680
         y: 420
       positionAbsolute:
-        x: 1010
+        x: 680
         y: 420
-      width: 260
-      height: 100
       sourcePosition: right
       targetPosition: left
-      data:
-        type: code
-        title: 结果契约校验
-        selected: false
-        code_language: python3
+      type: custom
+      width: 260
+    - data:
         code: "import json, re\ndef main(raw: str) -> dict:\n    text = re.sub(r\"\
           <think>[\\s\\S]*?</think>\", \"\", raw, flags=re.I).strip()\n    if text.startswith(\"\
           ```\"):\n        text = text.split(\"\\n\",1)[1].rsplit(\"```\",1)[0].strip()\n\
@@ -257,123 +335,55 @@ workflow:
           \        raise ValueError(\"Invalid citations output type\")\n    if not\
           \ isinstance(result.get('mode'),str):\n        raise ValueError(\"Invalid\
           \ mode output type\")\n    return {\"result\":result}\n"
-        variables:
-        - variable: raw
-          value_selector:
-          - llm-rag
-          - text
+        code_language: python3
         outputs:
           result:
-            type: object
             children: null
-    - id: end-rag
+            type: object
+        selected: false
+        title: 结果契约校验
+        type: code
+        variables:
+        - value_selector:
+          - llm-rag
+          - text
+          variable: raw
+      height: 100
+      id: validate-rag
+      position:
+        x: 1010
+        y: 420
+      positionAbsolute:
+        x: 1010
+        y: 420
+      sourcePosition: right
+      targetPosition: left
       type: custom
+      width: 260
+    - data:
+        outputs:
+        - value_selector:
+          - validate-rag
+          - result
+          value_type: object
+          variable: result
+        selected: false
+        title: 结构化输出
+        type: end
+      height: 100
+      id: end-rag
       position:
         x: 1340
         y: 420
       positionAbsolute:
         x: 1340
         y: 420
-      width: 260
-      height: 100
       sourcePosition: right
       targetPosition: left
-      data:
-        type: end
-        title: 结构化输出
-        selected: false
-        outputs:
-        - variable: result
-          value_selector:
-          - validate-rag
-          - result
-          value_type: object
-    edges:
-    - id: start-knowledge-mode
-      source: start
-      target: knowledge-mode
-      sourceHandle: source
-      targetHandle: target
       type: custom
-      data:
-        sourceType: start
-        targetType: if-else
-        isInIteration: false
-        isInLoop: false
-      zIndex: 0
-    - id: knowledge-mode-llm-qa
-      source: knowledge-mode
-      target: llm-qa
-      sourceHandle: qa
-      targetHandle: target
-      type: custom
-      data:
-        sourceType: if-else
-        targetType: llm
-        isInIteration: false
-        isInLoop: false
-      zIndex: 0
-    - id: llm-qa-validate-qa
-      source: llm-qa
-      target: validate-qa
-      sourceHandle: source
-      targetHandle: target
-      type: custom
-      data:
-        sourceType: llm
-        targetType: code
-        isInIteration: false
-        isInLoop: false
-      zIndex: 0
-    - id: validate-qa-end-qa
-      source: validate-qa
-      target: end-qa
-      sourceHandle: source
-      targetHandle: target
-      type: custom
-      data:
-        sourceType: code
-        targetType: end
-        isInIteration: false
-        isInLoop: false
-      zIndex: 0
-    - id: knowledge-mode-llm-rag
-      source: knowledge-mode
-      target: llm-rag
-      sourceHandle: 'false'
-      targetHandle: target
-      type: custom
-      data:
-        sourceType: if-else
-        targetType: llm
-        isInIteration: false
-        isInLoop: false
-      zIndex: 0
-    - id: llm-rag-validate-rag
-      source: llm-rag
-      target: validate-rag
-      sourceHandle: source
-      targetHandle: target
-      type: custom
-      data:
-        sourceType: llm
-        targetType: code
-        isInIteration: false
-        isInLoop: false
-      zIndex: 0
-    - id: validate-rag-end-rag
-      source: validate-rag
-      target: end-rag
-      sourceHandle: source
-      targetHandle: target
-      type: custom
-      data:
-        sourceType: code
-        targetType: end
-        isInIteration: false
-        isInLoop: false
-      zIndex: 0
+      width: 260
     viewport:
       x: 0
       y: 0
       zoom: 0.7
+  rag_pipeline_variables: []
