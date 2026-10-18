@@ -1,0 +1,137 @@
+{
+  "tested_at": "2026-10-17T11:49:12.173234+00:00",
+  "app_id": "8658ad46-1bea-4a41-89d3-6312fc578dd8",
+  "data_source": "synthetic fixtures, no business database writes",
+  "results": [
+    {
+      "case": "完整字段",
+      "passed": true,
+      "status": "succeeded",
+      "workflow_run_id": "eb7076c2-33a0-4708-8d5e-dd179dce6828",
+      "seconds": 2.29,
+      "expected_fields": 13,
+      "matched_fields": 13,
+      "mismatch_fields": [],
+      "unexpected_fields": [],
+      "rule_matched": true,
+      "rule_score": 30.0
+    },
+    {
+      "case": "叙述型资料",
+      "passed": true,
+      "status": "succeeded",
+      "workflow_run_id": "b168a545-bec4-4dcc-b681-e0d4b55f41b7",
+      "seconds": 2.36,
+      "expected_fields": 8,
+      "matched_fields": 8,
+      "mismatch_fields": [],
+      "unexpected_fields": []
+    },
+    {
+      "case": "稀疏资料",
+      "passed": true,
+      "status": "succeeded",
+      "workflow_run_id": "f13649b3-936d-4448-b2fb-e4e675788d52",
+      "seconds": 1.95,
+      "expected_fields": 3,
+      "matched_fields": 3,
+      "mismatch_fields": [],
+      "unexpected_fields": [],
+      "rule_matched": false,
+      "rule_score": 0.0
+    },
+    {
+      "case": "未知信息不推断",
+      "passed": true,
+      "status": "succeeded",
+      "workflow_run_id": "46ab2eff-ebac-4c8a-8e31-e2fe6487135b",
+      "seconds": 1.58,
+      "expected_fields": 0,
+      "matched_fields": 0,
+      "mismatch_fields": [],
+      "unexpected_fields": []
+    },
+    {
+      "case": "提示注入",
+      "passed": true,
+      "status": "succeeded",
+      "workflow_run_id": "ff74fcdf-8406-4f78-89e1-edd86720158e",
+      "seconds": 1.62,
+      "expected_fields": 3,
+      "matched_fields": 3,
+      "mismatch_fields": [],
+      "unexpected_fields": []
+    },
+    {
+      "case": "中文叙述与号码清理",
+      "passed": true,
+      "status": "succeeded",
+      "workflow_run_id": "63a0167c-d998-43a9-a0b5-81a52bf0e6ab",
+      "seconds": 2.17,
+      "expected_fields": 7,
+      "matched_fields": 7,
+      "mismatch_fields": [],
+      "unexpected_fields": []
+    },
+    {
+      "case": "不凭描述造产品编码",
+      "passed": true,
+      "status": "succeeded",
+      "workflow_run_id": "a82770b7-0bdc-4948-9604-1594d0445945",
+      "seconds": 2.17,
+      "expected_fields": 1,
+      "matched_fields": 1,
+      "mismatch_fields": [],
+      "unexpected_fields": []
+    },
+    {
+      "case": "零值保留",
+      "passed": true,
+      "status": "succeeded",
+      "workflow_run_id": "9887d6cc-818b-4ccf-8b5b-ed9bf69fc4b8",
+      "seconds": 1.66,
+      "expected_fields": 5,
+      "matched_fields": 5,
+      "mismatch_fields": [],
+      "unexpected_fields": [],
+      "rule_matched": false,
+      "rule_score": 0.0
+    },
+    {
+      "case": "多客户拒绝混合",
+      "passed": true,
+      "status": "succeeded",
+      "workflow_run_id": "a48d1606-d0a1-4c33-a711-846df2069664",
+      "seconds": 1.96,
+      "expected_fields": 0,
+      "matched_fields": 0,
+      "mismatch_fields": [],
+      "unexpected_fields": []
+    },
+    {
+      "case": "不从邮箱推断姓名",
+      "passed": true,
+      "status": "succeeded",
+      "workflow_run_id": "9894cc28-3105-4a98-959a-f5b8fba08be7",
+      "seconds": 1.75,
+      "expected_fields": 1,
+      "matched_fields": 1,
+      "mismatch_fields": [],
+      "unexpected_fields": []
+    },
+    {
+      "case": "非法契约版本",
+      "passed": true,
+      "status": "failed",
+      "workflow_run_id": "e122e694-5313-408d-bb86-2ac96b0a10b4"
+    },
+    {
+      "case": "非法字段Schema",
+      "passed": true,
+      "status": "failed",
+      "workflow_run_id": "9525c542-5e5d-4d82-b995-5d83d6fd5821"
+    }
+  ],
+  "passed": 12,
+  "total": 12
+}

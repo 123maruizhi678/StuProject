@@ -1,0 +1,74 @@
+/* =====================================================================
+   公共主题 —— 哈佛 / 斯坦福学院风
+   主色：绯红 crimson + 学术金 gold；衬线标题 + 无衬线正文，大量留白。
+   ===================================================================== */
+:root {
+  --crimson: #8C1515;
+  --crimson-dark: #6B0F0F;
+  --crimson-soft: #F7EDED;
+  --gold: #B99B5A;
+  --bg: #FAF7F2;
+  --bg-soft: #F2ECE2;
+  --card: #ffffff;
+  --text: #221E1A;
+  --muted: #6E675E;
+  --border: #E5DDD0;
+  --serif: Georgia, "Times New Roman", "Songti SC", "STSong", "SimSun", serif;
+  --sans: -apple-system, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0;
+  font-family: var(--sans);
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.6;
+}
+a { color: var(--crimson); text-decoration: none; }
+
+/* ---- 模块页顶栏 ---- */
+.site-topbar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 24px;
+  background: var(--crimson);
+  color: #fff;
+}
+.site-topbar .brand { color: #fff; font-weight: 600; letter-spacing: 1px; }
+.site-topbar .brand:hover { color: #fff; }
+.site-topbar h1 { margin: 0; font-size: 18px; font-weight: 600; flex: 1; color: #fff; font-family: var(--serif); }
+.site-topbar .back { color: rgba(255, 255, 255, 0.85); font-size: 14px; white-space: nowrap; }
+.site-topbar .back:hover { color: #fff; }
+
+header { padding: 24px; text-align: center; }
+header h1 { margin: 0 0 4px; font-family: var(--serif); }
+header p { margin: 0; color: var(--muted); }
+main { max-width: 960px; margin: 0 auto; padding: 0 16px 48px; }
+.cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px; }
+.card {
+  display: block;
+  padding: 24px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  color: var(--text);
+  text-align: center;
+}
+.card:hover { border-color: var(--crimson); color: var(--crimson); box-shadow: 0 8px 24px rgba(140, 21, 21, 0.08); }
+button, input, textarea, select {
+  font: inherit;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--text);
+}
+button { background: var(--crimson); color: #fff; border: none; cursor: pointer; }
+button:hover { background: var(--crimson-dark); }
+.panel { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 16px; margin: 16px 0; }
+.row { display: flex; gap: 8px; margin: 8px 0; }
+.msg { white-space: pre-wrap; }
+.muted { color: var(--muted); }

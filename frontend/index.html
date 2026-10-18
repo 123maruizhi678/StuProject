@@ -1,60 +1,181 @@
 <!DOCTYPE html>
-<html lang="zh-CN" data-theme="dark">
+<html lang="zh-CN">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>粤教服务智能业务平台</title>
-  <meta name="description" content="面向潜在客户、企业员工和留学生的一体化智能业务平台">
-  <link rel="stylesheet" href="/static/css/style.css?v=2">
-</head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>留学项目平台 · 智能留学服务</title>
+  <link rel="stylesheet" href="css/common/style.css" />
+  <link rel="stylesheet" href="css/home.css" />
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml"></head>
 <body>
-  <!-- 背景氛围层：电影感粒子 + 视频槽 + 极光微动 + 点阵网格 + 噪点 -->
-  <div class="bg" aria-hidden="true">
-    <canvas class="bg-canvas" id="bgCanvas"></canvas>
-    <video class="bg-video" id="bgVideo" muted loop autoplay playsinline preload="auto"></video>
-    <div class="bg-grid"></div>
-    <div class="bg-aurora a1"></div>
-    <div class="bg-aurora a2"></div>
-    <div class="bg-aurora a3"></div>
-    <div class="bg-noise"></div>
-  </div>
 
-  <div class="app">
-    <aside class="sidebar">
-      <div class="brand">
-        <div class="logo">粤</div>
-        <div>
-          <div class="name">粤教服务</div>
-          <div class="sub">智能业务平台</div>
-        </div>
+  <!-- 顶部导航 -->
+  <nav class="site-nav" id="siteNav">
+    <div class="nav-inner">
+      <a class="nav-brand" href="index.html"><span class="brand-mark">✦</span>留学项目平台</a>
+      <div class="nav-links">
+        <a href="dashboard/dashboard.html">工作台</a><a href="#modules">智能模块</a>
+        <a href="#universities">目标院校</a>
+        <a href="#about">关于平台</a>
       </div>
-      <nav class="nav" id="nav">
-        <button class="nav-item active" data-route="dashboard"><span class="ico">📊</span>数据看板</button>
-        <button class="nav-item" data-route="judge"><span class="ico">🎯</span>客户研判</button>
-        <button class="nav-item" data-route="agent"><span class="ico">💬</span>客服 Agent</button>
-        <button class="nav-item" data-route="enterprise"><span class="ico">🏢</span>企业智能助手</button>
-        <button class="nav-item" data-route="student"><span class="ico">🎓</span>学生智能助手</button>
-        <button class="nav-item" data-route="report"><span class="ico">📑</span>智能报告</button>
-      </nav>
-      <div class="foot">粤教服务 · 智能业务平台 v1.0</div>
-    </aside>
-
-    <div class="main">
-      <header class="topbar">
-        <div class="title" id="pageTitle">数据看板</div>
-        <div class="spacer"></div>
-        <span class="badge neutral" id="difyBadge">AI 能力：本地</span>
-        <button class="btn sm" id="themeBtn" title="切换深浅色">🌓</button>
-      </header>
-      <main class="content" id="app"></main>
+      <a class="nav-login" href="common/login.html">登录</a>
     </div>
-  </div>
+  </nav>
 
-  <div class="toast-wrap" id="toasts"></div>
+  <!-- Hero：视频背景 -->
+  <header class="hero" id="hero">
+    <video class="hero-video" autoplay muted loop playsinline
+           poster="assets/images/大学1.png" preload="auto">
+      <source src="assets/video/宣传视频.mp4" type="video/mp4" />
+    </video>
+    <div class="hero-overlay"></div>
+    <div class="hero-content">
+      <p class="hero-overline">Study Abroad · 智能留学服务平台</p>
+      <h1 class="hero-title">启航世界名校之路</h1>
+      <p class="hero-subtitle">融合 AI 智能客服、客户信息研判、智能报告与企业协同，为留学咨询与学生服务提供一站式智能支持。</p>
+      <div class="hero-actions">
+        <a class="btn btn-primary" href="#modules">进入平台</a>
+        <a class="btn btn-ghost" href="#universities">浏览目标院校</a>
+      </div>
+    </div>
+    <div class="hero-scroll">⌄ 向下探索</div>
+  </header>
 
-  <script src="/static/js/api.js?v=2"></script>
-  <script src="/static/js/charts.js?v=2"></script>
-  <script src="/static/js/effects.js?v=2"></script>
-  <script src="/static/js/app.js?v=2"></script>
+  <!-- 数据概览 -->
+  <section class="stats">
+    <div class="stat"><strong>6</strong><span>大智能模块</span></div>
+    <div class="stat"><strong>8</strong><span>所目标院校展示</span></div>
+    <div class="stat"><strong>7×24</strong><span>智能客服在线</span></div>
+    <div class="stat"><strong>AI</strong><span>全流程智能协作</span></div>
+  </section>
+
+  <!-- 智能模块 -->
+  <section class="section modules" id="modules">
+    <div class="section-head reveal">
+      <p class="overline">Smart Modules</p>
+      <h2>六大智能模块</h2>
+      <p class="section-sub">从客户咨询到学生服务，覆盖留学服务全流程</p>
+    </div>
+    <div class="module-grid">
+      <a class="module-card reveal" href="agent/agent.html">
+        <span class="module-icon">🤖</span>
+        <h3>客服 Agent</h3>
+        <p>智能客服与知识问答，精准识别意图，24 小时即时响应咨询。</p>
+        <span class="module-link">进入 →</span>
+      </a>
+      <a class="module-card reveal" href="customer/customer.html">
+        <span class="module-icon">🧩</span>
+        <h3>客户信息研判</h3>
+        <p>客户画像字段抽取与研判规则裁决，辅助顾问高效跟进。</p>
+        <span class="module-link">进入 →</span>
+      </a>
+      <a class="module-card reveal" href="report/report.html">
+        <span class="module-icon">📊</span>
+        <h3>智能报告</h3>
+        <p>依据已计算指标自动生成结构化报告正文，数据有据可循。</p>
+        <span class="module-link">进入 →</span>
+      </a>
+      <a class="module-card reveal" href="enterprise/enterprise.html">
+        <span class="module-icon">🏢</span>
+        <h3>企业智能助手</h3>
+        <p>指令解析、知识问答、日报摘要与只读数据查询一体化协同。</p>
+        <span class="module-link">进入 →</span>
+      </a>
+      <a class="module-card reveal" href="student/student-assistant.html">
+        <span class="module-icon">🎓</span>
+        <h3>学生智能助手</h3>
+        <p>学业进度、成绩查询与申请进度提醒，陪伴每位学子成长。</p>
+        <span class="module-link">进入 →</span>
+      </a>
+      <a class="module-card reveal" href="dashboard/dashboard.html">
+        <span class="module-icon">🔐</span>
+        <h3>统一工作台</h3>
+        <p>统一身份认证入口，安全接入各业务模块与权限体系。</p>
+        <span class="module-link">进入 →</span>
+      </a>
+    </div>
+  </section>
+
+  <!-- 目标院校画廊 -->
+  <section class="section universities" id="universities">
+    <div class="section-head reveal">
+      <p class="overline">Target Universities</p>
+      <h2>世界名校 · 目标院校</h2>
+      <p class="section-sub">遍览世界顶尖学府风光，成就每一位学子的名校之梦</p>
+    </div>
+    <div class="uni-grid">
+      <a class="uni-card reveal" href="#universities">
+        <img src="assets/images/大学1.png" alt="目标院校 01" loading="lazy" />
+        <span class="uni-overlay"><span class="uni-num">No. 01</span><span class="uni-name">世界顶尖学府</span></span>
+      </a>
+      <a class="uni-card reveal" href="#universities">
+        <img src="assets/images/大学2.png" alt="目标院校 02" loading="lazy" />
+        <span class="uni-overlay"><span class="uni-num">No. 02</span><span class="uni-name">世界顶尖学府</span></span>
+      </a>
+      <a class="uni-card reveal" href="#universities">
+        <img src="assets/images/大学3.png" alt="目标院校 03" loading="lazy" />
+        <span class="uni-overlay"><span class="uni-num">No. 03</span><span class="uni-name">世界顶尖学府</span></span>
+      </a>
+      <a class="uni-card reveal" href="#universities">
+        <img src="assets/images/大学4.png" alt="目标院校 04" loading="lazy" />
+        <span class="uni-overlay"><span class="uni-num">No. 04</span><span class="uni-name">世界顶尖学府</span></span>
+      </a>
+      <a class="uni-card reveal" href="#universities">
+        <img src="assets/images/大学5.png" alt="目标院校 05" loading="lazy" />
+        <span class="uni-overlay"><span class="uni-num">No. 05</span><span class="uni-name">世界顶尖学府</span></span>
+      </a>
+      <a class="uni-card reveal" href="#universities">
+        <img src="assets/images/大学6.png" alt="目标院校 06" loading="lazy" />
+        <span class="uni-overlay"><span class="uni-num">No. 06</span><span class="uni-name">世界顶尖学府</span></span>
+      </a>
+      <a class="uni-card reveal" href="#universities">
+        <img src="assets/images/大学7.png" alt="目标院校 07" loading="lazy" />
+        <span class="uni-overlay"><span class="uni-num">No. 07</span><span class="uni-name">世界顶尖学府</span></span>
+      </a>
+      <a class="uni-card reveal" href="#universities">
+        <img src="assets/images/大学8.png" alt="目标院校 08" loading="lazy" />
+        <span class="uni-overlay"><span class="uni-num">No. 08</span><span class="uni-name">世界顶尖学府</span></span>
+      </a>
+    </div>
+  </section>
+
+  <!-- 关于平台 -->
+  <section class="section about" id="about">
+    <div class="about-inner reveal">
+      <p class="overline">About</p>
+      <h2>关于留学项目平台</h2>
+      <p>平台面向留学咨询与学生服务场景，构建覆盖公共基础能力、客服 Agent、客户信息研判、智能报告、企业智能助手与学生智能助手的统一智能服务平台，以 AI 驱动咨询、研判、报告与协同，让服务更专业、更高效。</p>
+    </div>
+    <div class="features">
+      <div class="feature reveal">
+        <h4>智能客服</h4>
+        <p>基于知识库的意图识别与问答，覆盖公司信息、业务、留学政策与常见问题，支持转人工协同。</p>
+      </div>
+      <div class="feature reveal">
+        <h4>AI 研判</h4>
+        <p>从来源文本抽取客户关键字段，依据研判规则自动裁决，辅助顾问精准跟进客户。</p>
+      </div>
+      <div class="feature reveal">
+        <h4>只读安全</h4>
+        <p>企业数据查询严格限定只读 SELECT，受控动作与字段解析，敏感信息全程加密脱敏。</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 页脚 -->
+  <footer class="site-footer">
+    <div class="footer-inner">
+      <span class="footer-brand">✦ 留学项目平台</span>
+      <div class="footer-links">
+        <a href="#modules">智能模块</a>
+        <a href="#universities">目标院校</a>
+        <a href="#about">关于平台</a>
+        <a href="common/login.html">登录</a>
+      </div>
+    </div>
+    <p class="footer-note">© 2026 留学项目平台 · 以 AI 驱动留学咨询与学生服务</p>
+  </footer>
+
+  <script src="js/home.js"></script>
 </body>
 </html>

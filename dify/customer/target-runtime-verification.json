@@ -1,0 +1,22 @@
+{
+  "tested_at": "2026-10-17T11:51:58.723574+00:00",
+  "app_id": "8658ad46-1bea-4a41-89d3-6312fc578dd8",
+  "data_source": "synthetic fixtures, no business database writes",
+  "results": [
+    {
+      "case": "完整字段",
+      "passed": true,
+      "status": "succeeded",
+      "workflow_run_id": "f0382119-c68c-435d-aecd-d83e0b77c640",
+      "seconds": 2.27,
+      "expected_fields": 13,
+      "matched_fields": 13,
+      "mismatch_fields": [],
+      "unexpected_fields": [],
+      "rule_matched": true,
+      "rule_score": 30.0
+    }
+  ],
+  "passed": 1,
+  "total": 1
+}

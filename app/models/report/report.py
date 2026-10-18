@@ -39,6 +39,22 @@ from sqlalchemy.dialects.mysql import DATETIME, JSON, LONGTEXT, VARCHAR
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.database import Base
+from app.models.common._types import utc_timestamp
+from sqlalchemy.ext.compiler import compiles
+
+
+class report_updated_timestamp(utc_timestamp):
+    inherit_cache = True
+
+
+@compiles(report_updated_timestamp)
+def _report_updated_default(element, compiler, **kwargs):
+    return "CURRENT_TIMESTAMP"
+
+
+@compiles(report_updated_timestamp, "mysql")
+def _report_mysql_updated_default(element, compiler, **kwargs):
+    return "CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3)"
 
 # 表选项与全量脚本一致：InnoDB 支持外键，utf8mb4 支持中文及完整 Unicode。
 # 默认排序规则供普通文本使用；状态、编码列单独使用二进制排序规则。
@@ -78,7 +94,7 @@ class CreatedAtMixin:
         report_timestamp(),
         nullable=False,
         default=utcnow,
-        server_default=text("CURRENT_TIMESTAMP(3)"),
+        server_default=utc_timestamp(),
         comment="记录创建时间，UTC。",
     )
 
@@ -92,7 +108,7 @@ class UpdatedAtMixin(CreatedAtMixin):
         nullable=False,
         default=utcnow,
         onupdate=utcnow,
-        server_default=text("CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3)"),
+        server_default=report_updated_timestamp(),
         comment="记录最近更新时间，UTC。",
     )
 
