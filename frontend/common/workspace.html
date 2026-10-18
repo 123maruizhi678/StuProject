@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>通知中心 · 留学项目平台</title>
+  <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="../css/common/style.css" />
+  <link rel="stylesheet" href="../css/workspace/layout.css" />
+  <link rel="stylesheet" href="../css/common/workspace.css" />
+</head>
+<body data-notice-view="overview">
+  <a class="skip-link" href="#main-content">跳至主要内容</a>
+  <div class="mobile-scrim"></div>
+  <aside class="app-rail" aria-label="平台导航">
+    <a class="rail-brand" href="../index.html"><span class="brand-emblem">✦</span><span><strong>留学项目平台</strong><small>STUDY ABROAD</small></span></a>
+    <nav class="rail-scroll" aria-label="模块导航"></nav>
+  </aside>
+  <div class="workspace">
+    <header class="app-topbar">
+      <button class="icon-button menu-button" type="button" data-menu aria-label="打开导航" aria-expanded="false">☰</button>
+      <div class="crumb"><b>通知中心</b></div><div class="top-spacer"></div>
+      <div class="top-actions"><a class="user-chip" href="account.html"><span class="avatar">·</span><span class="user-name">正在读取身份</span></a><button class="button secondary small" id="workspace-logout" type="button">退出登录</button></div>
+    </header>
+    <main class="workspace-main" id="main-content">
+      <div class="page-heading"><div><div class="eyebrow">NOTIFICATION CENTER</div><h1>通知中心</h1><p>查看公共通知，以及与你相关的办理状态、服务回复与重要事项。</p></div><div class="actions"><button class="button secondary" id="notification-refresh" type="button">刷新通知</button></div></div>
+      <section class="section-card notice-section" aria-labelledby="public-title">
+        <div class="section-title"><div><h2 id="public-title">公共通知</h2><p class="muted tiny">平台公告与服务安排</p></div><a id="announcement-manage-link" href="announcement-manage.html" hidden>管理公共通知 →</a></div>
+        <div id="public-notices" class="notice-content" aria-live="polite"><p class="muted">正在读取公共通知……</p></div>
+      </section>
+      <section class="section-card notice-section" aria-labelledby="personal-title">
+        <div class="section-title"><div><h2 id="personal-title">与我相关</h2><p class="muted tiny">办理状态、服务回复与重要事项</p></div><span class="notice-unread" id="personal-unread">—</span></div>
+        <form class="notice-filters" id="notification-filters">
+          <label>阅读状态<select id="notice-read"><option value="all">全部消息</option><option value="unread">未读消息</option></select></label>
+          <label>消息类型<select id="notice-kind"><option value="">全部类型</option><option value="status">办理状态</option><option value="reply">服务回复</option><option value="important">重要事项</option></select></label>
+          <label class="notice-search">搜索<input id="notice-query" type="search" maxlength="200" placeholder="搜索标题或内容" /></label><button class="button secondary" type="submit">查询</button>
+        </form>
+        <div id="personal-notices" aria-live="polite"><p class="notice-empty">正在读取个人消息……</p></div>
+        <div class="notice-pagination"><button class="button secondary small" id="notice-prev" type="button" disabled>上一页</button><span id="notice-page">第 1 页</span><button class="button secondary small" id="notice-next" type="button" disabled>下一页</button></div>
+      </section>
+      <footer class="page-footer"><span>✦ 留学项目平台 · 专业服务，连接未来</span><a href="../index.html">返回首页</a></footer>
+    </main>
+  </div>
+  <script type="module" src="../js/common/notification-center.js"></script>
+</body>
+</html>

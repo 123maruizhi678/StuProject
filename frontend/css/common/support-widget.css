@@ -1,0 +1,16 @@
+.support-bubble{position:fixed;right:28px;bottom:max(26px,env(safe-area-inset-bottom));z-index:100;width:66px;height:66px;border:1px solid #ffffff75;border-radius:50%;background:var(--crimson,#741d25);color:#fff;box-shadow:0 6px 24px #50201c40;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:3px;cursor:pointer}
+.support-bubble svg{width:26px;height:26px}.support-bubble span{font-size:11px;letter-spacing:2px;padding-left:2px}
+.support-bubble:hover{background:#57151b;transform:translateY(-2px)}
+.support-bubble:focus-visible,.support-dialog button:focus-visible{outline:3px solid var(--gold,#ad8a4c);outline-offset:3px}
+.support-dialog{position:fixed;inset:auto 24px 24px auto;margin:0;padding:0;width:min(620px,calc(100vw - 48px));height:min(760px,calc(100dvh - 48px));max-width:none;max-height:none;border:1px solid #e4dbd2;border-radius:18px;background:#fffdf9;box-shadow:0 22px 80px #2c181a38;color:var(--text,#332924);overflow:hidden}
+.support-dialog[open]{display:flex;flex-direction:column}.support-dialog::backdrop{background:#24161924}
+.support-header{display:flex;align-items:center;justify-content:space-between;gap:18px;padding:20px 24px;background:var(--crimson,#741d25);color:#fff;flex:none}
+.support-header h2{font:600 21px var(--serif,serif);margin:0 0 7px}.support-header p{font-size:11px;color:#f0dbd3;margin:0;letter-spacing:1px}
+.support-header button{border:1px solid #ffffff40;background:transparent;color:#fff;border-radius:50%;width:36px;height:36px;font-size:27px;line-height:1;cursor:pointer;flex:none}
+.support-body{position:relative;flex:1;min-height:0;display:flex;flex-direction:column}
+.support-body iframe{border:0;width:100%;flex:1;min-height:0;background:#fffdf9}
+#support-status{font-size:13px;padding:18px 24px;margin:0;color:var(--muted,#7b7068)}
+#support-retry{margin:0 24px 20px;align-self:flex-start;border:1px solid #d4c5b5;border-radius:6px;padding:9px 16px;background:#fff;cursor:pointer}
+.support-body [hidden]{display:none!important}
+@media(max-width:640px){.support-bubble{right:16px;bottom:max(18px,env(safe-area-inset-bottom));width:60px;height:60px}.support-dialog{inset:auto 10px max(10px,env(safe-area-inset-bottom)) 10px;width:calc(100vw - 20px);height:calc(100dvh - 24px - env(safe-area-inset-bottom));border-radius:16px}.support-header{padding:18px}.support-header h2{font-size:19px}}
+@media(prefers-reduced-motion:reduce){.support-bubble{transition:none;transform:none}}

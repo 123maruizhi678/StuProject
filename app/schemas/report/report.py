@@ -14,7 +14,7 @@
       快照或报告正文。
 """
 from datetime import datetime
-from typing import Any, Optional
+from typing import Any, Literal, Optional
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
@@ -89,16 +89,21 @@ class UpdateReportConfigRequest(BaseModel):
 class GenerateReportRequest(BaseModel):
     """生成报告请求体。
 
-    report_code 是否属于五类枚举、时间窗是否合法由 service 层校验，
-    以便非法取值返回统一信封的 code=400。
+    report_code / timezone 在 schema 层收敛为枚举：前端按 OpenAPI 渲染下拉框，
+    非法取值由统一异常处理器转为 200 + code=400 信封；
+    时间窗合法性（对齐、跨度、不晚于受理时刻）仍由 service 层校验。
     """
 
     model_config = ConfigDict(extra="forbid")
 
-    report_code: str = Field(min_length=1, max_length=64, description="五类报告代码之一")
+    report_code: Literal[tuple(REPORT_CODES)] = Field(
+        description="五类报告代码之一（下拉枚举）"
+    )
     start_time: Optional[datetime] = Field(default=None, description="统计起始时间（显式时须带时区偏移）")
     end_time: Optional[datetime] = Field(default=None, description="统计截止时间（显式时须带时区偏移）")
-    timezone: str = Field(default=BUSINESS_TIMEZONE, max_length=32, description="统计口径时区")
+    timezone: Literal["Asia/Shanghai"] = Field(
+        default=BUSINESS_TIMEZONE, description="统计口径时区（下拉枚举）"
+    )
 
 
 class GenerateReportOut(BaseModel):

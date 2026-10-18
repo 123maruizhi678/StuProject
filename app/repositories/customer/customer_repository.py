@@ -6,7 +6,7 @@
 
 from typing import List, Optional
 
-from sqlalchemy import select
+from sqlalchemy import select, exists, true, func
 from sqlalchemy.orm import Session
 
 from app.models.customer.customer_info import CustomerInfo
@@ -14,11 +14,43 @@ from app.models.customer.customer_source import CustomerSource
 from app.models.customer.product import Product
 from app.models.customer.research_result import ResearchResult
 from app.models.customer.research_rule import ResearchRule
+from app.models.common import customer_profile
+
+
+def info_scope(department_id):
+    if department_id is None:
+        return true()
+    return exists(select(customer_profile.c.customer_id).where(
+        customer_profile.c.customer_id == CustomerInfo.customer_id,
+        customer_profile.c.department_id == department_id,
+        customer_profile.c.is_archived.is_(False),
+    ))
+
+
+def source_scope(department_id):
+    if department_id is None:
+        return true()
+    return exists(select(CustomerInfo.id).where(CustomerInfo.source_id == CustomerSource.id, info_scope(department_id)))
+
+
+def result_scope(department_id):
+    if department_id is None:
+        return true()
+    return exists(select(CustomerInfo.id).where(
+        CustomerInfo.id == ResearchResult.customer_info_id,
+        CustomerInfo.source_id == ResearchResult.source_id, info_scope(department_id)))
+
+
+def list_sources(db, department_id, limit, offset):
+    condition = source_scope(department_id)
+    rows = list(db.scalars(select(CustomerSource).where(condition).order_by(CustomerSource.id.desc()).limit(limit).offset(offset)))
+    total = db.scalar(select(func.count()).select_from(CustomerSource).where(condition))
+    return rows, total
 
 
 # ---- 来源 ----
-def get_source(db: Session, source_id: int) -> Optional[CustomerSource]:
-    return db.get(CustomerSource, source_id)
+def get_source(db: Session, source_id: int, department_id=None) -> Optional[CustomerSource]:
+    return db.scalar(select(CustomerSource).where(CustomerSource.id == source_id, source_scope(department_id)))
 
 
 def create_source(db: Session, **kwargs) -> CustomerSource:
@@ -38,8 +70,8 @@ def create_info(db: Session, **kwargs) -> CustomerInfo:
     return info
 
 
-def list_info_by_source(db: Session, source_id: int) -> List[CustomerInfo]:
-    return list(db.scalars(select(CustomerInfo).where(CustomerInfo.source_id == source_id)).all())
+def list_info_by_source(db: Session, source_id: int, department_id=None) -> List[CustomerInfo]:
+    return list(db.scalars(select(CustomerInfo).where(CustomerInfo.source_id == source_id, info_scope(department_id))).all())
 
 
 # ---- 产品 ----
@@ -121,8 +153,8 @@ def create_result(db: Session, **kwargs) -> ResearchResult:
     return result
 
 
-def get_result_by_id(db: Session, result_id: int) -> Optional[ResearchResult]:
-    return db.get(ResearchResult, result_id)
+def get_result_by_id(db: Session, result_id: int, department_id=None) -> Optional[ResearchResult]:
+    return db.scalar(select(ResearchResult).where(ResearchResult.id == result_id, result_scope(department_id)))
 
 
 def list_results(
@@ -131,8 +163,9 @@ def list_results(
     matched: Optional[bool] = None,
     offset: int = 0,
     limit: int = 20,
+    department_id: int | None = None,
 ) -> List[ResearchResult]:
-    stmt = select(ResearchResult).order_by(ResearchResult.id.desc())
+    stmt = select(ResearchResult).where(result_scope(department_id)).order_by(ResearchResult.id.desc())
     if product_id is not None:
         stmt = stmt.where(ResearchResult.product_id == product_id)
     if matched is not None:
@@ -144,10 +177,11 @@ def count_results(
     db: Session,
     product_id: Optional[int] = None,
     matched: Optional[bool] = None,
+    department_id: int | None = None,
 ) -> int:
     from sqlalchemy import func
 
-    stmt = select(func.count(ResearchResult.id))
+    stmt = select(func.count(ResearchResult.id)).where(result_scope(department_id))
     if product_id is not None:
         stmt = stmt.where(ResearchResult.product_id == product_id)
     if matched is not None:

@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>公共通知管理 · 留学项目平台</title>
+  <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="../css/common/style.css" />
+  <link rel="stylesheet" href="../css/workspace/layout.css" />
+  <link rel="stylesheet" href="../css/common/workspace.css" />
+</head>
+<body data-notice-view="manage">
+  <a class="skip-link" href="#main-content">跳至主要内容</a>
+  <div class="mobile-scrim"></div>
+  <aside class="app-rail" aria-label="平台导航">
+    <a class="rail-brand" href="../index.html"><span class="brand-emblem">✦</span><span><strong>留学项目平台</strong><small>STUDY ABROAD</small></span></a>
+    <nav class="rail-scroll" aria-label="模块导航"></nav>
+  </aside>
+  <div class="workspace">
+    <header class="app-topbar">
+      <button class="icon-button menu-button" type="button" data-menu aria-label="打开导航" aria-expanded="false">☰</button>
+      <div class="crumb"><b>通知中心</b></div><div class="top-spacer"></div>
+      <div class="top-actions"><a class="user-chip" href="account.html"><span class="avatar">·</span><span class="user-name">正在读取身份</span></a><button class="button secondary small" id="workspace-logout" type="button">退出登录</button></div>
+    </header>
+    <main class="workspace-main" id="main-content">
+      <div class="page-heading"><div><div class="eyebrow">ANNOUNCEMENTS</div><h1>公共通知管理</h1><p>维护平台公告、发布安排与有效期。</p></div><div class="actions"><a class="button secondary" href="workspace.html">返回通知中心</a></div></div>
+      <section class="section-card notice-admin-form"><h2 id="announcement-form-title">新增公共通知</h2>
+        <form id="announcement-form"><input id="announcement-id" type="hidden" /><input id="announcement-version" type="hidden" />
+          <label>标题<input id="announcement-title" required maxlength="200" /></label>
+          <label>正文<textarea id="announcement-content" required maxlength="20000" rows="8"></textarea></label>
+          <div class="notice-admin-grid"><label>状态<select id="announcement-state"><option value="draft">草稿</option><option value="published">发布</option><option value="withdrawn">撤回</option></select></label>
+          <label>发布时间（北京时间）<input id="announcement-published" type="datetime-local" /><small>发布时留空表示立即发布</small></label>
+          <label>结束时间（北京时间）<input id="announcement-expires" type="datetime-local" /><small>留空表示长期有效</small></label></div>
+          <label class="notice-pin-check"><input id="announcement-pinned" type="checkbox" />置顶通知</label>
+          <div class="actions"><button class="button" id="announcement-save" type="submit">保存通知</button><button class="button secondary" id="announcement-reset" type="button">新建一条</button></div>
+          <p id="announcement-form-status" role="status"></p>
+        </form>
+      </section>
+      <section class="section-card notice-section"><div class="section-title"><h2>已有通知</h2></div><div id="announcement-list" class="notice-content" aria-live="polite">正在读取……</div></section>
+      <footer class="page-footer"><span>✦ 留学项目平台 · 专业服务，连接未来</span><a href="../index.html">返回首页</a></footer>
+    </main>
+  </div>
+  <script type="module" src="../js/common/notification-center.js"></script>
+</body>
+</html>

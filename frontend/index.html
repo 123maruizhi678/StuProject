@@ -3,179 +3,149 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>留学项目平台 · 智能留学服务</title>
+  <meta name="description" content="了解粤教服务的企业信息，浏览德国与新加坡留学政策指南。" />
+  <title>留学项目平台 · 粤教服务</title>
   <link rel="stylesheet" href="css/common/style.css" />
   <link rel="stylesheet" href="css/home.css" />
-<link rel="icon" href="assets/favicon.svg" type="image/svg+xml"></head>
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml" />
+</head>
 <body>
-
-  <!-- 顶部导航 -->
-  <nav class="site-nav" id="siteNav">
+  <a class="skip-link" href="#main-content">跳至主要内容</a>
+  <nav class="site-nav" id="siteNav" aria-label="主导航">
     <div class="nav-inner">
-      <a class="nav-brand" href="index.html"><span class="brand-mark">✦</span>留学项目平台</a>
+      <a class="nav-brand" href="index.html"><span class="brand-mark" aria-hidden="true">✦</span>留学项目平台</a>
       <div class="nav-links">
-        <a href="dashboard/dashboard.html">工作台</a><a href="#modules">智能模块</a>
-        <a href="#universities">目标院校</a>
-        <a href="#about">关于平台</a>
+        <a href="#policies">留学政策</a>
+        <a href="#about">关于企业</a>
       </div>
-      <a class="nav-login" href="common/login.html">登录</a>
+      <a class="nav-login" href="common/login.html" data-public-auth>登录</a>
     </div>
   </nav>
 
-  <!-- Hero：视频背景 -->
   <header class="hero" id="hero">
-    <video class="hero-video" autoplay muted loop playsinline
-           poster="assets/images/大学1.png" preload="auto">
+    <video class="hero-video" autoplay muted loop playsinline poster="assets/images/大学1.png" preload="metadata" aria-hidden="true">
       <source src="assets/video/宣传视频.mp4" type="video/mp4" />
     </video>
     <div class="hero-overlay"></div>
     <div class="hero-content">
-      <p class="hero-overline">Study Abroad · 智能留学服务平台</p>
-      <h1 class="hero-title">启航世界名校之路</h1>
-      <p class="hero-subtitle">融合 AI 智能客服、客户信息研判、智能报告与企业协同，为留学咨询与学生服务提供一站式智能支持。</p>
+      <p class="hero-overline">Yuejiao Service · 粤教服务</p>
+      <h1 class="hero-title">以教育连接世界<br />让成长拥有更多可能</h1>
+      <p class="hero-subtitle">广东省教育服务有限公司，始于 1981 年。整合优质教育资源，提供专业、可靠的教育服务，陪伴每一段求学与成长之路。</p>
       <div class="hero-actions">
-        <a class="btn btn-primary" href="#modules">进入平台</a>
-        <a class="btn btn-ghost" href="#universities">浏览目标院校</a>
+        <a class="btn btn-primary" href="#policies">查看留学政策</a>
+        <a class="btn btn-ghost" href="#about">了解企业</a>
       </div>
     </div>
-    <div class="hero-scroll">⌄ 向下探索</div>
+    <a class="hero-scroll" href="#policies">⌄ 向下探索</a>
   </header>
 
-  <!-- 数据概览 -->
-  <section class="stats">
-    <div class="stat"><strong>6</strong><span>大智能模块</span></div>
-    <div class="stat"><strong>8</strong><span>所目标院校展示</span></div>
-    <div class="stat"><strong>7×24</strong><span>智能客服在线</span></div>
-    <div class="stat"><strong>AI</strong><span>全流程智能协作</span></div>
-  </section>
-
-  <!-- 智能模块 -->
-  <section class="section modules" id="modules">
-    <div class="section-head reveal">
-      <p class="overline">Smart Modules</p>
-      <h2>六大智能模块</h2>
-      <p class="section-sub">从客户咨询到学生服务，覆盖留学服务全流程</p>
-    </div>
-    <div class="module-grid">
-      <a class="module-card reveal" href="agent/agent.html">
-        <span class="module-icon">🤖</span>
-        <h3>客服 Agent</h3>
-        <p>智能客服与知识问答，精准识别意图，24 小时即时响应咨询。</p>
-        <span class="module-link">进入 →</span>
-      </a>
-      <a class="module-card reveal" href="customer/customer.html">
-        <span class="module-icon">🧩</span>
-        <h3>客户信息研判</h3>
-        <p>客户画像字段抽取与研判规则裁决，辅助顾问高效跟进。</p>
-        <span class="module-link">进入 →</span>
-      </a>
-      <a class="module-card reveal" href="report/report.html">
-        <span class="module-icon">📊</span>
-        <h3>智能报告</h3>
-        <p>依据已计算指标自动生成结构化报告正文，数据有据可循。</p>
-        <span class="module-link">进入 →</span>
-      </a>
-      <a class="module-card reveal" href="enterprise/enterprise.html">
-        <span class="module-icon">🏢</span>
-        <h3>企业智能助手</h3>
-        <p>指令解析、知识问答、日报摘要与只读数据查询一体化协同。</p>
-        <span class="module-link">进入 →</span>
-      </a>
-      <a class="module-card reveal" href="student/student-assistant.html">
-        <span class="module-icon">🎓</span>
-        <h3>学生智能助手</h3>
-        <p>学业进度、成绩查询与申请进度提醒，陪伴每位学子成长。</p>
-        <span class="module-link">进入 →</span>
-      </a>
-      <a class="module-card reveal" href="dashboard/dashboard.html">
-        <span class="module-icon">🔐</span>
-        <h3>统一工作台</h3>
-        <p>统一身份认证入口，安全接入各业务模块与权限体系。</p>
-        <span class="module-link">进入 →</span>
-      </a>
-    </div>
-  </section>
-
-  <!-- 目标院校画廊 -->
-  <section class="section universities" id="universities">
-    <div class="section-head reveal">
-      <p class="overline">Target Universities</p>
-      <h2>世界名校 · 目标院校</h2>
-      <p class="section-sub">遍览世界顶尖学府风光，成就每一位学子的名校之梦</p>
-    </div>
-    <div class="uni-grid">
-      <a class="uni-card reveal" href="#universities">
-        <img src="assets/images/大学1.png" alt="目标院校 01" loading="lazy" />
-        <span class="uni-overlay"><span class="uni-num">No. 01</span><span class="uni-name">世界顶尖学府</span></span>
-      </a>
-      <a class="uni-card reveal" href="#universities">
-        <img src="assets/images/大学2.png" alt="目标院校 02" loading="lazy" />
-        <span class="uni-overlay"><span class="uni-num">No. 02</span><span class="uni-name">世界顶尖学府</span></span>
-      </a>
-      <a class="uni-card reveal" href="#universities">
-        <img src="assets/images/大学3.png" alt="目标院校 03" loading="lazy" />
-        <span class="uni-overlay"><span class="uni-num">No. 03</span><span class="uni-name">世界顶尖学府</span></span>
-      </a>
-      <a class="uni-card reveal" href="#universities">
-        <img src="assets/images/大学4.png" alt="目标院校 04" loading="lazy" />
-        <span class="uni-overlay"><span class="uni-num">No. 04</span><span class="uni-name">世界顶尖学府</span></span>
-      </a>
-      <a class="uni-card reveal" href="#universities">
-        <img src="assets/images/大学5.png" alt="目标院校 05" loading="lazy" />
-        <span class="uni-overlay"><span class="uni-num">No. 05</span><span class="uni-name">世界顶尖学府</span></span>
-      </a>
-      <a class="uni-card reveal" href="#universities">
-        <img src="assets/images/大学6.png" alt="目标院校 06" loading="lazy" />
-        <span class="uni-overlay"><span class="uni-num">No. 06</span><span class="uni-name">世界顶尖学府</span></span>
-      </a>
-      <a class="uni-card reveal" href="#universities">
-        <img src="assets/images/大学7.png" alt="目标院校 07" loading="lazy" />
-        <span class="uni-overlay"><span class="uni-num">No. 07</span><span class="uni-name">世界顶尖学府</span></span>
-      </a>
-      <a class="uni-card reveal" href="#universities">
-        <img src="assets/images/大学8.png" alt="目标院校 08" loading="lazy" />
-        <span class="uni-overlay"><span class="uni-num">No. 08</span><span class="uni-name">世界顶尖学府</span></span>
-      </a>
-    </div>
-  </section>
-
-  <!-- 关于平台 -->
-  <section class="section about" id="about">
-    <div class="about-inner reveal">
-      <p class="overline">About</p>
-      <h2>关于留学项目平台</h2>
-      <p>平台面向留学咨询与学生服务场景，构建覆盖公共基础能力、客服 Agent、客户信息研判、智能报告、企业智能助手与学生智能助手的统一智能服务平台，以 AI 驱动咨询、研判、报告与协同，让服务更专业、更高效。</p>
-    </div>
-    <div class="features">
-      <div class="feature reveal">
-        <h4>智能客服</h4>
-        <p>基于知识库的意图识别与问答，覆盖公司信息、业务、留学政策与常见问题，支持转人工协同。</p>
+  <main class="public-main" id="main-content">
+    <section class="section policies" id="policies" aria-labelledby="policies-title">
+      <div class="section-head reveal">
+        <p class="overline">Study Abroad Policies</p>
+        <h2 id="policies-title">留学政策</h2>
+        <p class="section-sub">从入学申请到海外生活，了解德国与新加坡的留学路径</p>
       </div>
-      <div class="feature reveal">
-        <h4>AI 研判</h4>
-        <p>从来源文本抽取客户关键字段，依据研判规则自动裁决，辅助顾问精准跟进客户。</p>
+      <div class="policy-grid">
+        <a class="policy-card reveal" href="policies/germany.html" aria-labelledby="germany-title germany-link">
+          <div class="policy-cover policy-cover-germany" aria-hidden="true">
+            <span class="country-code">DE</span>
+            <span class="country-english">GERMANY</span>
+            <span class="country-caption">学术积淀 · 多元发展</span>
+          </div>
+          <div class="policy-card-content">
+            <p class="policy-kicker">德国 · 留学指南</p>
+            <h3 id="germany-title">德国留学政策</h3>
+            <p>了解大学入学与 APS 审核、学费及生活预算、学生签证、奖学金与毕业后的发展路径。</p>
+            <ul class="policy-tags" aria-label="指南主题"><li>入学与 APS</li><li>费用与奖学金</li><li>签证与就业</li></ul>
+            <span class="policy-link" id="germany-link">查看政策 <span aria-hidden="true">→</span></span>
+          </div>
+        </a>
+        <a class="policy-card reveal" href="policies/singapore.html" aria-labelledby="singapore-title singapore-link">
+          <div class="policy-cover policy-cover-singapore" aria-hidden="true">
+            <span class="country-code">SG</span>
+            <span class="country-english">SINGAPORE</span>
+            <span class="country-caption">多元文化 · 国际视野</span>
+          </div>
+          <div class="policy-card-content">
+            <p class="policy-kicker">新加坡 · 留学指南</p>
+            <h3 id="singapore-title">新加坡留学政策</h3>
+            <p>了解入学与学生签证、学费及经济支持、工作实习、生活成本，以及陪读与长期发展政策。</p>
+            <ul class="policy-tags" aria-label="指南主题"><li>入学与签证</li><li>学费与资助</li><li>实习与生活</li></ul>
+            <span class="policy-link" id="singapore-link">查看政策 <span aria-hidden="true">→</span></span>
+          </div>
+        </a>
       </div>
-      <div class="feature reveal">
-        <h4>只读安全</h4>
-        <p>企业数据查询严格限定只读 SELECT，受控动作与字段解析，敏感信息全程加密脱敏。</p>
-      </div>
-    </div>
-  </section>
+    </section>
 
-  <!-- 页脚 -->
+    <section class="about" id="about" aria-labelledby="about-title">
+      <div class="section">
+        <div class="about-inner reveal">
+          <p class="overline">About the Company</p>
+          <h2 id="about-title">关于企业</h2>
+          <h3 class="company-name">广东省教育服务有限公司</h3>
+          <p>广东省教育服务有限公司（简称“粤教服务”）创办于 1981 年，始终坚守服务广东教育事业的初心，通过整合各方优质教育资源，搭建专业、可靠的文化教育综合服务平台，全力打造省属国有优质教育服务品牌。</p>
+        </div>
+
+        <div class="company-story reveal">
+          <div class="company-milestone"><span class="milestone-year">1981</span><h3>创办启程</h3><p>扎根广东，持续服务教育事业。</p></div>
+          <div class="company-milestone"><span class="milestone-year">2024.03</span><h3>发展新阶段</h3><p>划转至广东教育国际交流服务中心有限公司（简称“粤教国际”）。</p></div>
+        </div>
+
+        <div class="company-values reveal">
+          <div><p class="policy-kicker">我们的使命</p><h3>致力让生活更美好</h3></div>
+          <div><p class="policy-kicker">我们的价值观</p><h3>向上向善，实干笃行</h3></div>
+        </div>
+
+        <div class="business-heading reveal"><h3>主营业务</h3><p>以多元教育服务，支持不同阶段的成长与发展</p></div>
+        <div class="business-grid">
+          <div class="business-card reveal"><span class="business-number" aria-hidden="true">01</span><h4>国际教育</h4><p>涵盖双元制教育、学历提升、国际留学与国际研学项目，连接优质国际教育资源。</p></div>
+          <div class="business-card reveal"><span class="business-number" aria-hidden="true">02</span><h4>智慧教育</h4><p>围绕智慧校园、教育信息化与智能装备，支持教育场景的数字化建设与升级。</p></div>
+          <div class="business-card reveal"><span class="business-number" aria-hidden="true">03</span><h4>素质教育</h4><p>结合课后服务、研学实践与科技赛事，拓展学生的综合素养与实践能力。</p></div>
+          <div class="business-card reveal"><span class="business-number" aria-hidden="true">04</span><h4>实体教育</h4><p>作为公司四大主营业务之一，与国际教育、智慧教育和素质教育共同构成教育服务体系。</p></div>
+        </div>
+
+        <div class="company-contact reveal">
+          <div class="contact-heading"><p class="overline">Contact</p><h3>联系我们</h3><p>期待与你共话教育与成长</p></div>
+          <dl class="contact-details">
+            <div class="contact-address"><dt>公司地址</dt><dd>广东省广州市越秀区东风东路 723 号高教大厦二楼</dd></div>
+            <div><dt>联系电话</dt><dd><a href="tel:02037628058">020-37628058</a></dd></div>
+            <div><dt>电子邮箱</dt><dd><a href="mailto:postmaster@ges1981.com">postmaster@ges1981.com</a></dd></div>
+            <div><dt>邮政编码</dt><dd>510599</dd></div>
+            <div><dt>微信公众号</dt><dd>gdjfgs333</dd></div>
+            <div><dt>企业官网</dt><dd><a href="http://www.gdjyfw.cn" target="_blank" rel="noopener noreferrer">www.gdjyfw.cn <span aria-hidden="true">↗</span></a></dd></div>
+          </dl>
+        </div>
+      </div>
+    </section>
+  </main>
+
   <footer class="site-footer">
     <div class="footer-inner">
       <span class="footer-brand">✦ 留学项目平台</span>
-      <div class="footer-links">
-        <a href="#modules">智能模块</a>
-        <a href="#universities">目标院校</a>
-        <a href="#about">关于平台</a>
-        <a href="common/login.html">登录</a>
-      </div>
+      <nav class="footer-links" aria-label="页脚导航">
+        <a href="#policies">留学政策</a>
+        <a href="#about">关于企业</a>
+        <a href="common/login.html" data-public-auth>登录</a>
+      </nav>
     </div>
-    <p class="footer-note">© 2026 留学项目平台 · 以 AI 驱动留学咨询与学生服务</p>
+    <p class="footer-note">© 2026 广东省教育服务有限公司 · 致力让生活更美好</p>
   </footer>
-
   <script src="js/home.js"></script>
+  <script type="module" src="js/common/public-auth.js"></script>
+  <link rel="stylesheet" href="css/common/support-widget.css" />
+  <button class="support-bubble" id="support-open" type="button" aria-label="打开客服咨询" aria-controls="support-dialog" aria-expanded="false">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M4 13v-2a8 8 0 0 1 16 0v2M4 12H3v6h4v-6H4Zm16 0h1v6h-4v-6h3ZM19 18c0 3-3 3-6 3"/></svg>
+    <span>客服</span>
+  </button>
+  <dialog class="support-dialog" id="support-dialog" aria-labelledby="support-title">
+    <header class="support-header"><div><h2 id="support-title">客服咨询</h2><p>留学规划 · 课程项目 · 活动答疑</p></div><button id="support-close" type="button" aria-label="关闭客服咨询">×</button></header>
+    <div class="support-body">
+      <p id="support-status" role="status">正在连接客服……</p>
+      <button id="support-retry" type="button" hidden>重新加载</button>
+      <iframe id="support-frame" data-support-frame title="客服咨询功能" sandbox="allow-scripts allow-same-origin allow-forms" hidden></iframe>
+    </div>
+  </dialog>
+  <script type="module" src="js/common/support-widget.js"></script>
 </body>
 </html>
