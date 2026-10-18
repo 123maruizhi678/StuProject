@@ -351,7 +351,7 @@ async function renderGenerate(main, notify, access) {
       hint.append(node("span", `已受理：报告 #${data.report_record_id}（${STATUS_LABELS[data.status] || data.status}）`));
       hint.append(node("br"));
       hint.append(link("前往报告列表查看进度", "list.html"));
-      notify.replaceChildren(hint);
+      notify.node(hint);
     } catch (error) {
       notify(error.message || "提交失败，请稍后重试。", true);
     } finally {
@@ -629,7 +629,6 @@ async function renderConfigs(main, notify, access) {
       tr.append(action);
       tbody.append(tr);
     }
-    notify("");
   }
 
   function openEditor(tr, config) {
@@ -668,8 +667,8 @@ async function renderConfigs(main, notify, access) {
             enabled: enabled.value === "true",
           },
         });
-        notify(`配置已更新（${config.report_code}）。`);
         await load();
+        notify(`配置已更新（${config.report_code}）。`);
       } catch (err) {
         error.textContent = err.message || "保存失败。";
       } finally {
@@ -699,6 +698,8 @@ export async function mountReportWorkspace({ main, page, access }) {
   main.append(notice);
   const notify = (text, error = false) =>
     notice.replaceChildren(text ? node("p", text, error ? "live-error" : "live-status") : node("p"));
+  // 需要带链接等富内容提示时使用（notify 只接受纯文本）。
+  notify.node = (element) => notice.replaceChildren(element);
 
   try {
     if (page.startsWith("report/list")) await renderList(main, notify, access);
