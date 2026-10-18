@@ -86,8 +86,8 @@ class FakeDifyClient:
         self.error = error
         self.calls = []
 
-    def generate_report(self, report_code, metrics, user="report-service", daily_summaries=None):
-        self.calls.append((report_code, metrics, user, daily_summaries))
+    def generate_report(self, report_code, metrics, user="report-service"):
+        self.calls.append((report_code, metrics, user))
         if self.error is not None:
             raise self.error
         if self.content is not None:
@@ -128,8 +128,7 @@ class ReportGenerationTest(unittest.TestCase):
                     "CREATE TABLE employee_daily_report ("
                     "daily_report_id INTEGER PRIMARY KEY, employee_id INTEGER, "
                     "report_date DATE, department_id_at_submit INTEGER, "
-                    "submitted_content TEXT, ai_summary TEXT, "
-                    "status TEXT, submitted_at DATETIME)"
+                    "submitted_content TEXT, status TEXT, submitted_at DATETIME)"
                 )
             )
         with Session(self.engine) as db:
@@ -212,7 +211,7 @@ class ReportGenerationTest(unittest.TestCase):
                 text("SELECT COUNT(*) FROM report_metric WHERE report_record_id = :id"),
                 {"id": record_id},
             ).scalar()
-            self.assertEqual(rows, len(record.metric_json) - 3)  # 减去三个保留区键
+            self.assertEqual(rows, len(record.metric_json) - 2)  # 减去两个保留区键
 
         detail = report_service.get_report(
             Session(self.engine), record_id, self.access
@@ -223,26 +222,6 @@ class ReportGenerationTest(unittest.TestCase):
         self.assertEqual(
             detail["metric_json"]["daily_submitted_count"]["value"], 2
         )
-
-    def test_daily_summaries_passed_to_dify(self):
-        window = default_window("day", datetime.utcnow().replace(tzinfo=None))
-        self._seed_daily_rows(window[0])
-        with Session(self.engine) as db:
-            db.execute(
-                text(
-                    "UPDATE employee_daily_report SET ai_summary = '完成客户需求' "
-                    "WHERE daily_report_id = 1"
-                )
-            )
-            db.commit()
-
-        fake = FakeDifyClient()
-        data, _ = self._generate()
-        with patch.object(service_module, "ReportDifyClient", lambda: fake):
-            report_service.run_generation(data["report_record_id"], bind=self.engine)
-
-        self.assertEqual(len(fake.calls), 1)
-        self.assertEqual(fake.calls[0][3], ["完成客户需求"])
 
     def test_pending_projection_hides_content_and_metrics(self):
         data, _ = self._generate()

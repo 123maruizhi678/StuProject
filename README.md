@@ -15,7 +15,7 @@ npm run dev
 
 `npm start` 与 `npm run dev` 等效，选择其中一个即可。首次拉取代码或 `node_modules` 不存在时，先在项目根目录执行一次 `npm ci`。
 
-此命令会依次启动后端、学生通知任务、企业通知任务、报告定时生成和 Vite；后端就绪后自动打开浏览器登录页。终端需要保持运行。
+此命令会依次启动后端、学生通知任务、企业通知任务和 Vite；后端就绪后自动打开浏览器登录页。终端需要保持运行。
 
 - 登录页（本机及局域网）：[http://192.168.5.12/login.html](http://192.168.5.12/login.html)
 - 后端：[http://127.0.0.1:8000](http://127.0.0.1:8000)
@@ -45,7 +45,7 @@ npm run dev
 
 ### 分别启动各服务
 
-排查问题或单独开发时，可以打开五个 PowerShell 终端，分别执行以下命令。不要与一键启动同时运行，以免端口、通知或定时任务重复。
+排查问题或单独开发时，可以打开四个 PowerShell 终端，分别执行以下命令。不要与一键启动同时运行，以免端口或通知任务重复。
 
 终端一：启动后端。
 
@@ -81,18 +81,7 @@ $env:PYTHONUTF8 = '1'
 & 'D:\anaconda3\envs\SST\python.exe' scripts/enterprise/run_enterprise_tasks.py --watch
 ```
 
-终端五：启动报告定时生成（每 300 秒一轮）。
-
-```powershell
-Set-Location D:\AI\StuProject
-$env:PYTHONPATH = "$PWD\.runtime\backend-deps"
-$env:PYTHONUTF8 = '1'
-& 'D:\anaconda3\envs\SST\python.exe' scripts/report/run_report_tasks.py --interval 300
-```
-
-报告定时生成只处理 `report_config` 中 `enabled=1` 且 `cron_expr` 非空的配置，上游数据、范围授权与报告三表就绪后才实际生成；未就绪时空闲等待，不自动补发 `failed` 记录。
-
-只开前后端可以访问业务页面；完整运行还需要两个通知任务与报告定时生成。分开启动时，各 Python 进程直接读取 `.env` 配置；一键启动额外默认屏蔽历史外部模型配置，符合当前未接入外部服务的测试范围。
+只开前后端可以访问业务页面；完整运行还需要两个通知任务。分开启动时，各 Python 进程直接读取 `.env` 配置；一键启动额外默认屏蔽历史外部模型配置，符合当前未接入外部服务的测试范围。
 
 ### 停止服务
 
@@ -110,7 +99,7 @@ powershell -File .\scripts\stop.ps1
 后端按技术层分为api、core、schemas、services、repositories、models、clients、tasks，每层再按业务模块分包。
 
 - 统一配置：根目录.env经app/config.py读取；不随模块复制配置。
-- 完整开发启动（项目根目录）：`npm run dev`（或 `npm start`）。会启动本地后端、学生/企业通知任务、报告定时生成和 Vite，并自动打开浏览器登录页。
+- 完整开发启动（项目根目录）：`npm run dev`（或 `npm start`）。会启动本地后端、学生/企业通知任务和 Vite，并自动打开浏览器登录页。
 - 前端地址：`http://192.168.5.12/login.html`；后端：`http://127.0.0.1:8000`。前端的 `/api`、`/health`、`/openapi.json` 由 Vite 代理到后端。
 - 仅启动后端：`conda run -n SST python -m uvicorn app.main:app --reload`；此命令不启动 Vite。
 - 本地管理员已创建：账号 `root`，密码 `root`。密码以 Argon2 哈希入库。学生本人业务仍需使用管理员创建的学生账号。

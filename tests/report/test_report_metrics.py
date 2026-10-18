@@ -72,8 +72,7 @@ class MetricsFixture:
                     "CREATE TABLE employee_daily_report ("
                     "daily_report_id INTEGER PRIMARY KEY, employee_id INTEGER, "
                     "report_date DATE, department_id_at_submit INTEGER, "
-                    "submitted_content TEXT, ai_summary TEXT, "
-                    "status TEXT, submitted_at DATETIME)"
+                    "submitted_content TEXT, status TEXT, submitted_at DATETIME)"
                 )
             )
             conn.execute(
@@ -190,27 +189,6 @@ class ReportMetricsTest(unittest.TestCase):
         self.assertEqual(entry["value"], 0)
         self.assertEqual(entry["availability"], "available")
 
-    def test_daily_report_summaries_reuse_ai_summary(self):
-        with Session(self.fixture.engine) as db:
-            db.execute(
-                text(
-                    "INSERT INTO employee_daily_report "
-                    "(daily_report_id, employee_id, report_date, submitted_content, "
-                    "ai_summary, status, submitted_at) VALUES "
-                    "(1, 10, '2026-10-12', 'today', '完成客户 A 需求', 'submitted', :s), "
-                    "(2, 11, '2026-10-12', 'today', '   ', 'submitted', :s), "
-                    "(3, 12, '2026-10-13', 'today', NULL, 'submitted', :s)"
-                ),
-                {"s": bj(2026, 10, 12, 9)},
-            )
-            db.commit()
-
-        result = self.metrics(
-            "daily_report", bj(2026, 10, 12), bj(2026, 10, 15), "day"
-        )
-        # 只保留非空 ai_summary，空串/纯空白跳过；按 report_date/employee_id 稳定排序。
-        self.assertEqual(result.daily_summaries, ["完成客户 A 需求"])
-
     # -- 投诉 ---------------------------------------------------------------
 
     def _seed_tickets(self):
@@ -311,28 +289,6 @@ class ReportMetricsTest(unittest.TestCase):
         )
         # 主指标不受可选表缺失影响。
         self.assertEqual(result.entries["complaint_new_count"]["value"], 2)
-
-    def test_complaint_new_change_rate(self):
-        self._seed_tickets()
-        # 上一等长窗口 [10-05, 10-12) 补一条投诉。
-        with Session(self.fixture.engine) as db:
-            db.execute(
-                text(
-                    "INSERT INTO service_ticket "
-                    "(ticket_id, ticket_type, category_code, status, created_at, "
-                    "handling_department_id) VALUES (10, 'complaint', 'teaching', "
-                    "'closed', :c, 3)"
-                ),
-                {"c": bj(2026, 10, 6, 10)},
-            )
-            db.commit()
-        result = self.metrics(
-            "complaint_weekly", bj(2026, 10, 12), bj(2026, 10, 19), "week"
-        )
-        rate = result.entries["complaint_new_change_rate"]
-        # 本期 2，上期 1：(2 - 1) / 1 * 100 = 100.0
-        self.assertEqual(rate["value"], 100.0)
-        self.assertEqual(rate["availability"], "available")
 
     # -- 心理 ---------------------------------------------------------------
 
@@ -447,31 +403,6 @@ class ReportMetricsTest(unittest.TestCase):
         self.assertEqual(
             entries["research_match_rate"]["availability"], "unavailable"
         )
-
-    def test_customer_new_change_rate(self):
-        with Session(self.fixture.engine) as db:
-            db.execute(
-                text(
-                    "INSERT INTO customer_profile (customer_id, status, is_archived, created_at) VALUES "
-                    "(1, 'signed', 0, :prev1), "
-                    "(2, 'signed', 0, :prev2), "
-                    "(3, 'new', 0, :cur)"
-                ),
-                {
-                    "prev1": bj(2026, 10, 6, 9),
-                    "prev2": bj(2026, 10, 7, 9),
-                    "cur": bj(2026, 10, 13, 9),
-                },
-            )
-            db.commit()
-
-        result = self.metrics(
-            "customer_overview", bj(2026, 10, 12), bj(2026, 10, 19), "week"
-        )
-        rate = result.entries["customer_new_change_rate"]
-        # 本期 1，上期 2：(1 - 2) / 2 * 100 = -50.0
-        self.assertEqual(rate["value"], -50.0)
-        self.assertEqual(rate["availability"], "available")
 
 
 if __name__ == "__main__":

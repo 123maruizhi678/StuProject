@@ -16,7 +16,6 @@ LLM 提示词要求只依据输入数据撰写摘要、趋势、归因和建议�
 |---|---|---:|---|
 | `report_code` | text-input | 是 | 报告类型或报告编码，用于说明报告主题。 |
 | `metrics` | text-input | 是 | 指标数据，建议传入 JSON 格式文本。模型只能引用其中提供的数据。 |
-| `daily_summaries` | text-input | 否 | 日报／周报的内容级摘要 JSON 数组（复用 `employee_daily_report.ai_summary`），可能为空。仅作定性概括输入；正文数字仍只能来自 `metrics`。 |
 
 `metrics` 是文本变量，调用 API 时应传字符串，例如：
 
@@ -49,8 +48,6 @@ Workflow 结束节点将 LLM 的 `text` 映射为字符串变量 `report_text`�
 4. 用合成的报告类型和指标数据运行测试，检查输出是否只引用输入数据中的数字。
 5. 发布应用并创建该应用专用 API Key。密钥应存放在 StuProject 根目录 `.env` 的业务配置项中，不要写入本 DSL 或提交到 Git。
 
-> 2026-10 变更：新增 `daily_summaries` 输入变量与提示词第 6 条（对内容摘要只做定性概括、不引用其中的具体数字或指向个人的细节）。已部署的线上应用需重新导入本 DSL（或同步提示词并补建输入变量）后再次发布；旧版仅两输入的 Workflow 在 `daily_summaries` 为空时仍可工作，非空时需新版。
-
 ## API 调用示例
 
 Dify Workflow 运行接口为 `POST {DIFY_API_BASE}/workflows/run`。以下示例中的地址、Key 和输入数据需替换为当前环境的实际值：
@@ -62,8 +59,7 @@ curl -X POST "http://127.0.0.1/v1/workflows/run" \
   -d '{
     "inputs": {
       "report_code": "monthly_summary",
-      "metrics": "{\"month\":\"2026-09\",\"orders\":120,\"previous_month_orders\":100}",
-      "daily_summaries": "[\"完成客户 A 需求\",\"跟进客户 B 签约\"]"
+      "metrics": "{\"month\":\"2026-09\",\"orders\":120,\"previous_month_orders\":100}"
     },
     "response_mode": "blocking",
     "user": "report-demo"
