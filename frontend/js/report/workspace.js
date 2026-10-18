@@ -208,7 +208,9 @@ async function renderList(main, notify, access) {
   for (const label of ["报告名称", "类别", "统计窗口（北京时间）", "状态", "生成日期", "来源记录数", "操作"]) {
     head.append(node("th", label));
   }
-  table.append(node("thead")).append(head);
+  const thead = node("thead");
+  thead.append(head);
+  table.append(thead);
   const tbody = node("tbody");
   table.append(tbody);
   wrap.append(table);
@@ -253,7 +255,9 @@ async function renderGenerate(main, notify, access) {
   }
   const card = node("section", undefined, "section-card");
   const title = node("div", undefined, "section-title");
-  title.append(node("div", undefined, "")).append(node("h2", "报告生成设置"));
+  const headingBox = node("div");
+  headingBox.append(node("h2", "报告生成设置"));
+  title.append(headingBox);
   const back = node("div", undefined, "actions");
   back.append(link("返回报告列表", "list.html", "button secondary"));
   title.append(back);
@@ -556,7 +560,9 @@ async function renderOverview(main, notify, access) {
   for (const label of ["报告名称", "类别", "统计窗口（北京时间）", "状态", "生成日期", "操作"]) {
     head.append(node("th", label));
   }
-  table.append(node("thead")).append(head);
+  const thead = node("thead");
+  thead.append(head);
+  table.append(thead);
   const tbody = node("tbody");
   renderReportTable(tbody, items.slice(0, 5), true);
   table.append(tbody);
@@ -586,7 +592,9 @@ async function renderConfigs(main, notify, access) {
   for (const label of ["报告名称", "周期", "计划时间（cron）", "时区", "状态", "操作"]) {
     head.append(node("th", label));
   }
-  table.append(node("thead")).append(head);
+  const thead = node("thead");
+  thead.append(head);
+  table.append(thead);
   const tbody = node("tbody");
   table.append(tbody);
   wrap.append(table);
