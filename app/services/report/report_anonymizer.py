@@ -19,7 +19,7 @@ PRIVACY_POLICY_VERSION = "privacy-v1"
 
 # 心理周报允许进入模型的匿名聚合指标前缀（045 白名单）。
 _MENTAL_MODEL_CODE_PATTERN = re.compile(
-    r"^mental_(assessment|warning|risk)_[a-z_]+_(count|rate|change_rate)$"
+    r"^mental_(assessment|warning|risk)_(?:[a-z_]+_)?(count|rate|change_rate)$"
 )
 
 # 日期与版本形态：对账时先移除，避免把日期/版本数字当作正文编造数字。
