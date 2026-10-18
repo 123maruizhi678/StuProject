@@ -91,7 +91,22 @@ function renderData(root, data, path) {
           return;
         }
         detail.replaceChildren(node('p', '已选择此记录。', 'live-selection')); renderObject(detail, row);
-      }; td.append(choose); tr.append(td); body.append(tr);
+      }; td.append(choose);
+      if (page === 'student/leave.html' && path === '/api/v1/student/leave') {
+        const view = node('button', '查看详情', 'button secondary small'); view.type = 'button';
+        view.onclick = async () => {
+          const id = Number(row.apply_id ?? row.id);
+          if (!Number.isSafeInteger(id) || id <= 0) { status(detail, '请假编号无效。', true); return; }
+          remember(row, path); view.disabled = true; status(detail, '正在读取请假详情……');
+          try {
+            const data = await request('/student/leave/' + id);
+            remember(data, path); detail.replaceChildren(node('h3', '请假详情')); renderObject(detail, data);
+          } catch (error) { status(detail, error.message, true); }
+          finally { view.disabled = false; }
+        };
+        td.classList.add('student-leave-row-actions'); td.append(view);
+      }
+      tr.append(td); body.append(tr);
     }
     table.append(body); wrap.append(table); root.append(wrap); const detail = node('div'); root.append(detail);
   } else if (typeof data === 'object') {
@@ -99,6 +114,17 @@ function renderData(root, data, path) {
     if (data.pending_action?.action_token) remember(data.pending_action, '/api/v1/student/actions/confirm');
     renderObject(root, data);
   } else root.append(node('p', String(data)));
+}
+function renderLeaveProgress(root, data) {
+  root.replaceChildren();
+  const steps = node('ol', undefined, 'student-leave-progress');
+  const created = node('li'); created.append(node('strong', '申请已提交'), node('p', format(data.created_at))); steps.append(created);
+  const state = data.approval_status;
+  const current = node('li'); current.append(node('strong', state === 'pending' ? '等待审批' : state === 'approved' ? '审批通过' : state === 'rejected' ? '审批未通过' : state === 'cancelled' ? '已撤销' : format(state)));
+  if (data.reviewed_at) current.append(node('p', '审批时间：' + format(data.reviewed_at)));
+  if (data.approval_comment) current.append(node('p', '审批意见：' + data.approval_comment));
+  if (state === 'pending') current.append(node('p', '请等待负责老师审批，结果以最新记录为准。'));
+  steps.append(current); root.append(steps);
 }
 function renderObject(root, data) {
   const dl = node('dl'); for (const [key, value] of Object.entries(data)) {
@@ -242,6 +268,11 @@ function readFields(form) {
   } return value;
 }
 function operationTitle(op) {
+  if (page === 'student/leave.html') {
+    if (op.method === 'POST') return '提交请假';
+    if (op.method === 'DELETE') return '撤销请假';
+    return op.path.includes('{') ? '审批进度' : '查看请假';
+  }
   const parts = op.path.split('/').filter(x => x && !x.startsWith('{')).slice(3);
   const names = parts.filter(x => !['internal', 'student', 'enterprise', 'agent', 'auth', 'report'].includes(x)).map(label);
   const action = op.method === 'GET' ? '查看' : op.method === 'POST' ? '提交' : op.method === 'PUT' ? '修改' : op.method === 'DELETE' ? '撤销或停用' : '更新';
@@ -294,7 +325,10 @@ function operationCard(op, index) {
         headers: op.method === 'GET' ? {} : { 'Idempotency-Key': pendingKey }, timeoutMs: 20000
       });
       if (op.method !== 'GET' && path.startsWith('/api/v1/student/notifications/')) window.dispatchEvent(new Event('student:notifications-changed'));
-      pendingKey = null; renderData(response, data, path); status(message, op.method === 'GET' ? '已读取最新数据。' : '操作成功，结果已由服务保存。');
+      pendingKey = null;
+      if (page === 'student/leave.html' && op.method === 'GET' && op.path.includes('{')) renderLeaveProgress(response, data);
+      else renderData(response, data, path);
+      status(message, op.method === 'GET' ? '已读取最新数据。' : '操作成功，结果已由服务保存。');
       if (adminListMode && op.method === 'GET' && !op.path.includes('{') && data && !Array.isArray(data) && data.total !== undefined) {
         appendPager(response, data.total, listOffset, next => { listOffset = next; execute(); });
       }
@@ -396,6 +430,10 @@ async function start() {
     }
     let operations = operationsForAccess(operationsForPage(page, schema.paths), access);
     if (studentWorkspace && studentAccess) operations = studentWorkspace.filterStudentOperations(operations, studentAccess);
+    if (page === 'student/leave.html') {
+      const rank = op => op.method === 'POST' ? 0 : op.method === 'GET' && !op.path.includes('{') ? 1 : op.method === 'DELETE' ? 2 : 3;
+      operations.sort((a, b) => rank(a) - rank(b));
+    }
     readOnlyView = /^(customer|report)\//.test(page) && operations.every(operation => operation.method === 'GET');
     intro.textContent = readOnlyView ? '当前为只读查看，仅显示当前账号有权查看的信息。' : '数据来自当前本地业务库。修改前请选择记录，提交时使用其当前版本。';
     if (adminListMode) {
