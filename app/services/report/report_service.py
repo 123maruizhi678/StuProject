@@ -381,8 +381,6 @@ def _full_metric_json(metrics: MetricsResult, period_type: str | None) -> dict:
 
     保留区仅存授权聚合基础量、配置/规则/指标版本和摘要，不存个人心理原文、
     个人ID列表、邮箱或手机号，也不把幂等请求映射放入模型输入。
-    _daily_summaries 存日报/周报的 ai_summary 内容级摘要（复用 047，团队工作
-    内容而非个人心理原文），仅用于给模型写正文，不进对外指标投影。
     """
     calculation_inputs: dict[str, dict] = {}
     for code, entry in metrics.entries.items():
@@ -396,7 +394,6 @@ def _full_metric_json(metrics: MetricsResult, period_type: str | None) -> dict:
     return {
         **metrics.entries,
         "_manifest": metrics.manifest,
-        "_daily_summaries": metrics.daily_summaries,
         "_calculation_inputs": {
             "base_counts": calculation_inputs,
             "source_counts_by_table": metrics.manifest.get(
@@ -481,9 +478,6 @@ def run_generation(
                     source_record_count=record.source_record_count,
                     snapshot_at=record.data_snapshot_at,
                     manifest=manifest,
-                    daily_summaries=list(
-                        record.metric_json.get("_daily_summaries") or []
-                    ),
                 )
                 metric_json = record.metric_json
             else:
@@ -509,10 +503,7 @@ def run_generation(
             model_input = anonymize_for_model(record.report_code, metrics.entries)
             content = strip_reasoning(
                 ReportDifyClient().generate_report(
-                    record.report_code,
-                    model_input,
-                    user=user,
-                    daily_summaries=metrics.daily_summaries,
+                    record.report_code, model_input, user=user
                 )
             )
             reconcile_content(record.report_code, content, metrics.entries)

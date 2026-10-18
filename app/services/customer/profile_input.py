@@ -1,5 +1,4 @@
 """客户资料抽取与多格式输入；模型只辅助原有基础事实，结论由文件规则决定。"""
-import csv
 import io
 import re
 from pathlib import Path
@@ -9,6 +8,7 @@ from app.schemas.customer.profile import ProfileFacts, PROFILE_FIELDS
 from app.services.customer.errors import BadRequestError
 from app.services.customer.extractor import ExtractorService
 from app.services.customer.profile_rules import evaluate_profile, RULE_VERSION, SOURCE_SHA256, LABELS
+from app.services.customer.profile_documents import decode_text, read_docx, read_tables
 
 MAX_FILE_BYTES=20*1024*1024
 MAX_ROWS=200
@@ -69,13 +69,21 @@ def extract_profile(text, extractor=None):
     # 标签值优先，重复且冲突的标签不会静默选择第一项。
     aliases={**HEADERS, **{key:key for key in PROFILE_FIELDS}}
     labeled={};conflicts=set()
-    for alias,key in sorted(aliases.items(),key=lambda item:-len(item[0])):
-        found=re.findall(r'(?<![\w\u4e00-\u9fff])'+re.escape(alias)+r'\s*[:：]\s*([^，,;；。\n]+)',text)
-        if not found:continue
-        labeled.setdefault(key,[]).extend(s.strip() for s in found)
+    label_pattern=re.compile(r'(?<![\w\u4e00-\u9fff])('+ '|'.join(re.escape(a) for a in sorted(aliases,key=len,reverse=True)) +r')\s*[:：]\s*')
+    matches=list(label_pattern.finditer(text))
+    for index,match in enumerate(matches):
+        key=aliases[match[1]]
+        end=matches[index+1].start() if index+1<len(matches) else len(text)
+        value=re.split(r'[;；。\n]',text[match.end():end],maxsplit=1)[0].strip(' ，,\t\r')
+        if key not in ('preferred_countries','excluded_countries'):
+            value=re.split(r'[,，]',value,maxsplit=1)[0].strip()
+        if value:labeled.setdefault(key,[]).append(value)
     for key,found in labeled.items():
         values=list(dict.fromkeys(found))
-        if len(values)>1:
+        if key=='full_name' and len(values)>1:
+            raise BadRequestError('资料包含多个不同客户姓名，请分别提交简历或整理为 Excel 一人一行')
+        normalized=[coerce_profile({key:value})[0].get(key,value) for value in values]
+        if any(value!=normalized[0] for value in normalized[1:]):
             raw.pop(key,None);conflicts.add(key);warnings.append(HEADERS_REVERSE.get(key,key)+'有多处冲突描述，请人工核实');continue
         raw[key]=values[0]
     ages=list(dict.fromkeys(int(n) for n in re.findall(r'(?<!\d)(\d{1,3})\s*岁',text)))
@@ -91,7 +99,7 @@ def extract_profile(text, extractor=None):
         if '高二' in education:raw.setdefault('grade','高二')
     # 只识别明确说出的意愿，不根据年龄、职业或收入猜测。
     patterns={
-      'study_abroad_willingness':(r'不(?:愿意|想|打算)出国|不考虑留学|拒绝出国',r'(?:愿意|希望|想要|计划|打算)(?:出国|赴(?:德|新加坡)|去(?:德国|新加坡)|留学)'),
+      'study_abroad_willingness':(r'不(?:愿意|想|打算|希望)(?:出国|留学)|不考虑留学|拒绝出国',r'(?:愿意|希望|想要|计划|打算)(?:出国|赴(?:德|新加坡)|去(?:德国|新加坡)|留学)|想去(?:德国|新加坡)(?:留学|读书|学习)'),
       'education_goal':(r'没有升学需求|不(?:想|希望|考虑|需要)(?:升学|提升学历)|拒绝专升本|拒绝本升硕',r'希望升学|提升学历|希望专升本|计划专升本|希望本升硕|计划本升硕|申请硕士|攻读本科'),
       'employment_goal':(r'没有就业需求|不(?:想|希望|考虑|需要)(?:就业|找工作)',r'希望就业|稳定工作|就业发展|找工作|职业发展|就业需求明确'),
       'immigration_goal':(r'不考虑移民|没有移民需求',r'希望移民|希望长期在德国生活|移民需求明确'),
@@ -102,70 +110,43 @@ def extract_profile(text, extractor=None):
       'logical_ability':(r'逻辑(?:思维|能力)(?:较)?弱',r'逻辑(?:思维|能力)(?:较)?强'),
       'closed_training_willingness':(r'不(?:接受|愿意参加)封闭(?:式)?实训|拒绝封闭(?:式)?实训',r'愿意参加(?:线下)?封闭(?:式)?实训|接受封闭(?:式)?实训'),
       'entrance_test_willingness':(r'不接受入学测试|拒绝入学测试',r'愿意参加入学测试|接受入学测试')}
+    narrative_text=label_pattern.sub('',text)
     for field,(negative,positive) in patterns.items():
-        if field in raw or field in conflicts:continue
-        no=bool(re.search(negative,text));yes=bool(re.search(positive,text))
-        if no:raw[field]=False
-        elif yes:raw[field]=True
+        if field in conflicts:continue
+        negative_matches=list(re.finditer(negative,narrative_text))
+        yes=any(narrative_text[max(0,m.start()-1):m.start()] not in ('不','没','未')
+                and not any(n.start()<=m.start()<n.end() for n in negative_matches) for m in re.finditer(positive,narrative_text))
+        previous=coerce_profile({field:raw[field]})[0].get(field) if field in raw else None
+        if negative_matches and yes:
+            raw.pop(field,None)
+            conflicts.add(field)
+            warnings.append(HEADERS_REVERSE.get(field,field)+'同时出现肯定与否定描述，请人工核实')
+        elif (negative_matches and previous is True) or (yes and previous is False):
+            raw.pop(field,None)
+            conflicts.add(field)
+            warnings.append(HEADERS_REVERSE.get(field,field)+'标签与正文描述冲突，请人工核实')
+        elif field not in raw:
+            if negative_matches:raw[field]=False
+            elif yes:raw[field]=True
     if 'preferred_countries' not in raw and 'preferred_countries' not in conflicts:
         countries=[]
         for country in ('新加坡','德国'):
-            for match in re.finditer(r'(?:意向|考虑|希望去|想去|愿意去|计划去|希望赴|愿赴|希望留学|希望到)\s*'+country,text):
+            for match in re.finditer(r'(?:意向|考虑|希望去|想去|愿意去|计划去|希望赴|愿赴|希望留学|希望到|计划赴|愿意赴|打算去)\s*'+country,text):
                 if text[max(0,match.start()-1):match.start()] not in ('不','无'):countries.append(country);break
         if countries:raw['preferred_countries']=countries
     exclusions=[country for country in ('新加坡','德国') if re.search(r'(?:不考虑|不想去|不愿去|拒绝去)\s*'+country,text)]
-    if exclusions:raw['excluded_countries']=exclusions
+    if exclusions:raw['excluded_countries']=list(dict.fromkeys([*(raw.get('excluded_countries') if isinstance(raw.get('excluded_countries'),list) else [v for v in re.split(r'[,，、/;；]',raw.get('excluded_countries','')) if v]),*exclusions]))
+    if 'study_abroad_willingness' not in raw and 'study_abroad_willingness' not in conflicts:
+        if any(text[max(0,m.start()-1):m.start()] not in ('不','没','未') for m in re.finditer(r'(?:希望|计划|愿意|打算|想)\s*(?:去|赴|到)\s*(?:德国|新加坡)\s*(?:留学|读书|学习|升学|就业|工作)',text)):
+            raw['study_abroad_willingness']=True
     if 'german_level' not in raw and 'german_level' not in conflicts:
         for match in re.finditer(r'德语\s*(?:等级|水平|证书)?\s*[:：]?\s*(A[012]|B[12]|C[12])',text,re.I):
             prefix=text[max(0,match.start()-12):match.start()]
-            if not re.search(r'目标|计划|准备|备考|希望达到|将要',prefix):raw['german_level']=match[1].upper()
+            suffix=text[match.end():match.end()+8]
+            if not re.search(r'目标|计划|准备|备考|希望达到|将要|争取|未达到|没达到|没有|尚未|未取得|未考取|未通过',prefix) and not re.match(r'\s*(?:目标|未通过|没通过|未考过|备考)',suffix):raw['german_level']=match[1].upper()
     facts,invalid=coerce_profile(raw)
     if not facts:raise BadRequestError('未识别到可用于画像研判的事实，请补充姓名、年龄、学历或意向等资料')
     return facts,warnings+invalid
-
-
-def _decode(data):
-    for encoding in ('utf-8-sig','gb18030'):
-        try:return data.decode(encoding)
-        except UnicodeDecodeError:continue
-    raise BadRequestError('文本编码无法识别，请转换为 UTF-8 后重试')
-
-
-def _table_rows(data,suffix):
-    book=None
-    if suffix=='.csv':iterator=iter(csv.reader(io.StringIO(_decode(data))))
-    else:
-        import openpyxl
-        try:
-            from zipfile import ZipFile
-            with ZipFile(io.BytesIO(data)) as archive:
-                if sum(item.file_size for item in archive.infolist())>100*1024*1024:
-                    raise BadRequestError('Excel 解压内容超过 100 MB，请拆分文件')
-            book=openpyxl.load_workbook(io.BytesIO(data),read_only=True,data_only=True)
-            if book.active.max_column>100:
-                book.close();raise BadRequestError('表格超过 100 列，请保留客户资料列后重试')
-            iterator=iter(book.active.iter_rows(values_only=True))
-        except BadRequestError:raise
-        except Exception as exc:raise BadRequestError('Excel 文件无法读取，请确认是有效的 XLSX 工作簿') from exc
-    try:
-        first=next(iterator,None)
-        if first is None:raise BadRequestError('表格为空')
-        if len(first)>100:raise BadRequestError('表格超过 100 列，请保留客户资料列后重试')
-        headers=[str(x).strip() if x is not None else '' for x in first]
-        mapped=[HEADERS.get(h,h.lower() if h.lower() in PROFILE_FIELDS else None) for h in headers]
-        recognized=[h for h in mapped if h]
-        if not recognized:raise BadRequestError('未识别到客户字段表头，请使用客户资料模板')
-        if len(set(recognized))!=len(recognized):raise BadRequestError('多个表头映射到同一个客户字段，请删除重复列')
-        values=[]
-        for index,row in enumerate(iterator,2):
-            if index>10000:raise BadRequestError('表格扫描范围超过 10000 行，请移除多余空行')
-            if not any(x is not None and x!='' for x in row):continue
-            values.append((index,{field:row[i] for i,field in enumerate(mapped) if field and i<len(row) and row[i] is not None}))
-            if len(values)>MAX_ROWS:raise BadRequestError('单次最多支持 200 位客户，请拆分表格')
-        if not values:raise BadRequestError('表格没有客户记录')
-        return values
-    finally:
-        if book:book.close()
 
 
 def parse_input(*,text=None,file_name=None,file_bytes=None,extractor=None):
@@ -174,12 +155,13 @@ def parse_input(*,text=None,file_name=None,file_bytes=None,extractor=None):
         if not file_bytes:raise BadRequestError('上传文件为空')
         if len(file_bytes)>MAX_FILE_BYTES:raise BadRequestError('文件超过 20 MB，请拆分后上传')
         suffix=Path(file_name or '').suffix.lower()
-        if suffix not in ('.txt','.md','.pdf','.xlsx','.csv'):raise BadRequestError('支持文本、PDF、XLSX、CSV、TXT、MD；旧版 XLS 请另存为 XLSX')
-        if suffix in ('.xlsx','.csv'):
+        if suffix not in ('.txt','.md','.pdf','.docx','.xlsx','.xls','.csv','.tsv'):raise BadRequestError('支持文本、PDF、DOCX、XLSX、XLS、CSV、TSV、TXT、MD；旧版 DOC 请另存为 DOCX')
+        if suffix in ('.xlsx','.xls','.csv','.tsv'):
             results=[]
-            for index,raw in _table_rows(file_bytes,suffix):
+            rows,table_warnings=read_tables(file_bytes,suffix,HEADERS,PROFILE_FIELDS,MAX_ROWS)
+            for sheet,index,raw in rows:
                 facts,warnings=coerce_profile(raw)
-                results.append({'row_number':index,'facts':facts,'warnings':warnings,'error':None if facts else '该行未识别到有效客户事实'})
+                results.append({'row_number':index,'sheet_name':sheet,'facts':facts,'warnings':table_warnings+warnings,'error':None if facts else '该行未识别到有效客户事实'})
             return results
         if suffix=='.pdf':
             from pypdf import PdfReader
@@ -190,7 +172,8 @@ def parse_input(*,text=None,file_name=None,file_bytes=None,extractor=None):
             except BadRequestError:raise
             except Exception as exc:raise BadRequestError('PDF 无法读取，可能已加密或损坏') from exc
             if not text.strip():raise BadRequestError('PDF 没有可提取的文字层；扫描简历请先 OCR 转成文字或补充文本')
-        else:text=_decode(file_bytes)
+        elif suffix=='.docx':text=read_docx(file_bytes,set(HEADERS)|PROFILE_FIELDS)
+        else:text=decode_text(file_bytes)
     # 不把多份简历文本混成同一客户。
     if len(set(re.findall(r'客户([一二三四五六七八九十0-9]+)\s*[:：]',text or '')))>1:
         raise BadRequestError('文本包含多位客户，请分别提交或整理成 Excel 一人一行')

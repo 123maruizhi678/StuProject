@@ -24,6 +24,8 @@ SG_PATHS = [
 def catalog():
     return {'rule_version':RULE_VERSION, 'source_name':SOURCE_NAME, 'source_sha256':SOURCE_SHA256,
             'field_labels':{key:LABELS[key] for key in ProfileFacts.model_fields},
+            'input':{'extensions':['pdf','docx','xlsx','xls','csv','tsv','txt','md'],
+                     'max_file_bytes':20*1024*1024,'max_customers':200,'multiple_worksheets':True},
             'interpretation':[
                 '新加坡年龄原文为“大致 / 大约”，超出参考范围列为待核实，不直接认定不符合。',
                 '新加坡不同学历对应不同路径；不能把某条路径的年龄套用到全部客户。',
@@ -110,10 +112,12 @@ def _result(product, facts, conditions, paths=None):
     # 家庭、能力等画像倾向不足时需要沟通，不直接当作入学拒绝条件。
     supportive=[c for c in conditions if c['kind']=='supportive' and c['status']!='passed']
     status='not_matched' if hard_failed else 'pending' if unresolved or supportive else 'matched'
-    missing=[{'field':c['field'],'label':c['label'],'question':c['expected']} for c in conditions if c['status'] in ('missing','review')]
+    missing=[{'field':c['field'],'label':c['label'],'question':c['expected']} for c in conditions
+             if c['status'] in ('missing','review') or (c['kind']=='supportive' and c['status']=='failed')]
     steps=[]
     if hard_failed:steps.append('说明当前不符合的画像条件，核实资料后再讨论其他项目。')
     if unresolved or supportive:steps.append('优先核实尚不明确或不一致的意愿、能力与支持条件。')
+    steps.extend(c['label']+'：'+c['expected'] for c in unresolved+supportive)
     if product['code']=='DE-VOCATIONAL':
         level=facts.get('german_level');ready=level in ('B1','B2','C1','C2')
         milestones=[{'name':'德国企业匹配及面试','status':'ready' if ready else 'not_ready' if level else 'unknown',
@@ -126,6 +130,7 @@ def _result(product, facts, conditions, paths=None):
     return {'product_code':product['code'],'product_name':product['name'],'status':status,
             'status_label':{'matched':'符合目标画像','pending':'资料不足 / 待核实','not_matched':'暂不符合目标画像'}[status],
             'conditions':conditions,'paths':paths or [],'missing_information':missing,'milestones':milestones,
+            'blocking_reasons':[c['label']+'：'+c['reason'] for c in hard_failed],
             'next_steps':steps,'score':None,'rule_version':RULE_VERSION}
 
 

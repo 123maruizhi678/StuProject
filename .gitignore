@@ -30,7 +30,3 @@ app/__pycache__/
 node_modules/
 playwright-report/
 test-results/
-
-# Vite local runtime logs
-.tmp_vite.err
-.tmp_vite.log

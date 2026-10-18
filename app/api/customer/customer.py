@@ -187,7 +187,8 @@ def source_profile(source_id: int,
     detail=CustomerService(db).get_source_detail(account,source_id)
     items=[]
     for info in detail["fields"]:
-        items.append({"customer_info_id":info["id"], "row_number":len(items)+1,
+        items.append({"customer_info_id":info["id"], "row_number":info.get("profile_row_number") or len(items)+1,
+                      "sheet_name":info.get("profile_sheet_name", ""),
                       "facts":info["profile_fields"], "warnings":info.get("profile_warnings", []),
                       "error":None,"evaluation":evaluate_profile(info["profile_fields"])})
     return success({"source":detail["source"],"items":items,"total":len(items),"persisted":False,

@@ -96,6 +96,8 @@ def serialize_info(info) -> dict:
         "contact_email": info.contact_email,
         "profile_fields": _profile_fields(info),
         "profile_warnings": (info.raw_fields or {}).get("_profile_warnings", []),
+        "profile_row_number": (info.raw_fields or {}).get("_profile_row_number"),
+        "profile_sheet_name": (info.raw_fields or {}).get("_profile_sheet_name", ""),
     }
 
 
@@ -232,8 +234,9 @@ class CustomerService:
             parsed=parse_input(text=source.raw_content)
         errors=[row for row in parsed if row["error"]]
         if errors:
-            raise BadRequestError("表格存在无效客户行，请先核对："+"、".join(str(r["row_number"]) for r in errors[:10]))
-        return [{**row["facts"], "_profile_warnings":row["warnings"]} for row in parsed]
+            raise BadRequestError("表格存在无效客户行，请先核对："+"、".join((r.get("sheet_name", "")+" 第 "+str(r["row_number"])+" 行").strip() for r in errors[:10]))
+        return [{**row["facts"], "_profile_warnings":row["warnings"],
+                 "_profile_row_number":row["row_number"], "_profile_sheet_name":row.get("sheet_name", "")} for row in parsed]
 
     @staticmethod
     def _has_meaningful(fields: dict) -> bool:
