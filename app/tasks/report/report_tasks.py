@@ -556,7 +556,12 @@ def drain(
                 {"report_record_id": lease.record_id, "reason": "租约被接管"}
             )
             continue
-        run_generation(lease.record_id, user=f"report-{queue.owner}", bind=bind)
+        run_generation(
+            lease.record_id,
+            user=f"report-{queue.owner}",
+            bind=bind,
+            already_claimed=True,
+        )
         record = repo.get_record(db, lease.record_id)
         if record is None:
             summary["skipped"].append(
