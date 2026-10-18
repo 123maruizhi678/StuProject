@@ -192,6 +192,28 @@ test("详情页定位所属模块和列表目录，权限撤销后不能沿用�
   assert.deepEqual(navigation.navigationLocation(detail, access), { current: detail, moduleId: null, menuPath: null });
 });
 
+test("平台管理员移除通知中心并进入已授权账号管理，其他身份保留通知中心", async () => {
+  const navigation = await load("../../frontend/js/common/navigation-model.js");
+  const access = { identity_type: "admin", navigation: { routes: {
+    "/common/workspace.html": {}, "/common/notification-detail.html": {},
+    "/admin/accounts.html": {}, "/common/account.html": {},
+  } } };
+  assert.equal(navigation.canOpenPage("/common/workspace.html", access), false);
+  assert.equal(navigation.canOpenPage("/common/notification-detail.html", access), false);
+  assert.equal(navigation.canOpenPage("/common/notifications.html", access), false);
+  assert.equal(navigation.loginDestination(null, access), "/admin/accounts.html");
+  assert.equal(navigation.loginDestination("/dashboard/dashboard.html", access), "/admin/accounts.html");
+  assert.equal(navigation.loginDestination("/common/workspace.html", access), "/admin/accounts.html");
+  assert.equal(navigation.loginDestination("/common/account.html", access), "/common/account.html");
+  delete access.navigation.routes["/admin/accounts.html"];
+  assert.equal(navigation.defaultEntry(access), "/common/account.html");
+  for (const identity_type of ["employee", "student", "customer"]) {
+    const other = { ...access, identity_type, roles: ["admin"] };
+    assert.equal(navigation.canOpenPage("/common/workspace.html", other), true);
+    assert.equal(navigation.loginDestination(null, other), "/common/workspace.html");
+  }
+});
+
 test("后台客服菜单仅对管理员保留，公开客服页面授权不变", async () => {
   const navigation = await load("../../frontend/js/common/navigation-model.js");
   const access = { identity_type: "student", roles: [], navigation: {

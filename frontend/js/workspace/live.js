@@ -363,6 +363,14 @@ async function start() {
         options = await request('/admin/accounts/options');
       }
       const logout = node('button', '退出登录', 'button secondary small'); logout.type = 'button'; logout.onclick = () => { clearSession(); location.assign('/common/login.html'); }; $('.top-actions')?.append(logout);
+      if (adminListMode) {
+        const { mountAdminWorkspace } = await import('./admin.js');
+        intro.remove();
+        await mountAdminWorkspace({ main, page, schema, access, options, field, readFields, resolve, setValue, format, label, buildBodyFields });
+        if (footer) main.append(footer);
+        document.documentElement.dataset.liveReady = 'true';
+        return;
+      }
       if (page.startsWith('enterprise/')) {
         const { mountEnterpriseWorkspace } = await import('../enterprise/workspace.js');
         intro.remove();

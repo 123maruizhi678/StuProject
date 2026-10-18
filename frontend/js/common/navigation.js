@@ -1,5 +1,5 @@
 import { API, readSession, clearSession } from "./api.js";
-import { WORKSPACE_PATH, pagePath, canOpenPage, workspaceModules, navigationLocation } from "./navigation-model.js";
+import { WORKSPACE_PATH, pagePath, canOpenPage, workspaceModules, navigationLocation, hasNotificationCenter, defaultEntry } from "./navigation-model.js";
 import { isSupportFrame, renderSupportNavigation } from "./support-context.js";
 
 const roleNames = { admin: "平台管理员", employee: "企业员工", student: "学生", customer: "客户" };
@@ -36,7 +36,7 @@ export function renderNavigation(access) {
   for (const nav of document.querySelectorAll(".rail-scroll")) {
     const scrollTop = nav.scrollTop;
     nav.replaceChildren();
-    if (readSession()) {
+    if (readSession() && hasNotificationCenter(access)) {
       const active = canOpenPage(current, access) && [WORKSPACE_PATH, "/common/notification-detail.html"].includes(current);
       const home = link("通知中心", WORKSPACE_PATH, "rail-link" + (active ? " active" : ""));
       if (active) home.setAttribute("aria-current", current === WORKSPACE_PATH ? "page" : "location");
@@ -86,11 +86,13 @@ export function renderNavigation(access) {
   for (const anchor of document.querySelectorAll("a[href]")) {
     const raw = anchor.getAttribute("href");
     if (!raw || raw.startsWith("#")) continue;
-    const path = pagePath(anchor.href);
+    let path = pagePath(anchor.href);
     if (!path) continue;
     if (path === WORKSPACE_PATH) {
-      anchor.href = WORKSPACE_PATH;
-      if (/^(我的工作台|工作台|公共入口)$/.test(anchor.textContent.trim())) anchor.textContent = "通知中心";
+      const genericEntry = /^(我的工作台|工作台|公共入口)$/.test(anchor.textContent.trim());
+      anchor.href = genericEntry ? defaultEntry(access) : WORKSPACE_PATH;
+      if (genericEntry) anchor.textContent = hasNotificationCenter(access) ? "通知中心" : "账号管理";
+      path = pagePath(anchor.href);
     }
     if (/^\/(agent|customer|enterprise|student|report|admin)\/.*\.html$/.test(path) ||
         ["/common/account.html", "/common/notifications.html", "/common/notification-detail.html", "/common/announcement-manage.html", WORKSPACE_PATH].includes(path)) {
@@ -105,11 +107,13 @@ export function renderNavigation(access) {
   window.dispatchEvent(new CustomEvent("navigation:updated", { detail: access }));
 }
 
-function showNotice(title, description) {
+function showNotice(title, description, access) {
   const main = document.querySelector("#main-content") || document.querySelector("main");
   if (!main) return;
   const section = node("section", undefined, "section-card permission-notice");
-  section.append(node("h1", title), node("p", description), link("返回通知中心", WORKSPACE_PATH, "button"));
+  const entry = defaultEntry(access);
+  const backLabel = entry === WORKSPACE_PATH ? "返回通知中心" : entry === "/admin/accounts.html" ? "返回账号管理" : "返回首页";
+  section.append(node("h1", title), node("p", description), link(backLabel, entry, "button"));
   const retry = node("button", "重新检查权限", "button secondary");
   retry.type = "button";
   retry.onclick = () => location.reload();
@@ -131,12 +135,16 @@ export async function mountNavigation() {
       const access = await (session ? API.myAccess() : API.publicAccess());
       if (current !== revision || readSession()?.accessToken !== session?.accessToken) return null;
       lastAccess = access;
+      if (!hasNotificationCenter(access) && [WORKSPACE_PATH, "/common/notification-detail.html"].includes(pagePath(location.pathname))) {
+        location.replace(defaultEntry(access));
+        return null;
+      }
       renderNavigation(access);
       const nextAllowed = canOpenPage(location.pathname, access);
       if (!nextAllowed) {
         if (!session) {
           location.replace("/common/login.html?next=" + encodeURIComponent(pagePath(location.pathname)));
-        } else showNotice("暂无访问权限", "当前账号未获得此页面的访问权限，请从左侧菜单选择其他入口。");
+        } else showNotice("暂无访问权限", "当前账号未获得此页面的访问权限，请从左侧菜单选择其他入口。", access);
       } else if (document.documentElement.dataset.permissionDenied === "true") {
         location.reload();
       }
@@ -149,7 +157,7 @@ export async function mountNavigation() {
       if (!readSession() && session) { location.replace("/common/login.html"); return null; }
       if (!lastAccess) {
         renderNavigation({});
-        showNotice("暂时无法读取访问权限", error.message);
+        showNotice("暂时无法读取访问权限", error.message, { identity_type: session?.identity?.identityType });
       }
       return null;
     } finally {

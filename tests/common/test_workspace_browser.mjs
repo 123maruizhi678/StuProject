@@ -66,6 +66,9 @@ try {
       return route.fulfill({ json: { code: 0, data: {} } });
     });
     const page = await context.newPage();
+    const platformAdmin = fixtures[role].identity_type === 'admin';
+    const entry = platformAdmin ? '/admin/accounts.html' : '/common/workspace.html';
+    const ready = platformAdmin ? 'html[data-live-ready=true]' : 'html[data-workspace-ready=true]';
     page.on('pageerror', error => errors.push(error.message));
     await page.goto(base + '/common/workspace.html');
     await page.waitForURL('**/common/login.html?next=**');
@@ -78,23 +81,25 @@ try {
     await page.locator('[name=username]').fill('fictional-' + role);
     await page.locator('[name=password]').fill('Fictional!2026');
     await page.getByRole('button', { name: '登录', exact: true }).click();
-    await page.waitForURL('**/common/workspace.html');
-    await page.locator('html[data-workspace-ready=true]').waitFor();
+    await page.waitForURL('**' + entry);
+    await page.locator(ready).waitFor();
     const expected = fixtures[role].navigation.modules.map(module => module.id).sort();
-    await page.locator('html[data-notification-ready=true]').waitFor();
+    if (!platformAdmin) await page.locator('html[data-notification-ready=true]').waitFor();
     assert.equal(await page.locator('.workspace-module-card').count(), 0);
-    await expect(page.locator('#public-title')).toHaveText('公共通知');
-    await expect(page.locator('#personal-title')).toHaveText('与我相关');
-    const sidebar = await page.locator('.rail-scroll > .rail-link').allTextContents();
+    if (!platformAdmin) {
+      await expect(page.locator('#public-title')).toHaveText('公共通知');
+      await expect(page.locator('#personal-title')).toHaveText('与我相关');
+    }
+    const sidebar = await page.locator('.rail-scroll > .rail-link:not(.sub)').allTextContents();
     const admin = fixtures[role].identity_type === 'admin' || fixtures[role].roles.includes('admin');
-    assert.deepEqual(sidebar, ['通知中心', ...fixtures[role].navigation.modules.filter(module => module.id !== 'agent_center' || admin).map(module => module.title)]);
+    assert.deepEqual(sidebar, [...(platformAdmin ? [] : ['通知中心']), ...fixtures[role].navigation.modules.filter(module => module.id !== 'agent_center' || admin).map(module => module.title)]);
     assert.equal(await page.locator('.rail-label, .rail-foot').count(), 0);
     if (role === 'admin') await page.screenshot({ path: '.runtime/workspace-review/admin-desktop.png', fullPage: true });
     await page.locator('.rail-brand').click();
     await expect(page.locator('.nav-login')).toHaveText(fixtures[role].display_name);
     await page.locator('.nav-login').click();
-    await page.waitForURL('**/common/workspace.html');
-    await page.locator('html[data-workspace-ready=true]').waitFor();
+    await page.waitForURL('**' + entry);
+    await page.locator(ready).waitFor();
     if (role === 'student' || role === 'customer') {
       const start = requests.length;
       await page.goto(base + '/customer/customer.html');
@@ -102,7 +107,8 @@ try {
       assert.ok(!requests.slice(start).some(url => url.startsWith('/api/v1/customer/')));
       assert.equal(await page.locator('.rail-scroll a[href="/admin/accounts.html"]').count(), 0);
       await page.goto(base + '/common/account.html');
-      await expect(page.locator('#account-name')).toHaveValue(fixtures[role].display_name);
+      await expect(page.locator('#account-name')).toHaveText(fixtures[role].display_name);
+      await expect(page.locator('#main-content input, #main-content form, #main-content button')).toHaveCount(0);
       await expect(page.locator('.rail-scroll .sub')).toHaveCount(0);
       await expect(page.locator('.rail-scroll a[aria-current=page]')).toHaveText('个人中心');
       await expect(page.locator('#main-content a')).toHaveCount(0);
@@ -120,6 +126,11 @@ try {
         await page.goto(base + route);
         await page.locator('html[data-live-ready=true]').waitFor();
         await expect(page.locator('.live-error')).toHaveCount(0);
+        if (route.startsWith('/report/')) {
+          await expect(page.locator('#main-content .data-table')).toContainText('虚构报告');
+          if (role === 'admin') await expect(page.locator('#main-content a[href="generate.html"]:visible').first()).toBeVisible();
+          continue;
+        }
         assert.ok(await page.locator('[data-operation^="GET "]').count() > 0, route + ' 应有查询');
         const writes = page.locator('[data-operation^="POST "], [data-operation^="PUT "]');
         if (role === 'manager') {
@@ -139,21 +150,23 @@ try {
         await expect(page.locator('#main-content')).toContainText('暂无访问权限');
       }
       await page.goto(base + '/report/list.html');
-      await page.getByRole('button', { name: '查看记录', exact: true }).click();
+      await page.locator('html[data-live-ready=true]').waitFor();
+      await page.getByRole('link', { name: '查看报告', exact: true }).click();
       await page.waitForURL('**/report/detail.html?report_record_id=7');
-      await expect(page.locator('.live-result')).toContainText('虚构报告正文');
+      await expect(page.locator('.report-md')).toContainText('虚构报告正文');
       await expect(page.locator('.rail-scroll .sub.active')).toHaveAttribute('href', '/report/list.html');
       await page.reload();
-      await expect(page.locator('.live-result')).toContainText('虚构报告正文');
+      await expect(page.locator('.report-md')).toContainText('虚构报告正文');
       if (role === 'admin') {
         await page.goto(base + '/report/generate.html');
-        await page.locator('[name=report_code]').fill('daily_report');
-        await page.locator('[name=start_time]').fill('2026-10-17T00:00');
-        await page.locator('[name=end_time]').fill('2026-10-18T00:00');
-        await page.getByRole('button', { name: '确认提交', exact: true }).click();
+        await page.locator('html[data-live-ready=true]').waitFor();
+        await page.locator('#main-content select').selectOption('daily_report');
+        await page.locator('#main-content input[type=date]').nth(0).fill('2026-10-17');
+        await page.locator('#main-content input[type=date]').nth(1).fill('2026-10-18');
+        await page.getByRole('button', { name: '提交生成', exact: true }).click();
         await expect(page.locator('.live-error')).toContainText('模拟生成失败');
-        await page.getByRole('button', { name: '确认提交', exact: true }).click();
-        await expect(page.locator('.live-result')).toContainText('待处理');
+        await page.getByRole('button', { name: '提交生成', exact: true }).click();
+        await expect(page.locator('#main-content .live-status')).toContainText('待生成');
         assert.equal(reportAttempts.length, 2);
         assert.ok(reportAttempts[0].key);
         assert.equal(reportAttempts[0].key, reportAttempts[1].key);
