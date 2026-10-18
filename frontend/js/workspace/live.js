@@ -239,8 +239,9 @@ async function start(){
   try{
     try{selected=JSON.parse(sessionStorage.getItem('stuproject.live.selection')||'{}');}catch{}
     const response=await fetch('/openapi.json');if(!response.ok)throw new Error('服务契约暂时不可用。');schema=await response.json();
+    let access;
     if(readSession()){
-      const access=await API.myAccess();
+      access=await API.myAccess();
       $$('.user-name').forEach(x=>x.textContent=(enums[access.identity_type]||access.identity_type)+' #'+access.user_id);
       if(access.identity_type==='admin'){
         const r=await fetch('/api/v1/admin/openapi.json',{headers:{Authorization:'Bearer '+readSession().accessToken}});
