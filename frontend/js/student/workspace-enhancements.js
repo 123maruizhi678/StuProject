@@ -41,6 +41,10 @@ export async function initializeStudentWorkspace({access,main,page}){
  if(pageKey(page)==='notifications'){
   const region=document.createElement('section');region.className='student-live';main.append(region);const notifications=await import('./notifications.js');await notifications.render(region);return true;
  }
+ if(pageKey(page)==='care'){
+  const region=document.createElement('section');region.className='student-live';main.append(region);
+  const care=await import('./care-workspace.js');await care.render(region);return true;
+ }
  if(pageKey(page)==='chat'){
   const region=document.createElement('section');region.className='student-live';main.append(region);const chat=await import('./chat.js');await chat.render(region);return true;
  }
