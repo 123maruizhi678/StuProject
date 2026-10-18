@@ -4,6 +4,8 @@ import { PAGE_RESOURCES, operationsForPage, operationsForAccess, LABELS } from '
 const $ = (q, root=document) => root.querySelector(q);
 const $$ = (q, root=document) => [...root.querySelectorAll(q)];
 const page = location.pathname.replace(/^\/static\//,'/').replace(/^\//,'');
+const adminListMode = page.startsWith('admin/');
+let adminCreateOp = null, adminCreateDialog = null, adminCreateTitle = '新增';
 const style = document.createElement('link'); style.rel='stylesheet'; style.href='/css/workspace/live.css'; document.head.append(style);
 const node = (tag, text, cls) => { const n=document.createElement(tag); if(text!==undefined)n.textContent=text; if(cls)n.className=cls;return n; };
 const label = key => LABELS[key] || (key ? key.replaceAll('_',' ') : '业务记录');
@@ -63,17 +65,24 @@ function renderData(root, data, path) {
   if (data === null || data === undefined) { root.append(node('p', '操作成功。')); return; }
   const rows = Array.isArray(data) ? data : Array.isArray(data.items) ? data.items : Array.isArray(data.rows) ? data.rows : null;
   if (rows) {
-    root.append(node('p', `共 ${data.total ?? rows.length} 条记录。` + (readOnlyView ? '点击查看记录，可查看详细信息。' : '选择记录后，可在下方操作中使用其编号和当前版本。')));
+    root.append(node('p', `共 ${data.total ?? rows.length} 条记录。` + (adminListMode ? '点击整条记录可查看详情。' : readOnlyView ? '点击查看记录，可查看详细信息。' : '选择记录后，可在下方操作中使用其编号和当前版本。')));
     if (!rows.length) { root.append(node('p', '暂无记录。')); return; }
     const keys = [...new Set(rows.flatMap(row => Object.keys(row)))].filter(k => !/(password|ciphertext|lookup_token|secret|request_hash)/i.test(k));
     const priority = ['full_name', 'username', 'course_name', 'title', 'report_name', 'customer_no', 'student_no', 'course_code', 'report_date', 'status', 'row_version'];
     keys.sort((a, b) => (priority.includes(a) ? priority.indexOf(a) : 99) - (priority.includes(b) ? priority.indexOf(b) : 99));
     const visible = keys.slice(0, 8), wrap = node('div', undefined, 'table-wrap'), table = node('table', undefined, 'data-table');
-    const head = node('tr'); for (const k of visible) head.append(node('th', label(k))); head.append(node('th', '操作'));
+    const head = node('tr'); for (const k of visible) head.append(node('th', label(k))); if (!adminListMode) head.append(node('th', '操作'));
     const thead = node('thead'); thead.append(head); table.append(thead);
     const body = node('tbody');
     for (const row of rows) {
       const tr = node('tr'); for (const k of visible) tr.append(node('td', format(row[k])));
+      if (adminListMode) {
+        tr.classList.add('clickable'); tr.tabIndex = 0;
+        const open = () => { remember(row, path); openDetailModal(row); };
+        tr.addEventListener('click', open);
+        tr.addEventListener('keydown', event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); open(); } });
+        body.append(tr); continue;
+      }
       const td = node('td'), choose = node('button', readOnlyView ? '查看记录' : '选择记录', 'button secondary small'); choose.type = 'button';
       choose.onclick = () => {
         remember(row, path);
@@ -96,6 +105,92 @@ function renderObject(root, data) {
     if (privateField(key)) continue;
     dl.append(node('dt', label(key)), node('dd', format(value)));
   } root.append(dl);
+}
+function parametersFor(op) {
+  const params = (op.parameters || []).filter(p => p.in !== 'header' &&
+    (p.name !== 'unread_only' || op.path.includes('/notifications')) && (p.name !== 'manage' || op.path.includes('/knowledge')));
+  // Request-based enterprise routes declare identifiers in the URL; infer any omitted schema parameters.
+  for (const match of op.path.matchAll(/\{([^}]+)\}/g)) if (!params.some(p => p.name === match[1])) params.push({ name: match[1], in: 'path', required: true, schema: { type: match[1].endsWith('_code') ? 'string' : 'integer', minimum: 1 } });
+  return params;
+}
+function buildBodyFields(op, form) {
+  const content = op.requestBody?.content || {}, mime = Object.keys(content)[0], bodySpec = resolve(content[mime]?.schema);
+  let bodyContainer = form;
+  function bodyFields(spec) { for (const [name, raw] of Object.entries(spec.properties || {})) field(bodyContainer, name, raw, (spec.required || []).includes(name)); }
+  if (bodySpec.oneOf) {
+    const picker = node('select'); picker.name = 'identity-choice'; picker.setAttribute('aria-label', '账号身份'); picker.required = true;
+    const box = node('div', undefined, 'form-field'); box.append(node('label', '账号身份 *'), picker); form.append(box);
+    const branches = bodySpec.oneOf.map(resolve); for (let n = 0; n < branches.length; n++) {
+      const identity = resolve(branches[n].properties.identity_type).const; picker.append(new Option(enums[identity] || identity, String(n)));
+    }
+    const region = node('div', undefined, 'wide live-form'); form.append(region); bodyContainer = region;
+    const fill = () => { region.replaceChildren(); bodyFields(branches[Number(picker.value)]); }; picker.onchange = fill; fill();
+  } else bodyFields(bodySpec);
+  return mime;
+}
+const detailTitle = row => row.full_name || row.username || row.title || row.report_name || row.customer_no || row.student_no || row.employee_no || '记录详情';
+function dialogShell(title) {
+  const dialog = node('dialog', undefined, 'enterprise-dialog'); dialog.setAttribute('aria-label', title);
+  const scroll = node('div', undefined, 'enterprise-dialog-scroll'), head = node('header', undefined, 'enterprise-dialog-head'), h = node('h2', title);
+  const close = node('button', '×', 'icon-button enterprise-dialog-close'); close.type = 'button'; close.setAttribute('aria-label', '关闭弹窗'); close.onclick = () => dialog.close();
+  head.append(h, close); scroll.append(head); dialog.append(scroll); document.body.append(dialog);
+  dialog.addEventListener('close', () => dialog.remove());
+  return { dialog, scroll };
+}
+function openDetailModal(row) {
+  const { dialog, scroll } = dialogShell(detailTitle(row));
+  const content = node('div', undefined, 'enterprise-dialog-content'); renderObject(content, row); scroll.append(content);
+  dialog.showModal();
+}
+function appendPager(root, total, offset, onChange) {
+  const size = 10, page = Math.floor(offset / size) + 1;
+  const bar = node('div', undefined, 'live-paging');
+  const prev = node('button', '上一页', 'button secondary small'); prev.type = 'button'; prev.disabled = offset <= 0; prev.onclick = () => onChange(Math.max(0, offset - size));
+  const next = node('button', '下一页', 'button secondary small'); next.type = 'button'; next.disabled = offset + size >= total; next.onclick = () => onChange(offset + size);
+  bar.append(prev, node('span', `第 ${page} 页`), next); root.append(bar);
+}
+function ensureCreateDialog() {
+  if (adminCreateDialog) return adminCreateDialog;
+  if (!adminCreateOp) return null;
+  const op = adminCreateOp, { dialog, scroll } = dialogShell(adminCreateTitle);
+  const content = node('div', undefined, 'enterprise-dialog-content');
+  const form = node('form', undefined, 'live-form'); forms.push(form); form.dataset.resource = resourceKey(op.path);
+  const params = parametersFor(op);
+  for (const p of params) field(form, p.name, p.schema, p.required);
+  const mime = buildBodyFields(op, form);
+  const result = node('div', undefined, 'live-result'), actions = node('div', undefined, 'form-actions');
+  const submit = node('button', '确认提交', 'button'); submit.type = 'submit';
+  const cancel = node('button', '取消', 'button secondary'); cancel.type = 'button'; cancel.onclick = () => dialog.close();
+  actions.append(cancel, submit); form.append(actions, result); content.append(form); scroll.append(content);
+  let pendingKey = null, signature = null;
+  form.addEventListener('submit', async event => {
+    event.preventDefault(); if (!form.reportValidity()) return; submit.disabled = true; result.replaceChildren();
+    try {
+      let path = op.path; const values = readFields(form), query = new URLSearchParams();
+      for (const p of params) {
+        const v = values[p.name]; delete values[p.name]; if (v === undefined) continue;
+        if (p.in === 'path') path = path.replace('{' + p.name + '}', encodeURIComponent(v)); else query.set(p.name, String(v));
+      }
+      if (path.includes('{')) throw new Error('请先选择记录或填写对应编号。');
+      const sign = JSON.stringify({ path, values, query: String(query) });
+      if (sign !== signature) { signature = sign; pendingKey = createRequestId(); }
+      let payload = values;
+      if (mime === 'multipart/form-data') {
+        payload = new FormData(); for (const [k, v] of Object.entries(values)) payload.append(k, String(v));
+        for (const input of $$('input[type=file]', form)) if (input.files[0]) payload.append(input.name, input.files[0]);
+      }
+      await request(path.slice('/api/v1'.length) + (query.size ? '?' + query : ''), {
+        method: op.method, authenticated: !path.includes('/agent/'), body: payload,
+        headers: { 'Idempotency-Key': pendingKey }, timeoutMs: 20000
+      });
+      result.append(node('p', '操作成功，结果已由服务保存。', 'live-status'));
+      await Promise.allSettled(listQueries.map(refresh => refresh()));
+      setTimeout(() => dialog.close(), 600);
+    } catch (error) { result.replaceChildren(node('p', error.message, 'live-error')); }
+    finally { submit.disabled = false; }
+  });
+  adminCreateDialog = { dialog, open() { if (!dialog.open) dialog.showModal(); } };
+  return adminCreateDialog;
 }
 function field(parent, name, raw, required = false, prefix = '') {
   const spec = resolve(raw), full = prefix + name;
@@ -156,29 +251,21 @@ function operationCard(op, index) {
   const card = node('details', undefined, 'section-card live-section'); card.dataset.operation = op.method + ' ' + op.path;
   if (index === 0) card.open = true; card.append(node('summary', operationTitle(op)));
   const body = node('div', undefined, 'live-body'), form = node('form', undefined, 'live-form'), response = node('div', undefined, 'live-result'), message = node('div');
-  forms.push(form); form.dataset.resource = resourceKey(op.path); const params = (op.parameters || []).filter(p => p.in !== 'header' &&
-    (p.name !== 'unread_only' || op.path.includes('/notifications')) && (p.name !== 'manage' || op.path.includes('/knowledge')));
-  // Request-based enterprise routes declare identifiers in the URL; infer any omitted schema parameters.
-  for (const match of op.path.matchAll(/\{([^}]+)\}/g)) if (!params.some(p => p.name === match[1])) params.push({ name: match[1], in: 'path', required: true, schema: { type: match[1].endsWith('_code') ? 'string' : 'integer', minimum: 1 } });
-  for (const p of params) field(form, p.name, p.schema, p.required);
+  forms.push(form); form.dataset.resource = resourceKey(op.path); const params = parametersFor(op);
+  for (const p of params) { if (adminListMode && (p.name === 'limit' || p.name === 'offset')) continue; field(form, p.name, p.schema, p.required); }
   const detailSelection = page === 'report/detail.html' || (!selected.__path && page.endsWith('-detail.html'));
   if (detailSelection || resourceKey(selected.__path || '') === resourceKey(op.path)) for (const p of params.filter(p => p.in === 'path')) {
     const input = $('[name="' + p.name + '"]', form); if (input && selected[p.name] !== undefined) setValue(input, selected[p.name]);
   }
-  const content = op.requestBody?.content || {}, mime = Object.keys(content)[0], bodySpec = resolve(content[mime]?.schema);
-  let bodyContainer = form;
-  function bodyFields(spec) { for (const [name, raw] of Object.entries(spec.properties || {})) field(bodyContainer, name, raw, (spec.required || []).includes(name)); }
-  if (bodySpec.oneOf) {
-    const picker = node('select'); picker.name = 'identity-choice'; picker.setAttribute('aria-label', '账号身份'); picker.required = true;
-    const box = node('div', undefined, 'form-field'); box.append(node('label', '账号身份 *'), picker); form.append(box);
-    const branches = bodySpec.oneOf.map(resolve); for (let n = 0; n < branches.length; n++) {
-      const identity = resolve(branches[n].properties.identity_type).const; picker.append(new Option(enums[identity] || identity, String(n)));
-    }
-    const region = node('div', undefined, 'wide live-form'); form.append(region); bodyContainer = region;
-    const fill = () => { region.replaceChildren(); bodyFields(branches[Number(picker.value)]); }; picker.onchange = fill; fill();
-  } else bodyFields(bodySpec);
-  const actions = node('div', undefined, 'form-actions'), submit = node('button', op.method === 'GET' ? '查询' : '确认提交', 'button'); submit.type = 'submit'; actions.append(submit); form.append(actions);
-  let pendingKey = null, signature = null, hasList = false;
+  const mime = buildBodyFields(op, form);
+  const actions = node('div', undefined, 'form-actions'), submit = node('button', op.method === 'GET' ? '查询' : '确认提交', 'button'); submit.type = 'submit';
+  const autoAdminGet = adminListMode && op.method === 'GET' && !params.some(p => p.required);
+  if (autoAdminGet) {
+    if (adminCreateOp) { const add = node('button', adminCreateTitle, 'button'); add.type = 'button'; add.onclick = () => ensureCreateDialog()?.open(); actions.append(add); }
+  } else actions.append(submit);
+  if (actions.childNodes.length) form.append(actions);
+  else if (autoAdminGet && !form.querySelector('[data-field]')) form.remove();
+  let pendingKey = null, signature = null, hasList = false, listOffset = 0;
   async function execute() {
     message.replaceChildren(); submit.disabled = true;
     try {
@@ -188,6 +275,7 @@ function operationCard(op, index) {
         const v = values[p.name]; delete values[p.name]; if (v === undefined) continue;
         if (p.in === 'path') path = path.replace('{' + p.name + '}', encodeURIComponent(v)); else query.set(p.name, String(v));
       }
+      if (adminListMode && op.method === 'GET' && !op.path.includes('{')) { query.set('limit', '10'); query.set('offset', String(listOffset)); }
       if (path.includes('{')) throw new Error('请先选择记录或填写对应编号。');
       const sign = JSON.stringify({ path, values, query: String(query) });
       if (sign !== signature) { signature = sign; pendingKey = createRequestId(); }
@@ -207,6 +295,9 @@ function operationCard(op, index) {
       });
       if (op.method !== 'GET' && path.startsWith('/api/v1/student/notifications/')) window.dispatchEvent(new Event('student:notifications-changed'));
       pendingKey = null; renderData(response, data, path); status(message, op.method === 'GET' ? '已读取最新数据。' : '操作成功，结果已由服务保存。');
+      if (adminListMode && op.method === 'GET' && !op.path.includes('{') && data && !Array.isArray(data) && data.total !== undefined) {
+        appendPager(response, data.total, listOffset, next => { listOffset = next; execute(); });
+      }
       hasList = Array.isArray(data) || Array.isArray(data?.items) || Array.isArray(data?.rows);
       // Selection must use current versions after a successful write. Refresh only
       // lists already queried by the user; never repeat another business mutation.
@@ -293,7 +384,19 @@ async function start() {
     if (studentWorkspace && studentAccess) operations = studentWorkspace.filterStudentOperations(operations, studentAccess);
     readOnlyView = /^(customer|report)\//.test(page) && operations.every(operation => operation.method === 'GET');
     intro.textContent = readOnlyView ? '当前为只读查看，仅显示当前账号有权查看的信息。' : '数据来自当前本地业务库。修改前请选择记录，提交时使用其当前版本。';
-    for (let index = 0; index < operations.length; index++)main.append(operationCard(operations[index], index));
+    if (adminListMode) {
+      adminCreateOp = null; adminCreateDialog = null;
+      const createOps = operations.filter(op => op.method === 'POST' && !op.path.includes('{'));
+      if (createOps.length) {
+        adminCreateOp = createOps[0];
+        const listOp = operations.find(op => op.method === 'GET' && !op.path.includes('{'));
+        adminCreateTitle = '新增' + (listOp ? label(listOp.path.split('/').filter(Boolean).at(-1)) : '');
+      }
+    }
+    for (let index = 0; index < operations.length; index++) {
+      if (adminListMode && adminCreateOp === operations[index]) continue;
+      main.append(operationCard(operations[index], index));
+    }
     if (!operations.length) intro.textContent = '当前身份没有可用操作。';
   } catch (error) { status(intro, error.message, true); }
   if (footer) main.append(footer);
