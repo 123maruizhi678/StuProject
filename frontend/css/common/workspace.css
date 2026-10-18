@@ -1,4 +1,4 @@
-.permission-loading .rail-scroll,.permission-loading .workspace-main{visibility:hidden}
+/* Initial loading visibility is controlled by the critical shared layout stylesheet. */
 .notice-section{margin-bottom:28px;overflow:hidden}
 .notice-section .section-title p{margin:6px 0 0}
 .notice-content{max-height:390px;overflow:auto}

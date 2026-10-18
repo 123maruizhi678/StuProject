@@ -62,6 +62,36 @@ test("受保护请求附带 Bearer，公开请求不附带", async () => {
   assert.deepEqual(seen, ["Bearer fake-token", undefined]);
 });
 
+test("同一会话的并发权限查询共用请求，完成后仍可重新校验", async () => {
+  api.saveSession({ access_token: "shared-access-token", token_type: "bearer", expires_in: 60 });
+  let release, calls = 0;
+  globalThis.fetch = async () => {
+    calls++;
+    await new Promise(resolve => { release = resolve; });
+    return reply(200, { code: 0, data: { user_id: 1, identity_type: "admin", display_name: "测试管理员", permissions: ["private.permission"], navigation: { routes: {}, modules: [] } } });
+  };
+  const first = api.API.myAccess(), second = api.API.myAccess();
+  assert.equal(first, second);
+  assert.equal(calls, 1);
+  release(); await first;
+  const preview = api.readNavigationPreview();
+  assert.equal(preview.display_name, "测试管理员");
+  assert.equal(preview.permissions, undefined, "导航缓存不保存或充当业务权限结果");
+  const next = api.API.myAccess();
+  assert.equal(calls, 2); release(); await next;
+  api.saveSession({ access_token: "another-session", token_type: "bearer", expires_in: 60 });
+  assert.equal(api.readNavigationPreview(), null);
+});
+
+test("权限查询失败后可以重试，失败结果不会当作已验证权限复用", async () => {
+  api.saveSession({ access_token: "retry-access-token", token_type: "bearer", expires_in: 60 });
+  let calls = 0;
+  globalThis.fetch = async () => { calls++; return reply(503, { code: 503, message: "临时不可用", data: null }); };
+  await assert.rejects(api.API.myAccess(), /临时不可用/);
+  await assert.rejects(api.API.myAccess(), /临时不可用/);
+  assert.equal(calls, 2);
+});
+
 test("过期与损坏会话被清除", () => {
   sessionStorage.setItem("stuproject.auth.session", "not-json");
   assert.equal(api.readSession(), null);

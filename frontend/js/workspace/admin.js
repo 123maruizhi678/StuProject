@@ -21,20 +21,25 @@ export async function mountAdminWorkspace({ main, page, schema, access, options,
   const operations = operationsForAccess(operationsForPage(page, schema.paths), access);
   const find = (method, path) => operations.find(operation => operation.method === method && operation.path === path);
   const can = permission => access.identity_type === 'admin' || access.permissions?.includes(permission);
+  const adminCreationPage = page === 'admin/permissions.html' && access.identity_type === 'admin';
+  const isPlatformAdminRow = row => row.identity_type === 'admin' || row.role_codes?.includes('admin') ||
+    options.positions?.[row.position_title]?.includes('admin') || ['平台管理员', '企业管理员', '企业配置管理员'].includes(row.position_title);
   const listOp = find('GET', definition.path);
   if (!listOp) { main.append(node('p', '当前身份没有可用操作。', 'live-status')); return; }
   const employeeUpdate = can('enterprise.employee.manage') && find('PUT', definition.path + '/{employee_id}');
   const roleUpdate = can('enterprise.role.manage') && find('PUT', definition.path + '/{employee_id}/roles');
   const configUpdate = find('PUT', definition.path + '/{report_code}');
-  const createOp = (page !== 'admin/permissions.html' || can('enterprise.employee.manage')) && find('POST', definition.create);
+  const createOp = adminCreationPage ? find('POST', '/api/v1/auth/register')
+    : (page !== 'admin/permissions.html' || can('enterprise.employee.manage')) && find('POST', definition.create);
+  const createTitle = adminCreationPage ? '新建平台管理员' : definition.createTitle;
   const card = node('section', undefined, 'section-card admin-list'); card.dataset.operation = 'GET ' + definition.path;
   const heading = node('div', undefined, 'section-title'), body = node('div', undefined, 'section-body');
   heading.append(node('h2', definition.title)); card.append(heading, body); main.append(card);
   const feedback = node('div'), result = node('div', undefined, 'live-result');
   feedback.setAttribute('aria-live', 'polite');
   if (createOp) {
-    const toolbar = node('div', undefined, 'admin-list-toolbar'), add = node('button', definition.createTitle, 'button');
-    add.type = 'button'; add.onclick = () => openEditor(createOp, definition.createTitle);
+    const toolbar = node('div', undefined, 'admin-list-toolbar'), add = node('button', createTitle, 'button');
+    add.type = 'button'; add.onclick = () => openEditor(createOp, createTitle);
     toolbar.append(add); body.append(toolbar);
   }
   body.append(feedback, result);
@@ -80,8 +85,10 @@ export async function mountAdminWorkspace({ main, page, schema, access, options,
             const button = node('button', text, 'button secondary small'); button.type = 'button';
             button.onclick = () => openEditor(operation, text, row, mode); td.append(button);
           };
-          addAction('编辑员工', employeeUpdate);
-          addAction('调整角色', roleUpdate, 'roles');
+          if (!employeeList || !isPlatformAdminRow(row)) {
+            addAction('编辑员工', employeeUpdate);
+            addAction('调整角色', roleUpdate, 'roles');
+          } else td.append(node('span', '仅查看', 'muted'));
           addAction('修改配置', configUpdate);
           tr.append(td);
         }
@@ -100,6 +107,7 @@ export async function mountAdminWorkspace({ main, page, schema, access, options,
   }
 
   function openEditor(operation, title, row = null, mode = '') {
+    if (employeeList && row && isPlatformAdminRow(row)) return;
     const dialog = node('dialog', undefined, 'enterprise-dialog admin-dialog'); dialog.setAttribute('aria-label', title);
     const scroll = node('div', undefined, 'enterprise-dialog-scroll'), head = node('header', undefined, 'enterprise-dialog-head');
     const close = node('button', '×', 'icon-button'); close.type = 'button'; close.setAttribute('aria-label', '关闭弹窗');
@@ -108,6 +116,9 @@ export async function mountAdminWorkspace({ main, page, schema, access, options,
     form.dataset.operation = operation.method + ' ' + operation.path;
     const response = node('div', undefined, 'wide admin-action-result'); response.setAttribute('aria-live', 'polite');
     const bodySpec = resolve(operation.requestBody?.content?.['application/json']?.schema);
+    const adminRegistration = adminCreationPage && !row && operation.path === '/api/v1/auth/register';
+    const adminSpec = adminRegistration && [bodySpec, ...(bodySpec.oneOf || []).map(resolve)]
+      .find(spec => resolve(spec.properties?.identity_type).const === 'admin');
     const initial = new Map();
     if (row) content.append(node('p', row.full_name || row.report_name || '', 'enterprise-record-name'));
     const addField = (name, raw, required) => {
@@ -118,7 +129,14 @@ export async function mountAdminWorkspace({ main, page, schema, access, options,
       return input;
     };
     let position;
-    if (mode === 'roles') {
+    if (adminRegistration) {
+      form.append(node('p', '账号身份：平台管理员', 'wide enterprise-form-context'));
+      if (adminSpec) {
+        for (const [name, raw] of Object.entries(adminSpec.properties || {})) {
+          if (name !== 'identity_type') addField(name, raw, (adminSpec.required || []).includes(name));
+        }
+      } else form.append(node('p', '暂时无法读取平台管理员开户表单，请刷新后重试。', 'wide live-error'));
+    } else if (mode === 'roles') {
       const positionSpec = resolve(employeeUpdate?.requestBody?.content?.['application/json']?.schema)?.properties?.position_title;
       if (positionSpec && options.positions) {
         position = addField('position_title', positionSpec, true);
@@ -143,6 +161,7 @@ export async function mountAdminWorkspace({ main, page, schema, access, options,
     } else buildBodyFields(operation, form);
     const actions = node('div', undefined, 'form-actions'), cancel = node('button', '取消', 'button secondary'); cancel.type = 'button';
     const submit = node('button', row ? '保存' : '确认提交', 'button'); submit.type = 'submit';
+    if (adminRegistration && !adminSpec) submit.disabled = true;
     actions.append(cancel, submit); form.append(actions, response); content.append(form); scroll.append(head, content); dialog.append(scroll);
     document.body.append(dialog);
     let busy = false, signature = null, pendingKey = null;
@@ -154,6 +173,11 @@ export async function mountAdminWorkspace({ main, page, schema, access, options,
       busy = true; submit.disabled = cancel.disabled = close.disabled = true; response.replaceChildren();
       try {
         let op = operation, values = readFields(form);
+        if (adminRegistration) {
+          if (!adminSpec || op.method !== 'POST') throw new Error('暂时无法读取平台管理员开户表单，请刷新后重试。');
+          values = { username: values.username, identity_type: 'admin' };
+        }
+        if (employeeList && row && isPlatformAdminRow(row)) throw new Error('平台管理员记录仅支持查看。');
         if (row) {
           if (!Number.isInteger(row.row_version) || row.row_version < 1) throw new Error('当前记录缺少版本，请刷新列表后重试。');
           if (mode === 'roles') {

@@ -1,6 +1,7 @@
 import { request, readSession, clearSession } from "./api.js";
 import { mountNavigation } from "./navigation.js";
 import { canOpenPage, WORKSPACE_PATH } from "./navigation-model.js";
+import { beginPageLoading, finishPageLoading, failPageLoading } from "./page-loading.js";
 
 const $ = selector => document.querySelector(selector);
 const labels = { announcement: "公共通知", status: "办理状态", reply: "服务回复", important: "重要事项" };
@@ -164,7 +165,7 @@ function setupManagement() {
   };
 }
 
-document.documentElement.classList.add("permission-loading");
+beginPageLoading();
 $("#workspace-logout").onclick = () => { clearSession(); location.replace("/common/login.html"); };
 document.addEventListener("click", event => {
   if (event.target.closest("[data-menu]")) {
@@ -174,6 +175,7 @@ document.addEventListener("click", event => {
   if (event.target.closest(".mobile-scrim")) document.body.classList.remove("rail-open");
 });
 document.addEventListener("keydown", event => { if (event.key === "Escape") document.body.classList.remove("rail-open"); });
+try {
 access = await mountNavigation();
 if (access) {
   document.documentElement.dataset.workspaceReady = "true";
@@ -194,4 +196,6 @@ if (access) {
     });
   } else if (view === "detail") await loadDetail();
   else if (view === "manage") { setupManagement(); await loadManagement(); }
+  await finishPageLoading();
 }
+} catch (error) { await failPageLoading(error); }
