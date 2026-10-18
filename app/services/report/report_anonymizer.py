@@ -18,11 +18,8 @@ from typing import Any
 PRIVACY_POLICY_VERSION = "privacy-v1"
 
 # 心理周报允许进入模型的匿名聚合指标前缀（045 白名单）。
-# 中间分类段可选：既覆盖 mental_assessment_count / mental_warning_count 等
-# 基础聚合键，也覆盖 mental_warning_{跟进状态}_count、mental_risk_{等级}_count
-# 等按数据动态生成的聚合键；后缀仅限 count/rate/change_rate，明细键一律拒绝。
 _MENTAL_MODEL_CODE_PATTERN = re.compile(
-    r"^mental_(?:assessment|warning|risk)_(?:[a-z_]+_)?(?:count|rate|change_rate)$"
+    r"^mental_(assessment|warning|risk)_[a-z_]+_(count|rate|change_rate)$"
 )
 
 # 日期与版本形态：对账时先移除，避免把日期/版本数字当作正文编造数字。

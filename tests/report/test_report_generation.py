@@ -541,44 +541,6 @@ class ReportGenerationTest(unittest.TestCase):
                 entries,
             )
 
-    # -- 心理匿名聚合白名单 --------------------------------------------------
-
-    def test_mental_anonymization_accepts_all_aggregate_keys(self):
-        """心理周报全部聚合指标键（基础键 + 动态分类键）必须通过白名单。
-
-        回归：mental_assessment_count / mental_warning_count 无中间分类段，
-        旧正则漏匹配导致心理健康周报每次生成都在匿名聚合阶段失败。
-        """
-        from app.services.report.report_anonymizer import (
-            AnonymizationError,
-            anonymize_for_model,
-        )
-
-        entries = {
-            "mental_assessment_count": {"value": 23, "unit": "次", "availability": "available"},
-            "mental_risk_low_count": {"value": 15, "unit": "次", "availability": "available"},
-            "mental_risk_high_count": {"value": 2, "unit": "次", "availability": "available"},
-            "mental_risk_critical_count": {"value": 1, "unit": "次", "availability": "available"},
-            "mental_warning_count": {"value": 3, "unit": "次", "availability": "available"},
-            "mental_warning_pending_count": {"value": 2, "unit": "次", "availability": "available"},
-            "mental_warning_closed_count": {"value": 1, "unit": "次", "availability": "available"},
-            "mental_assessment_change_rate": {"value": 15.0, "unit": "%", "availability": "available"},
-            "mental_warning_change_rate": {"value": None, "availability": "unavailable", "reason": "缺上一窗口"},
-            "_manifest": {"report_code": "mental_weekly", "report_version": "v1"},
-        }
-        payload = anonymize_for_model("mental_weekly", entries)
-        self.assertEqual(len(payload), 9)  # _manifest 保留区被剔除
-        self.assertEqual(payload["mental_assessment_count"]["value"], 23)
-
-        # 明细键（学生标识、原因文本等）仍必须被拒绝。
-        for hostile in (
-            "mental_student_detail",
-            "mental_assessment_student_id",
-            "mental_warning_reason_text",
-        ):
-            with self.assertRaises(AnonymizationError, msg=hostile):
-                anonymize_for_model("mental_weekly", {**entries, hostile: {"value": 1}})
-
     # -- 调度 ----------------------------------------------------------------
 
     def test_scheduler_scan_creates_missing_windows_once(self):

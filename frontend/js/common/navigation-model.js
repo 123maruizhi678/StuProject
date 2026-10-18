@@ -1,15 +1,5 @@
 export const WORKSPACE_PATH = "/common/workspace.html";
 
-export function hasNotificationCenter(access) {
-  return access?.identity_type !== "admin";
-}
-
-export function defaultEntry(access) {
-  if (hasNotificationCenter(access)) return WORKSPACE_PATH;
-  return ["/admin/accounts.html", "/common/announcement-manage.html", "/common/account.html"]
-    .find(path => canOpenPage(path, access)) || "/index.html";
-}
-
 export function pagePath(value) {
   try {
     if (typeof value !== "string" || value.includes("\\")) return null;
@@ -27,7 +17,6 @@ export function pagePath(value) {
 
 export function canOpenPage(value, access) {
   const path = pagePath(value);
-  if (!hasNotificationCenter(access) && [WORKSPACE_PATH, "/common/notification-detail.html"].includes(path)) return false;
   return Boolean(path && Object.hasOwn(access?.navigation?.routes || {}, path));
 }
 
@@ -47,7 +36,7 @@ export function workspaceModules(access) {
 }
 
 export function loginDestination(value, access) {
-  if (!value || !canOpenPage(value, access)) return defaultEntry(access);
+  if (!value || !canOpenPage(value, access)) return WORKSPACE_PATH;
   const url = new URL(value, window.location.origin);
   return pagePath(value) + url.search + url.hash;
 }
