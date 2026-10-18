@@ -3,6 +3,8 @@ import { WORKSPACE_PATH, pagePath, canOpenPage, workspaceModules, navigationLoca
 import { isSupportFrame, renderSupportNavigation } from "./support-context.js";
 
 const roleNames = { admin: "平台管理员", employee: "企业员工", student: "学生", customer: "客户" };
+let expandedModuleId = null;      // 用户手动点开的模块；null 表示全部收起
+let hasManualExpansion = false;   // 是否已手动点过，用于区分"默认展开当前模块"
 const node = (tag, text, className) => {
   const element = document.createElement(tag);
   if (text !== undefined) element.textContent = text;
@@ -42,20 +44,30 @@ export function renderNavigation(access) {
     }
     for (const module of workspaceModules(access)) {
       const active = module.id === moduleId;
-      const heading = link(module.title, module.entry, "rail-link" + (active ? " active" : ""));
-      heading.setAttribute("aria-expanded", String(active));
-      if (module.id === "account_center") {
-        heading.removeAttribute("aria-expanded");
+      const expandable = module.id !== "account_center";
+      const expanded = expandable && (hasManualExpansion ? expandedModuleId === module.id : active);
+      let heading;
+      if (expandable) {
+        heading = node("button", module.title, "rail-link" + (active ? " active" : ""));
+        heading.type = "button";
+        heading.setAttribute("aria-expanded", String(expanded));
+        heading.addEventListener("click", () => {
+          hasManualExpansion = true;
+          expandedModuleId = expandedModuleId === module.id ? null : module.id;
+          renderNavigation(access);
+        });
+      } else {
+        heading = link(module.title, module.entry, "rail-link" + (active ? " active" : ""));
         if (active) heading.setAttribute("aria-current", "page");
       }
       nav.append(heading);
-      if (active && module.id !== "account_center") for (const page of module.pages) {
+      if (expanded) for (const page of module.pages) {
         const selected = page.route === menuPath;
         const item = link(page.title, page.route, "rail-link sub" + (selected ? " active" : ""));
         if (selected) item.setAttribute("aria-current", page.route === current ? "page" : "location");
         nav.append(item);
       }
-      if (active && !menuPath && module.id !== "account_center") {
+      if (active && expanded && !menuPath) {
         const item = link(access.navigation.routes[current].title, current, "rail-link sub active");
         item.setAttribute("aria-current", "page");
         nav.append(item);
