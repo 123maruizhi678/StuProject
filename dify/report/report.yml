@@ -111,6 +111,14 @@ workflow:
           required: true
           type: text-input
           variable: metrics
+        - default: ''
+          hint: ''
+          label: daily_summaries
+          options: []
+          placeholder: ''
+          required: false
+          type: text-input
+          variable: daily_summaries
       height: 134
       id: '1792069521962'
       position:
@@ -144,6 +152,8 @@ workflow:
 
             指标数据（JSON）：{{#1792069521962.metrics#}}
 
+            日报内容摘要（JSON 数组，仅日报/周报有，可能为空）：{{#1792069521962.daily_summaries#}}
+
 
             要求：
 
@@ -156,6 +166,8 @@ workflow:
             4. 用 Markdown 小标题组织（摘要、趋势研判、归因分析、建议），语言简洁专业；
 
             5. 只输出报告正文，不要输出思考过程或与指标无关的内容。
+
+            6. 若有日报内容摘要（daily_summaries），仅用定性语言概括团队进展、关键产出与风险，不引用摘要中的具体数字或指向个人的细节；正文中的数字仍只能原样来自指标 JSON。
 
             '
         selected: false

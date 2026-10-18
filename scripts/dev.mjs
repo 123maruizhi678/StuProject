@@ -72,5 +72,6 @@ if (!stopping) {
   console.log(`后端已就绪。局域网登录地址 ${localOrigin}/login.html，通过 Vite 代理访问后端。`);
   launch(python, ['scripts/student/run_student_tasks.py']);
   launch(python, ['scripts/enterprise/run_enterprise_tasks.py', '--watch']);
+  launch(python, ['scripts/report/run_report_tasks.py', '--interval', '300']);
   launch(process.execPath, ['node_modules/vite/bin/vite.js', '--config', 'vite.config.mjs']);
 }
