@@ -18,7 +18,7 @@ const enums = {admin:'平台管理员',employee:'员工',student:'学生',custom
 const privateField=key=>/password|ciphertext|lookup_token|secret|request_hash|parameters_hash/.test(key)||['token','action_token','conversation_token','request_key','__path'].includes(key);
 const publicValue=value=>Array.isArray(value)?value.map(publicValue):value&&typeof value==='object'?Object.fromEntries(Object.entries(value).filter(([key])=>!privateField(key)).map(([key,item])=>[key,publicValue(item)])):value;
 const format = value => value===null||value===undefined?'—':typeof value==='boolean'?(value?'是':'否'):typeof value==='object'?JSON.stringify(publicValue(value),null,2):enums[value]||String(value);
-let schema, selected={}, options={};
+let schema, selected={}, options={}, studentWorkspace=null, studentAccess=null;
 const forms=[], listQueries=[];
 const resourceKey=path=>path.split('/').slice(3,path.includes('/internal/')?6:5).join('/');
 const resolve = raw => {
@@ -191,6 +191,7 @@ function operationCard(op,index){
       const data=await request(path.slice('/api/v1'.length)+(query.size?'?'+query:''),{
         method:op.method,authenticated:!path.includes('/agent/'),body:op.method==='GET'?undefined:payload,
         headers:op.method==='GET'?{}:{'Idempotency-Key':pendingKey},timeoutMs:20000});
+      if(op.method!=='GET'&&path.startsWith('/api/v1/student/notifications/'))window.dispatchEvent(new Event('student:notifications-changed'));
       pendingKey=null;renderData(response,data,path);status(message,op.method==='GET'?'已读取最新数据。':'操作成功，结果已由服务保存。');
       hasList=Array.isArray(data)||Array.isArray(data?.items)||Array.isArray(data?.rows);
       // Selection must use current versions after a successful write. Refresh only
@@ -247,9 +248,17 @@ async function start(){
         options=await request('/admin/accounts/options');
       }
       const logout=node('button','退出登录','button secondary small');logout.type='button';logout.onclick=()=>{clearSession();location.assign('/common/login.html');};$('.top-actions')?.append(logout);
+      if(page.startsWith('student/')){
+        studentAccess=access;studentWorkspace=await import('../student/workspace-enhancements.js');
+        if(await studentWorkspace.initializeStudentWorkspace({access,main,page})){
+          intro.remove();
+          if(footer)main.append(footer);document.documentElement.dataset.liveReady='true';return;
+        }
+      }
     }
     intro.textContent='数据来自当前本地业务库。修改前请选择记录，提交时使用其当前版本。';
-    const operations=operationsForPage(page,schema.paths);
+    const allOperations=operationsForPage(page,schema.paths);
+    const operations=studentWorkspace?studentWorkspace.filterStudentOperations(allOperations,studentAccess):allOperations;
     for(let index=0;index<operations.length;index++)main.append(operationCard(operations[index],index));
     if(!operations.length)intro.textContent='当前身份没有可用操作。';
   }catch(error){status(intro,error.message,true);}
