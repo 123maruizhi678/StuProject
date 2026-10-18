@@ -24,7 +24,10 @@ _INFO_FIELDS = (
 _EXT_SOURCE_TYPE = {
     ".pdf": "pdf",
     ".xlsx": "excel",
+    ".xls": "excel",
     ".csv": "excel",
+    ".tsv": "excel",
+    ".docx": "text",
     ".txt": "text",
     ".md": "text",
 }
@@ -68,7 +71,7 @@ def assert_allowed_file(file_name: Optional[str]) -> None:
         raise BadRequestError("缺少文件名")
     ext = os.path.splitext(file_name)[1].lower()
     if ext not in _EXT_SOURCE_TYPE:
-        raise BadRequestError("文件格式不支持，仅允许 pdf / xlsx / csv / txt / md")
+        raise BadRequestError("文件格式不支持，仅允许 pdf / docx / xlsx / xls / csv / tsv / txt / md")
 
 
 def read_pdf_text(path: str) -> str:

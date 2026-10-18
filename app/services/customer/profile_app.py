@@ -108,7 +108,8 @@ def evaluate_source(source_id:int=Path(...,gt=0,le=9223372036854775807),context=
         for key in ('full_name','age','education_level'):
             if row.get(key) is not None:facts[key]=row[key]
         facts,warnings=coerce_profile(facts)
-        items.append({'row_number':index,'customer_info_id':row.get('id'),'facts':facts,'warnings':warnings,
+        items.append({'row_number':row.get('profile_row_number') or index,'sheet_name':row.get('profile_sheet_name',''),
+                      'customer_info_id':row.get('id'),'facts':facts,'warnings':list(row.get('profile_warnings') or [])+warnings,
                       'error':None,'evaluation':evaluate_profile(facts)})
     return success({'source':source,'items':items,'total':len(items),'persisted':False,
                     'notice':'读取现有后端有权查看的字段并实时研判；未提供的意愿、能力等信息仍需核实'})
