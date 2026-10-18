@@ -98,3 +98,16 @@ body.student-workspace .student-notification-list .pager {
   body.student-workspace .student-notification-row { grid-template-columns: minmax(0, 1fr); gap: 14px; padding: 18px; }
   body.student-workspace .student-notification-action { justify-self: start; }
 }
+
+/* Student prompt labels and disclosure controls remain readable and easy to reach. */
+body.student-workspace .student-live .prompt-chip { color: #332b25; }
+body.student-workspace .student-live .prompt-chip:hover { color: #281f19; background: #f1e9dc; }
+body.student-workspace .student-live .prompt-chip:focus-visible { outline: 3px solid #b58b44; outline-offset: 3px; }
+body.student-workspace .live-section summary { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+body.student-workspace .live-section summary::after { float: none; display: inline-flex; align-items: center; justify-content: center; flex: 0 0 40px; width: 40px; height: 40px; font-size: 30px; line-height: 1; font-weight: 600; color: #861b23; background: #f8eeec; border-radius: 8px; }
+
+body.student-workspace .student-leave-row-actions { white-space: nowrap; }
+body.student-workspace .student-leave-row-actions .button + .button { margin-left: 10px; }
+body.student-workspace .student-leave-progress { padding-left: 24px; }
+body.student-workspace .student-leave-progress li { padding: 10px 0 10px 8px; }
+body.student-workspace .student-leave-progress p { white-space: pre-wrap; overflow-wrap: anywhere; margin: 8px 0; }

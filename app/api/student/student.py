@@ -361,3 +361,18 @@ def chat_history_detail(session_id: str, actor=Depends(get_principal), service=D
 def own_profile(actor=Depends(get_principal), service=Depends(get_service)):
     row = service.student(actor)
     return success({key: row[key] for key in ('student_id', 'student_no', 'full_name')})
+
+
+from app.services.student.student_care import StudentCareService
+
+
+@router.get('/mental/feedback')
+def care_feedback_history(actor=Depends(get_principal), service=Depends(get_service),
+    limit: int=Query(20, ge=1, le=100), offset: int=Query(0, ge=0)):
+    return success(StudentCareService(service).history(actor, limit, offset))
+
+
+@router.post('/mental/feedback')
+def submit_care_feedback(body: MentalInput, actor=Depends(get_principal), key=Depends(request_key),
+    service=Depends(get_service), dify=Depends(get_configured_dify)):
+    return success(StudentCareService(service, dify).submit(actor, key, body))
