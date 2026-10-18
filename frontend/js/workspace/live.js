@@ -362,7 +362,7 @@ async function login() {
     try {
       const data = await API.login(name.value.trim(), password.value); saveSession(data); password.value = '';
       const access = await API.myAccess();
-      location.assign(access.identity_type === 'student' ? '/student/student-assistant.html' : access.identity_type === 'employee' ? '/enterprise/enterprise.html' : access.identity_type === 'customer' ? '/common/account.html' : '/dashboard/dashboard.html');
+      location.assign(access.identity_type === 'student' ? '/student/student-assistant.html' : access.identity_type === 'employee' ? '/enterprise/assistant.html' : access.identity_type === 'customer' ? '/common/account.html' : '/dashboard/dashboard.html');
     }
     catch (error) { status(message, error.message, true); } finally { button.disabled = false; }
   });

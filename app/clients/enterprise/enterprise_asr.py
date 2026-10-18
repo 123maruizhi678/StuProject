@@ -26,7 +26,9 @@ def transcribe_audio(content,filename):
                 streams=[s for s in audio.streams if s.type=='audio']
                 if not streams:error(400,'文件中没有可解码音轨')
                 duration=audio.duration/av.time_base if audio.duration else (float(streams[0].duration*streams[0].time_base) if streams[0].duration else None)
-                if duration is None or duration<=0 or duration>300:error(400,'音频须为可验证的5分钟以内有效文件')
+                # MediaRecorder WebM streams often omit container duration. Bound
+                # the decoded sample count below instead of rejecting valid audio.
+                if duration is not None and (duration<=0 or duration>300):error(400,'音频须为可验证的5分钟以内有效文件')
                 samples=0;pcm=[];resampler=av.AudioResampler(format='fltp',layout='mono',rate=16000)
                 for frame in audio.decode(streams[0]):
                     if not frame.sample_rate:error(400,'音频采样率无效')
@@ -47,6 +49,12 @@ def transcribe_audio(content,filename):
             # 统一解码为16kHz单声道PCM，避免重复解码及不同PyAV版本的文件接口差异。
             segments,info=_model.transcribe(np.concatenate(pcm).astype(np.float32),language='zh',vad_filter=True,beam_size=5)
             text=''.join(s.text for s in segments).strip()
+            # Whisper may produce traditional Chinese for Mandarin. Normalize
+            # when the optional local voice dependencies have been installed.
+            try:
+                from opencc import OpenCC
+                text=OpenCC('t2s').convert(text)
+            except ImportError:pass
         except Exception:error(503,'本地语音模型加载或转写失败')
         return {'text':text,'duration_seconds':duration,'language':info.language,'requires_user_review':True,'business_written':False}
     finally:

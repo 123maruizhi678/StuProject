@@ -114,6 +114,7 @@ export function renderNavigation(access = navigationAccess || {}, { preview = fa
     if (!raw || raw.startsWith("#")) continue;
     let path = pagePath(anchor.href);
     if (!path) continue;
+    if (/\/enterprise\/enterprise\.html(?:[?#]|$)/.test(anchor.href)) anchor.href = '/enterprise/assistant.html';
     if (path === WORKSPACE_PATH) {
       const genericEntry = /^(我的工作台|工作台|公共入口)$/.test(anchor.textContent.trim());
       anchor.href = genericEntry ? defaultEntry(access) : WORKSPACE_PATH;
