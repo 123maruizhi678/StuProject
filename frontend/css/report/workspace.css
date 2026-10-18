@@ -1,0 +1,49 @@
+/* 智能报告模块工作区样式（js/report/workspace.js 动态加载）。
+   版式骨架复用 css/workspace/layout.css 的 section-card / data-table / badge 等；
+   这里只补报告特有的：Markdown 正文、指标网格、页签面板、分页态、窗口预览。 */
+
+[data-tab-panel]{padding-top:20px}
+[data-tab-panel][hidden]{display:none}
+
+/* 报告正文（Markdown 渲染结果） */
+.report-md{max-width:810px;line-height:1.9}
+.report-md h1,.report-md h2,.report-md h3,.report-md h4{font-family:var(--serif);color:var(--crimson);margin:24px 0 10px}
+.report-md h1{font-size:22px}
+.report-md h2{font-size:19px;text-align:center;margin-top:8px}
+.report-md h3{font-size:16px}
+.report-md h4{font-size:14px}
+.report-md p{font-size:13px;color:#716352;margin:8px 0}
+.report-md ul,.report-md ol{padding-left:22px;margin:8px 0}
+.report-md li{font-size:13px;color:#716352;margin:3px 0}
+.report-md code{font-family:var(--mono,monospace);font-size:12px;background:#f5f1e8;border:1px solid var(--border);border-radius:3px;padding:1px 6px}
+.report-md table{border-collapse:collapse;margin:12px 0}
+.report-md th,.report-md td{border:1px solid var(--border);padding:6px 12px;font-size:12px}
+.report-md th{background:#faf7f0;font-weight:500}
+.report-md strong{font-weight:600;color:#4d4335}
+
+/* 指标快照卡 */
+.metric-grid{display:flex;flex-wrap:wrap;gap:12px}
+.metric-card{min-width:170px;padding:12px 15px;background:#fffdf5;border:1px solid var(--border);border-radius:7px}
+.metric-card .metric-code{font-family:var(--mono,monospace);font-size:10px;color:var(--muted);word-break:break-all}
+.metric-card .metric-value{font-family:var(--serif);font-size:21px;margin-top:3px;color:#3d3529}
+.metric-card .metric-unit{font-size:10px;color:var(--muted);margin-left:5px}
+.metric-card .metric-reason{font-size:10.5px;color:var(--amber);margin-top:4px;line-height:1.5}
+.metric-card.unavailable .metric-value{color:var(--muted)}
+
+/* 生成表单：时区固定说明与窗口预览 */
+.tz-fixed{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted)}
+.tz-fixed code{font-family:var(--mono,monospace);background:#f5f1e8;border:1px solid var(--border);border-radius:3px;padding:2px 8px}
+.window-preview{font-family:var(--mono,monospace);font-size:11.5px;color:var(--muted);margin-top:10px}
+
+/* 分页按钮禁用态（layout.css 未定义） */
+.pager button:disabled{opacity:.4;cursor:not-allowed}
+
+/* 概览类别卡 */
+.category-card .section-body{display:flex;flex-direction:column;gap:8px;min-height:118px}
+.category-card h2{font-size:15px}
+.category-card p{flex:1}
+
+/* 配置行内编辑 */
+.config-edit{display:flex;flex-wrap:wrap;gap:10px;align-items:center;padding:14px 0 4px;border-top:1px dashed var(--border)}
+.config-edit input,.config-edit select{min-width:180px}
+.config-edit .config-error{color:var(--crimson);font-size:11px;flex-basis:100%}
