@@ -238,8 +238,9 @@ async function start(){
   try{
     try{selected=JSON.parse(sessionStorage.getItem('stuproject.live.selection')||'{}');}catch{}
     const response=await fetch('/openapi.json');if(!response.ok)throw new Error('服务契约暂时不可用。');schema=await response.json();
+    let access;
     if(readSession()){
-      const access=await API.myAccess();
+      access=await API.myAccess();
       $$('.user-name').forEach(x=>x.textContent=(enums[access.identity_type]||access.identity_type)+' #'+access.user_id);
       if(access.identity_type==='admin'){
         const r=await fetch('/api/v1/admin/openapi.json',{headers:{Authorization:'Bearer '+readSession().accessToken}});
@@ -248,10 +249,16 @@ async function start(){
       }
       const logout=node('button','退出登录','button secondary small');logout.type='button';logout.onclick=()=>{clearSession();location.assign('/common/login.html');};$('.top-actions')?.append(logout);
     }
-    intro.textContent='数据来自当前本地业务库。修改前请选择记录，提交时使用其当前版本。';
-    const operations=operationsForPage(page,schema.paths);
-    for(let index=0;index<operations.length;index++)main.append(operationCard(operations[index],index));
-    if(!operations.length)intro.textContent='当前身份没有可用操作。';
+    if(page.startsWith('enterprise/')){
+      intro.textContent='数据来自当前本地业务库。选择记录，可在弹窗中查看详情并办理业务。';
+      const {mountEnterpriseWorkspace}=await import('../enterprise/workspace.js');
+      await mountEnterpriseWorkspace({main,page,schema,access,options,field,readFields,resolve,setValue,format,label,privateField});
+    }else{
+      intro.textContent='数据来自当前本地业务库。修改前请选择记录，提交时使用其当前版本。';
+      const operations=operationsForPage(page,schema.paths);
+      for(let index=0;index<operations.length;index++)main.append(operationCard(operations[index],index));
+      if(!operations.length)intro.textContent='当前身份没有可用操作。';
+    }
   }catch(error){status(intro,error.message,true);}
   if(footer)main.append(footer);
   document.documentElement.dataset.liveReady='true';

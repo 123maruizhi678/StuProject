@@ -3,6 +3,8 @@ import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import net from 'node:net';
+import { homedir } from 'node:os';
+import { localOrigin } from './local-address.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const children = [];
@@ -17,7 +19,13 @@ if (process.env.STUPROJECT_ENABLE_EXTERNAL !== '1') {
   for (const key of ['DIFY_API_KEY','DIFY_AGENT_API_KEY','STUDENT_DIFY_KEY','ENTERPRISE_DIFY_API_KEY','REPORT_DIFY_API_KEY','CUSTOMER_EXTRACT_DIFY_API_KEY']) env[key] = '';
   env.DIFY_CLIENT = 'real';
 }
-const python = process.env.STUPROJECT_PYTHON || (existsSync('D:/anaconda3/envs/SST/python.exe') ? 'D:/anaconda3/envs/SST/python.exe' : 'python');
+const pythonCandidates = [
+  process.env.CONDA_PREFIX && path.join(process.env.CONDA_PREFIX, 'python.exe'),
+  path.join(homedir(), 'anaconda3/envs/SST/python.exe'),
+  path.join(homedir(), 'miniconda3/envs/SST/python.exe'),
+  'D:/anaconda3/envs/SST/python.exe',
+].filter(Boolean);
+const python = process.env.STUPROJECT_PYTHON || pythonCandidates.find(existsSync) || 'python';
 async function health() {
   try { const r = await fetch('http://127.0.0.1:8000/health', {signal: AbortSignal.timeout(1000)});
     return r.ok && (await r.json()).data?.service === 'StuProject'; } catch { return false; }
@@ -58,7 +66,7 @@ if (!await health()) {
   if (!ready) { console.error('后端启动失败，请检查 MySQL 和 .env。'); stop(1); }
 }
 if (!stopping) {
-  console.log('后端已就绪。局域网登录地址 http://192.168.5.12/login.html，通过 Vite 代理访问后端。');
+  console.log(`后端已就绪。局域网登录地址 ${localOrigin}/login.html，通过 Vite 代理访问后端。`);
   launch(python, ['scripts/student/run_student_tasks.py']);
   launch(python, ['scripts/enterprise/run_enterprise_tasks.py', '--watch']);
   launch(process.execPath, ['node_modules/vite/bin/vite.js', '--config', 'vite.config.mjs']);
