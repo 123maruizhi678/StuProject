@@ -7,7 +7,7 @@ import assert from 'node:assert/strict';
 const dir='.runtime/role-simulation';await mkdir(dir,{recursive:true});
 const resume=process.argv.includes('--resume');
 const state=resume?JSON.parse(await readFile(dir+'/run.json','utf8')):{run_id:'sim_'+Date.now(),started_at:new Date().toISOString(),accounts:{},ids:{},receipts:{},scenarios:[],calls:[],errors:[]};
-const base='http://127.0.0.1:5173',run=state.run_id,ids=state.ids;
+const base=process.env.SYSTEM_BASE_URL||'http://127.0.0.1',run=state.run_id,ids=state.ids;
 const save=()=>writeFile(dir+'/run.json',JSON.stringify(state,null,2));
 const browser=await chromium.launch({channel:'msedge',headless:true});
 const actors=new Map();let currentStep='';

@@ -1,4 +1,4 @@
-import { API, request, readSession, saveSession, clearSession } from '../common/api.js';
+import { API, request, readSession, saveSession, clearSession, createRequestId } from '../common/api.js';
 import { PAGE_RESOURCES, operationsForPage, LABELS } from './pages.js';
 
 const $ = (q, root=document) => root.querySelector(q);
@@ -94,7 +94,7 @@ function field(parent,name,raw,required=false,prefix=''){
     for(const [key,value] of Object.entries(spec.properties))field(group,key,value,(spec.required||[]).includes(key),full+'.');
     parent.append(group);return;
   }
-  const box=node('div',undefined,'form-field'),id='live-'+crypto.randomUUID(),caption=node('label',label(name)+(required?' *':''));caption.htmlFor=id;
+  const box=node('div',undefined,'form-field'),id='live-'+createRequestId(),caption=node('label',label(name)+(required?' *':''));caption.htmlFor=id;
   let input;
   const choices=spec.enum||(spec.const!==undefined?[spec.const]:null);
   if(choices||spec.type==='boolean'||(name==='position_title'&&options.positions)||(name==='department_id'&&options.departments)){
@@ -177,7 +177,7 @@ function operationCard(op,index){
         if(p.in==='path')path=path.replace('{'+p.name+'}',encodeURIComponent(v));else query.set(p.name,String(v));}
       if(path.includes('{'))throw new Error('请先选择记录或填写对应编号。');
       const sign=JSON.stringify({path,values,query:String(query)});
-      if(sign!==signature){signature=sign;pendingKey=crypto.randomUUID();}
+      if(sign!==signature){signature=sign;pendingKey=createRequestId();}
       let payload=values;
       if(mime==='multipart/form-data'){
         payload=new FormData();for(const [k,v]of Object.entries(values))payload.append(k,String(v));

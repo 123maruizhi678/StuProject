@@ -58,7 +58,7 @@ if (!await health()) {
   if (!ready) { console.error('后端启动失败，请检查 MySQL 和 .env。'); stop(1); }
 }
 if (!stopping) {
-  console.log('后端已就绪。前端 http://127.0.0.1:5173，通过 Vite 代理访问后端。');
+  console.log('后端已就绪。局域网登录地址 http://192.168.5.12/login.html，通过 Vite 代理访问后端。');
   launch(python, ['scripts/student/run_student_tasks.py']);
   launch(python, ['scripts/enterprise/run_enterprise_tasks.py', '--watch']);
   launch(process.execPath, ['node_modules/vite/bin/vite.js', '--config', 'vite.config.mjs']);

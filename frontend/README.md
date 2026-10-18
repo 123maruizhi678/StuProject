@@ -2,7 +2,7 @@
 
 保留学院风布局，69 个主要页面和 5 个兼容入口现通过真实 API 使用本地 MySQL 业务数据。
 
-在项目根目录运行 `npm run dev`，启动后自动打开 `http://127.0.0.1:5173/common/login.html`。账号 `root`、密码 `root`。
+在项目根目录运行 `npm run dev`，启动后自动打开 `http://192.168.5.12/login.html`，同一局域网设备可使用该地址访问，无需填写端口或配置域名解析。Vite 监听 HTTP 80 端口，本机也可通过 `http://127.0.0.1/login.html` 访问。账号 `root`、密码 `root`。首次使用局域网访问时，在管理员 PowerShell 中运行根目录的 `scripts/setup-lan.ps1` 配置防火墙。
 
 Vite 配置位于根目录 `vite.config.mjs`，将 `/api`、`/health`、`/openapi.json` 代理到 `127.0.0.1:8000`。`/static/*` 和旧登录/工作台地址兼容原有入口。直接双击 HTML 不能使用业务接口。
 

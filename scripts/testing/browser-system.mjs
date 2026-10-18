@@ -2,7 +2,7 @@ import { chromium } from '@playwright/test';
 import { readFile, writeFile } from 'node:fs/promises';
 import assert from 'node:assert/strict';
 
-const base=process.env.SYSTEM_BASE_URL||'http://127.0.0.1:5173';
+const base=process.env.SYSTEM_BASE_URL||'http://127.0.0.1';
 const catalog=JSON.parse(await readFile('frontend/pages.json','utf8'));
 const backend=JSON.parse(await readFile('.runtime/backend-system.json','utf8'));
 const browser=await chromium.launch({channel:'msedge',headless:true});

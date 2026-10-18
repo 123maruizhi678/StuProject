@@ -7,7 +7,7 @@ export default defineConfig({
     name: 'existing-page-routes',
     configureServer(server) {
       server.middlewares.use((req, res, next) => {
-        const aliases = { '/login': '/common/login.html', '/account': '/common/account.html',
+        const aliases = { '/': '/common/login.html', '/login.html': '/common/login.html', '/login': '/common/login.html', '/account': '/common/account.html',
           '/enterprise': '/enterprise/enterprise.html', '/student-assistant': '/student/student-assistant.html',
           '/admin': '/admin/accounts.html', '/admin/accounts': '/admin/accounts.html' };
         const [path, query] = req.url.split('?');
@@ -18,8 +18,8 @@ export default defineConfig({
     },
   }],
   server: {
-    host: '127.0.0.1', port: 5173, strictPort: true,
-    open: process.env.NO_OPEN !== '1' ? '/common/login.html' : false,
+    host: '0.0.0.0', port: 80, strictPort: true,
+    open: process.env.NO_OPEN !== '1' ? 'http://192.168.5.12/login.html' : false,
     proxy: {
       '/api': { target: 'http://127.0.0.1:8000', changeOrigin: true },
       '/health': { target: 'http://127.0.0.1:8000', changeOrigin: true },

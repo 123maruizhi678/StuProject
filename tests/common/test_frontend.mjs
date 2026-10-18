@@ -211,3 +211,12 @@ test("北京时间转换不受运行机器时区影响", async () => {
   assert.equal(report.toBeijingIso("2026-10-17T09:30:15"), "2026-10-17T09:30:15+08:00");
   assert.throws(() => report.toBeijingIso("invalid"));
 });
+
+test("普通 HTTP 缺少 randomUUID 时仍生成安全且互不重复的 UUID v4", () => {
+  const provider = { getRandomValues: bytes => globalThis.crypto.getRandomValues(bytes) };
+  const ids = Array.from({ length: 100 }, () => api.createRequestId(provider));
+  assert.equal(new Set(ids).size, ids.length);
+  for (const id of ids) assert.match(id, /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/);
+  const fixed = api.createRequestId({ getRandomValues: bytes => bytes.fill(255) });
+  assert.equal(fixed, "ffffffff-ffff-4fff-bfff-ffffffffffff");
+});
