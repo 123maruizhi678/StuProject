@@ -144,3 +144,8 @@ ENDPOINT_PERMISSIONS={
 ENDPOINT_PERMISSIONS.update({"submit_leave":"student.admin_service.create","submit_complaint":"service_ticket.create","tickets":"service_ticket.read_own","ticket_detail":"service_ticket.read_own","ticket_records":"service_ticket.read_own","get_courses":"student.course.read_own","get_scores":"student.score.read_own","notification_detail":"student.notification.read_own","leave_assignments":"student.admin_service.assign","assign_leave":"student.admin_service.assign","warning_assignments":"student.warning.assign","assign_warning":"student.warning.assign","maintain_academic":"student.academic.maintain","maintain_progress":"student.progress.maintain"})
 
 ENDPOINT_PERMISSIONS.update({'chat_history':'student.chat','chat_history_detail':'student.chat','own_profile':'student.profile.read_own'})
+
+ENDPOINT_PERMISSIONS.update({
+    'care_feedback_history': 'student.mental.create_own',
+    'submit_care_feedback': 'student.mental.create_own',
+})

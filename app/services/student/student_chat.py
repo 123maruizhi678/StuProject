@@ -32,7 +32,7 @@ class StudentChatService:
         from sqlalchemy import func
         from app.services.student.student_service import public_row
         self.service.student(actor)
-        where = sessions.c.student_id == actor.actor_id
+        where = (sessions.c.student_id == actor.actor_id) & ~sessions.c.session_id.like('care-%')
         rows = self.db.execute(select(sessions).where(where).order_by(sessions.c.updated_at.desc(), sessions.c.session_id).limit(limit).offset(offset)).mappings().all()
         items = []
         for row in rows:
@@ -45,7 +45,7 @@ class StudentChatService:
         from app.services.student.student_service import public_row
         self.service.student(actor)
         row = self.db.execute(select(sessions).where(sessions.c.session_id == session_id, sessions.c.student_id == actor.actor_id)).mappings().first()
-        if not row:
+        if not row or session_id.startswith('care-'):
             raise BusinessException('会话不存在', 404)
         where = (turns.c.session_id == session_id, turns.c.student_id == actor.actor_id)
         pending = bool(self.db.scalar(select(turns.c.id).where(*where, turns.c.result.is_(None)).limit(1)))

@@ -4,6 +4,10 @@ import { existsSync } from 'node:fs';
 const backendTarget = process.env.STUPROJECT_BACKEND_URL || 'http://192.168.5.12:8000';
 const localVoice = Boolean(process.env.ASR_MODEL_PATH || existsSync(new URL('./.runtime/models/faster-whisper-base/model.bin', import.meta.url)));
 
+// 后端代理目标：默认本机 127.0.0.1:8000；需要连接局域网其他机器上的后端时，
+// 启动前设置 BACKEND_ORIGIN，例如 BACKEND_ORIGIN=http://192.168.5.12:8000。
+const backendOrigin = process.env.BACKEND_ORIGIN || 'http://127.0.0.1:8000';
+
 export default defineConfig({
   root: 'frontend',
   appType: 'mpa',
