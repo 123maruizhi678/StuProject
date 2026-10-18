@@ -52,6 +52,16 @@ def _iso(dt) -> Optional[str]:
     return dt.isoformat() if dt else None
 
 
+def _profile_fields(info):
+    from app.schemas.customer.profile import PROFILE_FIELDS
+    from app.services.customer.profile_input import coerce_profile
+    raw={k:v for k,v in (info.raw_fields or {}).items() if k in PROFILE_FIELDS}
+    for key in ("full_name", "age", "education_level"):
+        value=getattr(info,key,None)
+        if value is not None:raw[key]=value
+    return coerce_profile(raw)[0]
+
+
 # ---- 序列化（明文电话 / 密文不返回）----
 def serialize_source(s) -> dict:
     return {
@@ -84,6 +94,8 @@ def serialize_info(info) -> dict:
         "target_product_code": info.target_product_code,
         "phone_lookup_token": info.phone_lookup_token,
         "contact_email": info.contact_email,
+        "profile_fields": _profile_fields(info),
+        "profile_warnings": (info.raw_fields or {}).get("_profile_warnings", []),
     }
 
 
@@ -137,6 +149,8 @@ class CustomerService:
     def _create_text_source(self, account: AccountContext, text: str):
         if not text or not text.strip():
             raise BadRequestError("文本内容不能为空")
+        if len(text.encode("utf-8")) > 100*1024:
+            raise BadRequestError("文本超过 100 KiB，请拆分后提交")
         source = customer_repository.create_source(
             self.db,
             source_type="text",
@@ -153,6 +167,8 @@ class CustomerService:
         parser_mod.assert_allowed_file(file_name)
         if not file_bytes:
             raise BadRequestError("文件内容为空")
+        if len(file_bytes) > 20*1024*1024:
+            raise BadRequestError("文件超过 20 MB，请拆分后提交")
         source_type = parser_mod.source_type_from_filename(file_name)
         upload_dir = os.path.abspath(settings.CUSTOMER_UPLOAD_DIR)
         os.makedirs(upload_dir, exist_ok=True)
@@ -208,17 +224,16 @@ class CustomerService:
         return source, created
 
     def _extract_records(self, source) -> List[dict]:
-        extractor = ExtractorService()
-        if source.source_type == "excel":
-            rows = parser_mod.read_excel_records(source.file_path)
-            return [extractor.coerce(r) for r in rows]
-        text = parser_mod.read_source_text(source)
-        if not text or not text.strip():
-            raise BadRequestError("无可解析内容")
-        fields = extractor.extract(text)
-        if not self._has_meaningful(fields):
-            raise BadRequestError("未能提取到有效字段")
-        return [fields]
+        from app.services.customer.profile_input import parse_input, MAX_FILE_BYTES
+        if source.file_path:
+            with open(source.file_path, "rb") as stream:
+                parsed=parse_input(file_name=source.file_name, file_bytes=stream.read(MAX_FILE_BYTES+1))
+        else:
+            parsed=parse_input(text=source.raw_content)
+        errors=[row for row in parsed if row["error"]]
+        if errors:
+            raise BadRequestError("表格存在无效客户行，请先核对："+"、".join(str(r["row_number"]) for r in errors[:10]))
+        return [{**row["facts"], "_profile_warnings":row["warnings"]} for row in parsed]
 
     @staticmethod
     def _has_meaningful(fields: dict) -> bool:
