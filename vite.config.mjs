@@ -1,6 +1,8 @@
 import { defineConfig } from 'vite';
 import { frontendPort, localOrigin } from './scripts/local-address.mjs';
 
+const backendTarget = process.env.STUPROJECT_BACKEND_TARGET || 'http://192.168.5.12:8000';
+
 export default defineConfig({
   root: 'frontend',
   appType: 'mpa',
@@ -22,9 +24,9 @@ export default defineConfig({
     host: '0.0.0.0', port: frontendPort, strictPort: true,
     open: process.env.NO_OPEN !== '1' ? `${localOrigin}/login.html` : false,
     proxy: {
-      '/api': { target: 'http://127.0.0.1:8000', changeOrigin: true },
-      '/health': { target: 'http://127.0.0.1:8000', changeOrigin: true },
-      '/openapi.json': { target: 'http://127.0.0.1:8000', changeOrigin: true },
+      '/api': { target: backendTarget, changeOrigin: true },
+      '/health': { target: backendTarget, changeOrigin: true },
+      '/openapi.json': { target: backendTarget, changeOrigin: true },
     },
   },
 });
