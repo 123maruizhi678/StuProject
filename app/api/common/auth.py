@@ -5,11 +5,13 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.core.common.auth import get_current_account
-from app.core.common.authorization import access_for, public_access
+from app.core.common.authorization import public_access
+from app.core.common.navigation import account_access, navigation_for
 from app.core.common.response import success
 from app.database import get_db
 from app.models.common.user_account import UserAccount
-from app.schemas.common.auth import LoginRequest
+from app.repositories.common.account_repository import AccountRepository
+from app.schemas.common.auth import LoginRequest, UpdateProfileRequest
 from app.services.common.auth_service import authenticate, create_access_token
 
 router = APIRouter(prefix="/auth", tags=["authentication"])
@@ -18,7 +20,9 @@ router = APIRouter(prefix="/auth", tags=["authentication"])
 @router.get("/public-access")
 def get_public_access():
     """Return public page metadata for clients before login."""
-    return success(public_access())
+    access = public_access()
+    access["navigation"] = navigation_for(set(), None)
+    return success(access)
 
 
 @router.post("/login")
@@ -41,6 +45,10 @@ def login(
             "access_token": token,
             "token_type": "bearer",
             "expires_in": expires_in,
+            "username": account.username,
+            "user_id": account.user_id,
+            "identity_type": account.identity_type,
+            "display_name": AccountRepository(db).display_name(account),
         }
     )
 
@@ -48,6 +56,19 @@ def login(
 @router.get("/me/access")
 def get_my_access(
     account: Annotated[UserAccount, Depends(get_current_account)],
+    db: Annotated[Session, Depends(get_db)],
 ):
     """Return the user's allowed pages and modules for frontend navigation."""
-    return success(access_for(account.identity_type, account.user_id))
+    access = account_access(db, account)
+    access["display_name"] = AccountRepository(db).display_name(account)
+    return success(access)
+
+
+@router.patch("/me/profile")
+def update_my_profile(
+    payload: UpdateProfileRequest,
+    account: Annotated[UserAccount, Depends(get_current_account)],
+    db: Annotated[Session, Depends(get_db)],
+):
+    name = AccountRepository(db).update_full_name(account, payload.full_name, payload.expected_full_name)
+    return success({"user_id": account.user_id, "identity_type": account.identity_type, "display_name": name})

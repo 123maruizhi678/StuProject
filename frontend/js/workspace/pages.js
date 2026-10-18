@@ -26,6 +26,32 @@ export function operationsForPage(page,paths){
   return rank(a)-rank(b)||a.path.split('/').length-b.path.split('/').length;
  });
 }
+
+// 菜单与表单均采用服务端精确动作权限，查看资料不隐含解析或原件下载权限。
+export function operationsForAccess(operations, access) {
+ const permissions = new Set(access?.permissions || []);
+ return operations.filter(operation => {
+  const { path, method } = operation;
+  let permission;
+  if (path.startsWith('/api/v1/customer/')) {
+   if (method === 'GET') permission = path.endsWith('/file') ? 'customer.source.file'
+    : path.includes('/source') ? 'customer.source.read'
+    : path.includes('/result') ? 'customer.result.read' : 'customer.rule.read';
+   else if (path.includes('/parse')) permission = 'customer.source.parse';
+   else if (path.endsWith('/source')) permission = 'customer.source.create';
+   else if (path.endsWith('/judge/batch')) permission = 'customer.judge.batch';
+   else if (path.endsWith('/judge')) permission = 'customer.judge.create';
+   else if (path.endsWith('/rule')) permission = 'customer.rule.manage';
+   else return false;
+  } else if (path.startsWith('/api/v1/report/')) {
+   permission = path.includes('/configs') ? (method === 'GET' ? 'report.config.read' : 'report.config.write')
+    : path.endsWith('/generate') && method === 'POST' ? 'report.generate'
+    : method === 'GET' ? 'report.read' : null;
+   if (!permission) return false;
+  } else return true;
+  return permissions.has(permission);
+ });
+}
 export const LABELS={
  customer_no:'客户编号',source_channel:'来源渠道',authority_source:'维护来源',employee_name:'员工姓名',
  product_name:'产品名称',source_type:'资料类型',file_name:'文件名称',matched:'是否符合条件',score:'研判得分',

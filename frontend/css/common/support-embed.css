@@ -1,0 +1,11 @@
+.support-embedded .app-rail,.support-embedded .app-topbar,.support-embedded .page-footer,.support-embedded .preview-notice,.support-embedded .preview-tag,.support-embedded .eyebrow,.support-embedded .mobile-scrim{display:none!important}
+.support-embedded .workspace{margin-left:0;min-height:100vh}
+.support-embedded .workspace-main{padding:22px 18px;max-width:100%;min-width:0}
+.support-embedded .page-heading h1{font-size:23px}
+.support-embedded .support-tabs{position:sticky;top:0;z-index:5;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px;padding:12px 10px;background:#fffdf9;border-bottom:1px solid var(--border)}
+.support-tabs a{text-align:center;font-size:12px;padding:10px 3px;border-radius:6px;color:var(--muted)}
+.support-tabs a:hover,.support-tabs a[aria-current]{background:var(--crimson-soft);color:var(--crimson)}
+.support-embedded .section-card,.support-embedded input,.support-embedded textarea,.support-embedded select{min-width:0;max-width:100%}
+.support-embedded .live-result{overflow-wrap:anywhere}
+.support-embedded a[hidden]{display:none!important}
+@media(max-width:360px){.support-embedded .workspace-main{padding:18px 12px}.support-tabs a{font-size:11px}}

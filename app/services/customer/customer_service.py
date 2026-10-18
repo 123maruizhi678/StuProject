@@ -289,23 +289,41 @@ class CustomerService:
         return outcomes
 
     # ---- 结果查询 ----
+    def list_sources(self, account, limit, offset):
+        from app.core.common.research_access import research_department
+        rows, total = customer_repository.list_sources(self.db, research_department(self.db, account), limit, offset)
+        return {"items": [serialize_source(row) for row in rows], "total": total, "limit": limit, "offset": offset}
+
+    def get_source_detail(self, account, source_id):
+        from app.core.common.research_access import research_department
+        department = research_department(self.db, account)
+        source = customer_repository.get_source(self.db, source_id, department)
+        if source is None:
+            raise NotFoundError("资料来源不存在")
+        return {"source": serialize_source(source), "fields": [serialize_info(row) for row in
+            customer_repository.list_info_by_source(self.db, source_id, department)]}
+
     def get_result(self, account: AccountContext, result_id: int):
-        result = customer_repository.get_result_by_id(self.db, result_id)
+        from app.core.common.research_access import research_department
+        result = customer_repository.get_result_by_id(self.db, result_id, research_department(self.db, account))
         if result is None:
             raise NotFoundError("研判结果不存在")
         return result
 
     def list_results(self, account: AccountContext, q: ResultListQuery):
+        from app.core.common.research_access import research_department
+        department = research_department(self.db, account)
         product_id = None
         if q.product_code:
             product = customer_repository.get_product_by_code(self.db, q.product_code)
             if product is None:
                 raise NotFoundError("产品不存在")
             product_id = product.id
-        total = customer_repository.count_results(self.db, product_id, q.matched)
+        total = customer_repository.count_results(self.db, product_id, q.matched, department_id=department)
         items = customer_repository.list_results(
             self.db, product_id, q.matched,
             offset=(q.page - 1) * q.page_size, limit=q.page_size,
+            department_id=department,
         )
         return {"total": total, "page": q.page, "page_size": q.page_size, "items": items}
 

@@ -1,9 +1,10 @@
 import { API, request, readSession, saveSession, clearSession, createRequestId } from '../common/api.js';
-import { PAGE_RESOURCES, operationsForPage, LABELS } from './pages.js';
+import { PAGE_RESOURCES, operationsForPage, operationsForAccess, LABELS } from './pages.js';
 
 const $ = (q, root=document) => root.querySelector(q);
 const $$ = (q, root=document) => [...root.querySelectorAll(q)];
 const page = location.pathname.replace(/^\/static\//,'/').replace(/^\//,'');
+let readOnlyView = false;
 const style = document.createElement('link'); style.rel='stylesheet'; style.href='/css/workspace/live.css'; document.head.append(style);
 const node = (tag, text, cls) => { const n=document.createElement(tag); if(text!==undefined)n.textContent=text; if(cls)n.className=cls;return n; };
 const label = key => LABELS[key] || (key ? key.replaceAll('_',' ') : '业务记录');
@@ -60,7 +61,7 @@ function renderData(root,data,path){
   if(data===null||data===undefined){root.append(node('p','操作成功。'));return;}
   const rows=Array.isArray(data)?data:Array.isArray(data.items)?data.items:Array.isArray(data.rows)?data.rows:null;
   if(rows){
-    root.append(node('p',`共 ${data.total??rows.length} 条记录。选择记录后，可在下方操作中使用其编号和当前版本。`));
+    root.append(node('p',`共 ${data.total??rows.length} 条记录。`+(readOnlyView?'点击查看记录，可查看详细信息。':'选择记录后，可在下方操作中使用其编号和当前版本。')));
     if(!rows.length){root.append(node('p','暂无记录。'));return;}
     const keys=[...new Set(rows.flatMap(row=>Object.keys(row)))].filter(k=>!/(password|ciphertext|lookup_token|secret|request_hash)/i.test(k));
     const priority=['full_name','username','course_name','title','report_name','customer_no','student_no','course_code','report_date','status','row_version'];
@@ -71,7 +72,7 @@ function renderData(root,data,path){
     const body=node('tbody');
     for(const row of rows){
       const tr=node('tr');for(const k of visible)tr.append(node('td',format(row[k])));
-      const td=node('td'),choose=node('button','选择记录','button secondary small');choose.type='button';
+      const td=node('td'),choose=node('button',readOnlyView?'查看记录':'选择记录','button secondary small');choose.type='button';
       choose.onclick=()=>{remember(row,path);detail.replaceChildren(node('p','已选择此记录。','live-selection'));renderObject(detail,row);};td.append(choose);tr.append(td);body.append(tr);
     }
     table.append(body);wrap.append(table);root.append(wrap);const detail=node('div');root.append(detail);
@@ -238,8 +239,9 @@ async function start(){
   try{
     try{selected=JSON.parse(sessionStorage.getItem('stuproject.live.selection')||'{}');}catch{}
     const response=await fetch('/openapi.json');if(!response.ok)throw new Error('服务契约暂时不可用。');schema=await response.json();
+    let access=null;
     if(readSession()){
-      const access=await API.myAccess();
+      access=await API.myAccess();
       $$('.user-name').forEach(x=>x.textContent=(enums[access.identity_type]||access.identity_type)+' #'+access.user_id);
       if(access.identity_type==='admin'){
         const r=await fetch('/api/v1/admin/openapi.json',{headers:{Authorization:'Bearer '+readSession().accessToken}});
@@ -248,8 +250,9 @@ async function start(){
       }
       const logout=node('button','退出登录','button secondary small');logout.type='button';logout.onclick=()=>{clearSession();location.assign('/common/login.html');};$('.top-actions')?.append(logout);
     }
-    intro.textContent='数据来自当前本地业务库。修改前请选择记录，提交时使用其当前版本。';
-    const operations=operationsForPage(page,schema.paths);
+    const operations=operationsForAccess(operationsForPage(page,schema.paths),access);
+    readOnlyView=/^(customer|report)\//.test(page)&&operations.every(operation=>operation.method==='GET');
+    intro.textContent=readOnlyView?'当前为只读查看，仅显示当前账号有权查看的信息。':'数据来自当前本地业务库。修改前请选择记录，提交时使用其当前版本。';
     for(let index=0;index<operations.length;index++)main.append(operationCard(operations[index],index));
     if(!operations.length)intro.textContent='当前身份没有可用操作。';
   }catch(error){status(intro,error.message,true);}
