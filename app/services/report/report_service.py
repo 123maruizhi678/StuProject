@@ -432,10 +432,13 @@ def run_generation(
     *,
     user: str = "report-service",
     bind=None,
+    already_claimed: bool = False,
 ) -> None:
     """后台执行：领取 → 取数 → 冻结输入 → AI 写分析 → 对账 → 原子发布。
 
     bind 仅供测试注入独立数据源（如 SQLite）；生产使用全局引擎。
+    already_claimed=True 表示调用方（调度器 drain）已领取执行权
+    （pending→running），此处不重复领取，只沿用当前行版本栅栏。
     """
     if bind is not None:
         from sqlalchemy.orm import sessionmaker
@@ -448,12 +451,19 @@ def run_generation(
         if record is None:
             return
 
-        claimed = repo.claim_record(db, report_record_id)
-        if claimed is None:
-            # 已被其他执行者领取，或状态非 pending（含 success/failed 复用）。
-            return
-        record = claimed
-        row_version = record.row_version
+        if already_claimed:
+            # 调度器 drain 已在 queue.claim() 领取（pending→running）；此处
+            # 只校验状态，不重复领取，直接沿用已领取记录的行版本栅栏。
+            if record.status != "running":
+                return
+            row_version = record.row_version
+        else:
+            claimed = repo.claim_record(db, report_record_id)
+            if claimed is None:
+                # 已被其他执行者领取，或状态非 pending（含 success/failed 复用）。
+                return
+            record = claimed
+            row_version = record.row_version
 
         try:
             config = repo.get_config_by_code(db, record.report_code)
