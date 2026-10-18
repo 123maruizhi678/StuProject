@@ -57,7 +57,7 @@ function stop(code = 0) {
 process.on('SIGINT', () => stop());
 process.on('SIGTERM', () => stop());
 if (!await health()) {
-  if (!await backendPortOpen()) launch(python, ['-m', 'uvicorn', 'app.main:app', '--host', '127.0.0.1', '--port', '8000']);
+  if (!await backendPortOpen()) launch(python, ['-m', 'uvicorn', 'app.main:app', '--host', '0.0.0.0', '--port', '8000']);
   let ready = false;
   for (let i = 0; i < 60 && !stopping; i++) {
     if (await health()) { ready = true; break; }
@@ -66,6 +66,9 @@ if (!await health()) {
   if (!ready) { console.error('后端启动失败，请检查 MySQL 和 .env。'); stop(1); }
 }
 if (!stopping) {
+  if (existsSync(path.join(root, '.runtime/models/faster-whisper-base/model.bin')) || process.env.ASR_MODEL_PATH) {
+    launch(python, ['scripts/enterprise/local_voice.py']);
+  }
   console.log(`后端已就绪。局域网登录地址 ${localOrigin}/login.html，通过 Vite 代理访问后端。`);
   launch(python, ['scripts/student/run_student_tasks.py']);
   launch(python, ['scripts/enterprise/run_enterprise_tasks.py', '--watch']);

@@ -1,4 +1,4 @@
-.permission-loading .rail-scroll,.permission-loading .workspace-main{visibility:hidden}
+/* Initial loading visibility is controlled by the critical shared layout stylesheet. */
 .notice-section{margin-bottom:28px;overflow:hidden}
 .notice-section .section-title p{margin:6px 0 0}
 .notice-content{max-height:390px;overflow:auto}
@@ -74,3 +74,17 @@ a[hidden],.section-card[hidden]{display:none!important}
 #workspace-module-count{font-size:32px}
 @media(max-width:1100px){.workspace-module-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:720px){.workspace-welcome{padding:26px;align-items:flex-start;flex-direction:column;gap:24px}.workspace-welcome h2{font-size:26px}.workspace-identity{text-align:left;min-width:0;gap:8px}.workspace-module-grid{grid-template-columns:1fr;gap:16px}.workspace-module-card{padding:24px}.permission-notice{padding:24px}.permission-notice h1{font-size:23px}}
+
+/* A single notification center retains inline read actions and full student messages. */
+.notice-entry{display:flex;align-items:center;gap:18px;border-bottom:1px solid var(--border);min-width:0}
+.notice-entry:last-child{border-bottom:0}
+.notice-entry.unread{background:#fffdf7}
+.notice-entry>.notice-row{flex:1;min-width:0;border-bottom:0}
+.notice-entry .notice-mark-read{flex:none;margin-right:26px;min-width:88px}
+.notice-full-content{white-space:pre-wrap;overflow:visible;text-overflow:clip;overflow-wrap:anywhere}
+.notice-action-status{padding:12px 26px;margin:0;color:var(--muted);font-size:12px;overflow-wrap:anywhere}
+.notice-action-status:empty{display:none}
+@media(max-width:720px){.notice-entry{flex-wrap:wrap;gap:0}.notice-entry>.notice-row{flex-basis:100%}.notice-entry .notice-mark-read{margin:0 18px 18px auto}.notice-action-status{padding:12px 18px}}
+
+/* School mission stays below the brand, above the scrolling navigation. */
+.app-rail .rail-mission{flex:none;margin:0 13px 12px;padding:0 9px;font-family:var(--serif);font-size:13px;line-height:1.8;letter-spacing:1px;text-align:center;color:var(--crimson)}

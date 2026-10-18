@@ -1,9 +1,14 @@
 .account-settings .account-setting-card { margin-top: 24px; padding: 28px 32px; }
-.account-settings .account-setting-card h2 { margin: 0 0 22px; font-size: 24px; }
+.account-settings .account-setting-card h2 { margin: 0 0 22px; font-size: 16px; }
 .account-settings .account-setting-form { display: grid; gap: 18px; max-width: 560px; }
 .account-settings .account-setting-form .form-field { display: grid; gap: 8px; }
-.account-settings .account-setting-form input { width: 100%; min-height: 46px; font-size: 17px; }
+.account-settings .account-setting-form input { width: 100%; min-height: 46px; font-size: 12px; }
 .account-settings .account-setting-form .button { justify-self: start; min-height: 44px; }
 .account-settings .account-setting-form [role=status] { white-space: pre-wrap; overflow-wrap: anywhere; }
 .account-settings .account-setting-form [hidden] { display: none; }
 @media(max-width: 600px) { .account-settings .account-setting-card { padding: 22px 18px; } }
+
+/* Match the public Notification Center heading and field type sizes. */
+.account-settings .permission-notice h1 { font-size: 29px; }
+.account-settings .account-setting-form label { font-size: 12px; }
+@media(max-width: 720px) { .account-settings .permission-notice h1 { font-size: 25px; } }

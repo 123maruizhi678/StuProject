@@ -1,5 +1,6 @@
 import { API, request, readSession, saveSession, clearSession, createRequestId } from '../common/api.js';
 import { PAGE_RESOURCES, operationsForPage, operationsForAccess, LABELS } from './pages.js';
+import { getPageAccess } from '../common/page-loading.js';
 
 const $ = (q, root=document) => root.querySelector(q);
 const $$ = (q, root=document) => [...root.querySelectorAll(q)];
@@ -361,7 +362,7 @@ async function login() {
     try {
       const data = await API.login(name.value.trim(), password.value); saveSession(data); password.value = '';
       const access = await API.myAccess();
-      location.assign(access.identity_type === 'student' ? '/student/student-assistant.html' : access.identity_type === 'employee' ? '/enterprise/enterprise.html' : access.identity_type === 'customer' ? '/common/account.html' : '/dashboard/dashboard.html');
+      location.assign(access.identity_type === 'student' ? '/student/student-assistant.html' : access.identity_type === 'employee' ? '/enterprise/assistant.html' : access.identity_type === 'customer' ? '/common/account.html' : '/dashboard/dashboard.html');
     }
     catch (error) { status(message, error.message, true); } finally { button.disabled = false; }
   });
@@ -389,12 +390,15 @@ async function start() {
     const response = await fetch('/openapi.json'); if (!response.ok) throw new Error('服务契约暂时不可用。'); schema = await response.json();
     let access = null;
     if (readSession()) {
-      access = await API.myAccess();
-      $$('.user-name').forEach(x => x.textContent = (enums[access.identity_type] || access.identity_type) + ' #' + access.user_id);
+      access = getPageAccess(readSession()?.accessToken) || await API.myAccess();
+      $$('.user-name').forEach(x => x.textContent = access.display_name || readSession()?.identity?.displayName || (enums[access.identity_type] || access.identity_type) + ' #' + access.user_id);
       if (access.identity_type === 'admin') {
-        const r = await fetch('/api/v1/admin/openapi.json', { headers: { Authorization: 'Bearer ' + readSession().accessToken } });
+        const [r, accountOptions] = await Promise.all([
+          fetch('/api/v1/admin/openapi.json', { headers: { Authorization: 'Bearer ' + readSession().accessToken } }),
+          request('/admin/accounts/options'),
+        ]);
         if (r.ok) { const admin = await r.json(); schema.paths = { ...schema.paths, ...admin.paths }; schema.components.schemas = { ...schema.components.schemas, ...admin.components.schemas }; }
-        options = await request('/admin/accounts/options');
+        options = accountOptions;
       }
       const logout = node('button', '退出登录', 'button secondary small'); logout.type = 'button'; logout.onclick = () => { clearSession(); location.assign('/common/login.html'); }; $('.top-actions')?.append(logout);
       if (adminListMode) {

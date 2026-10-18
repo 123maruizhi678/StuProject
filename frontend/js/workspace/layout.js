@@ -13,11 +13,13 @@ document.addEventListener('input', event => {
     document.querySelectorAll('.map-link').forEach(link=>link.hidden=link.dataset.permissionHidden==='true'||!link.textContent.includes(term));
   }
 });
-document.documentElement.classList.add('permission-loading');
+const pageLoading = import('../common/page-loading.js');
 const permissionStyle = document.createElement('link');
 permissionStyle.rel = 'stylesheet'; permissionStyle.href = '/css/common/workspace.css';
 document.head.append(permissionStyle);
 const startPublicLayout = async () => {
+  const { beginPageLoading, finishPageLoading } = await pageLoading;
+  beginPageLoading();
   const { prepareSupportFrame } = await import('../common/support-context.js');
   if (!prepareSupportFrame()) return;
   if (location.pathname.replace(/^\/static\//, '/') === '/common/notifications.html') {
@@ -25,8 +27,8 @@ const startPublicLayout = async () => {
     return;
   }
   if (document.querySelector('[data-login-preview]')) {
-    document.documentElement.classList.remove('permission-loading');
     await import('../common/login-page.js');
+    await finishPageLoading();
     return;
   }
   const { mountNavigation, renderNavigation } = await import('../common/navigation.js');
@@ -36,12 +38,10 @@ const startPublicLayout = async () => {
     const { renderAccount } = await import('../common/account-page.js');
     renderAccount(access);
   } else await import('./live.js');
-  renderNavigation(access);
+  renderNavigation();
+  await finishPageLoading();
 };
-startPublicLayout().catch(error => {
-  document.documentElement.classList.remove('permission-loading');
-  const node = document.createElement('p');
-  node.className = 'live-error'; node.setAttribute('role','alert');
-  node.textContent = '页面加载失败：' + error.message;
-  (document.querySelector('main') || document.body).prepend(node);
+startPublicLayout().catch(async error => {
+  const { failPageLoading } = await pageLoading;
+  await failPageLoading(error);
 });

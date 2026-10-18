@@ -16,7 +16,7 @@ export const PAGE_RESOURCES={
  'student/tickets.html':[s+'tickets',s+'complaint'],'student/ticket-detail.html':[s+'tickets'],'student/notifications.html':[s+'notifications'],'student/care.html':[s+'mental/monitor'],'student/action-preview.html':[s+'actions/confirm'],
  'report/report.html':[r+'list',r+'generate'],'report/list.html':[r+'list'],'report/generate.html':[r+'generate'],'report/detail.html':[r+'{report_record_id}'],'report/configs.html':[r+'configs'],
  'common/account.html':['/api/v1/auth/me/access',e+'me/permissions'],'common/notifications.html':[e+'notifications',s+'notifications',i+'notifications'],
- 'admin/accounts.html':['/api/v1/admin/accounts','/api/v1/auth/register'],'admin/permissions.html':['/api/v1/auth/me/access',e+'me/permissions',e+'employees'],'admin/audit.html':[e+'operation-logs'],'admin/settings.html':[r+'configs'],
+ 'admin/accounts.html':['/api/v1/admin/accounts','/api/v1/auth/register'],'admin/permissions.html':['/api/v1/auth/me/access',e+'me/permissions',e+'employees','/api/v1/auth/register'],'admin/audit.html':[e+'operation-logs'],'admin/settings.html':[r+'configs'],
 };
 export function operationsForPage(page,paths){
  return Object.entries(paths).flatMap(([path,methods])=>(PAGE_RESOURCES[page]||[]).some(prefix=>path===prefix||path.startsWith(prefix+'/'))

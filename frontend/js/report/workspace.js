@@ -45,10 +45,14 @@ const link = (text, href, cls = "") => {
   el.href = href;
   return el;
 };
-/** 接口返回 UTC ISO；业务时区为北京时间（UTC+8），界面统一换算为北京时间展示。 */
+/** 接口返回 UTC ISO；业务时区为北京时间（UTC+8），界面统一换算为北京时间展示。
+ *  契约值为带 Z 的 UTC；对漏带时区标识的 naive 值按 UTC 解析
+ *  （Date.parse 对无时区字符串会按浏览器本地时区解析，导致 +8 换算被抵消）。 */
 const formatBeijing = (value) => {
   if (!value) return "—";
-  const ms = Date.parse(String(value).replace(" ", "T"));
+  const raw = String(value).replace(" ", "T");
+  const iso = /(?:Z|[+-]\d{2}:?\d{2})$/.test(raw) ? raw : `${raw}Z`;
+  const ms = Date.parse(iso);
   if (Number.isNaN(ms)) return String(value);
   const shifted = new Date(ms + 8 * 3600 * 1000);
   const pad = (n) => String(n).padStart(2, "0");
@@ -348,7 +352,17 @@ async function renderGenerate(main, notify, access) {
     try {
       const data = await generateReport(bodyPayload);
       const hint = node("p", undefined, "live-status");
-      hint.append(node("span", `已受理：报告 #${data.report_record_id}（${STATUS_LABELS[data.status] || data.status}）`));
+      if (data.reused) {
+        // 业务键相同即复用已有记录（040/041）：不重新调用模型，失败记录不会自动重试。
+        hint.append(node("span",
+          `该时间窗已有报告 #${data.report_record_id}（${STATUS_LABELS[data.status] || data.status}），同参数不会重新生成。`));
+        if (data.status === "failed") {
+          hint.append(node("br"));
+          hint.append(node("span", "失败记录不会自动重试：请更换时间窗后再提交。"));
+        }
+      } else {
+        hint.append(node("span", `已受理：报告 #${data.report_record_id}（${STATUS_LABELS[data.status] || data.status}）`));
+      }
       hint.append(node("br"));
       hint.append(link("前往报告列表查看进度", "list.html"));
       notify.node(hint);

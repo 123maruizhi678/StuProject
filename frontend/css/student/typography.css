@@ -1,8 +1,5 @@
-/* Student pages only: one readable type scale for every student workflow. */
+/* Student pages inherit the same shared type scale as the public Notification Center. */
 body.student-workspace {
-  --student-body-size: 18px;
-  --student-small-size: 15px;
-  font-size: var(--student-body-size);
   line-height: 1.75;
 }
 body.student-workspace :is(p, label, input, select, textarea, button, .button,
@@ -11,14 +8,12 @@ body.student-workspace :is(p, label, input, select, textarea, button, .button,
   .detail-pairs dd, .live-result, .live-status, .live-selection, .live-paging,
   .message, .message .bubble, .suggestion, .prompt-chip, .history-item,
   .student-live .bubble, .student-live .prompt-chip, .student-live .history-item) {
-  font-size: var(--student-body-size);
   line-height: 1.75;
 }
 body.student-workspace :is(input, select, textarea) { padding: 10px 12px; }
 body.student-workspace :is(button, .button) { min-height: 46px; }
 body.student-workspace :is(.rail-link, .rail-link.sub, .quick-link strong,
   .list-line strong, .timeline strong, .notification h3, .faq-row summary) {
-  font-size: var(--student-body-size);
   line-height: 1.65;
 }
 body.student-workspace .rail-link.sub { padding-top: 9px; padding-bottom: 9px; }
@@ -35,23 +30,18 @@ body.student-workspace :is(small, .tiny, .eyebrow, .rail-label, .rail-foot,
   .student-live .composer-footer, .student-live .bubble small,
   .student-live .bubble pre, .student-live .pager,
   .student-live .detail-grid dt) {
-  font-size: var(--student-small-size);
   line-height: 1.7;
 }
 body.student-workspace :is(.data-table, .data-table th, .data-table td,
-  .data-table td strong) { font-size: 16px; line-height: 1.75; }
-body.student-workspace .data-table td small { font-size: var(--student-small-size); }
+  .data-table td strong) { line-height: 1.75; }
 body.student-workspace :is(.data-table th, .data-table td) { padding: 15px 18px; }
 body.student-workspace .table-wrap { max-width: 100%; overflow-x: auto; }
 body.student-workspace .data-table { min-width: 720px; }
-body.student-workspace .page-heading h1 { font-size: 34px; line-height: 1.4; }
-body.student-workspace :is(h2, .section-title h2, .panel-head h2) {
-  font-size: 24px; line-height: 1.5;
+body.student-workspace .page-heading h1 { line-height: 1.4; }
+body.student-workspace :is(h2, .section-title h2, .panel-head h2) { line-height: 1.5;
 }
-body.student-workspace :is(h3, .student-live .panel-head h3, .live-section summary) {
-  font-size: 20px; line-height: 1.6;
+body.student-workspace :is(h3, .student-live .panel-head h3, .live-section summary) { line-height: 1.6;
 }
-body.student-workspace .stat-card .stat-label { font-size: 15px !important; }
 body.student-workspace .student-live .chat-layout {
   grid-template-columns: minmax(0, 1fr) 290px;
 }
@@ -59,14 +49,12 @@ body.student-workspace .student-live .panel-head { gap: 16px; flex-wrap: wrap; }
 body.student-workspace .student-live .history-item { overflow-wrap: anywhere; }
 body.student-workspace .student-live .bubble pre { overflow-wrap: anywhere; }
 body.student-workspace .student-live .composer-footer { flex-wrap: wrap; }
-body.student-workspace .student-unread-count {
-  font-size: 12px; line-height: 1.5; min-width: 20px;
+body.student-workspace .student-unread-count { line-height: 1.5; min-width: 20px;
 }
 @media (max-width: 850px) {
   body.student-workspace .student-live .chat-layout { grid-template-columns: minmax(0, 1fr); }
 }
 @media (max-width: 720px) {
-  body.student-workspace .page-heading h1 { font-size: 30px; }
   body.student-workspace .live-form fieldset { min-width: 0; }
   body.student-workspace .live-paging { flex-wrap: wrap; }
 }
@@ -88,7 +76,7 @@ body.student-workspace .student-notification-row.unread { background: #fdf8f6; }
 body.student-workspace .student-notification-copy { min-width: 0; overflow-wrap: anywhere; }
 body.student-workspace .student-notification-copy h3 { margin: 0 0 10px; }
 body.student-workspace .student-notification-copy p { white-space: pre-wrap; margin: 0 0 10px; }
-body.student-workspace .student-notification-meta { color: var(--muted); font-size: 15px; line-height: 1.7; }
+body.student-workspace .student-notification-meta { color: var(--muted); line-height: 1.7; }
 body.student-workspace .student-notification-action { min-width: 118px; }
 body.student-workspace .student-notification-action:disabled { cursor: default; }
 body.student-workspace .student-notification-list .pager {
@@ -111,3 +99,17 @@ body.student-workspace .student-leave-row-actions .button + .button { margin-lef
 body.student-workspace .student-leave-progress { padding-left: 24px; }
 body.student-workspace .student-leave-progress li { padding: 10px 0 10px 8px; }
 body.student-workspace .student-leave-progress p { white-space: pre-wrap; overflow-wrap: anywhere; margin: 8px 0; }
+
+/* Custom student components match the notice title, body and metadata sizes. */
+body.student-workspace .student-live .panel-head :is(h2, h3) { font-size: 16px; }
+body.student-workspace .student-live :is(.bubble, .prompt-chip, .history-item) { font-size: 14px; }
+body.student-workspace .student-live :is(.bubble pre, .form-hint, .history-note, .muted, .composer-footer, .pager, .detail-grid dt) { font-size: 12px; }
+body.student-workspace .student-live :is(.bubble small, .history-item small) { font-size: 11px; }
+body.student-workspace .student-notification-copy h3 { font-size: 14px; }
+body.student-workspace .student-notification-copy p { font-size: 12px; }
+body.student-workspace .student-notification-meta { font-size: 11px; }
+body.student-workspace .student-unread-count { font-size: 12px; }
+body.student-workspace .form-field label { font-size: 12px; }
+@media (max-width: 720px) {
+  body.student-workspace .student-notification-copy h3 { font-size: 13px; }
+}
