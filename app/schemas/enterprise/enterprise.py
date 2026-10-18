@@ -80,7 +80,7 @@ class EmployeeUpdate(Mutation):
     status:Literal['active','disabled','left']|None=None
     left_date:date|None=None
 class RoleUpdate(Mutation):
-    role_codes:list[Literal['employee','consultant','manager','teacher','academic','admin','analyst','reviewer']]=Field(min_length=1,max_length=8)
+    role_codes:list[Literal['employee','consultant','manager','teacher','academic','admin','analyst','reviewer','counselor']]=Field(min_length=1,max_length=9)
     reason:str=Field(min_length=1,max_length=1000)
 class BindingCreate(StrictModel):
     student_id:int=Field(gt=0)

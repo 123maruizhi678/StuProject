@@ -35,10 +35,15 @@ def load_access_control() -> dict:
     return data
 
 
-def permissions_for(identity_type: str) -> set[str]:
+def permissions_for(identity_type: str, role_codes: list[str] | None = None) -> set[str]:
     """根据身份类型取得 YAML 中配置的权限标识集合。"""
-    role = load_access_control()["roles"].get(identity_type)
-    return set(role.get("permissions", [])) if role else set()
+    policy = load_access_control()
+    role = policy["roles"].get(identity_type)
+    permissions = set(role.get("permissions", [])) if role else set()
+    if identity_type == "employee":
+        for code in role_codes or []:
+            permissions.update(policy.get("employee_roles", {}).get(code, {}).get("permissions", []))
+    return permissions
 
 
 def require_permission(permission: str) -> Callable:

@@ -5,7 +5,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
-from app.core.common.response import BadRequestError
+from app.services.customer.errors import BadRequestError
 from app.services.customer import parser as p
 
 

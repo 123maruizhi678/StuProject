@@ -176,10 +176,9 @@ test("401 同步到同源工作台及 iframe", async () => {
   assert.deepEqual([rootEvents, childEvents], [1, 1]);
 });
 
-test("待联调模块阻止旧接口调用", async () => {
+test("已接入模块调用真实接口，未实现看板保持阻止", async () => {
   const adapter = await loadTree("../../frontend/js/common/module-api.js");
   globalThis.fetch = async () => { assert.fail("未就绪模块不应发起网络请求"); };
-  await assert.rejects(adapter.API.post("/student/leave", { student_id: 1 }), error => error.code === 503);
   await assert.rejects(adapter.API.get("/dashboard/overview"), error => error.code === 503);
   globalThis.fetch = async url => {
     assert.equal(url, "/api/v1/enterprise/customer");
@@ -211,4 +210,13 @@ test("北京时间转换不受运行机器时区影响", async () => {
   assert.equal(report.toBeijingIso("2026-10-17T09:30"), "2026-10-17T09:30:00+08:00");
   assert.equal(report.toBeijingIso("2026-10-17T09:30:15"), "2026-10-17T09:30:15+08:00");
   assert.throws(() => report.toBeijingIso("invalid"));
+});
+
+test("普通 HTTP 缺少 randomUUID 时仍生成安全且互不重复的 UUID v4", () => {
+  const provider = { getRandomValues: bytes => globalThis.crypto.getRandomValues(bytes) };
+  const ids = Array.from({ length: 100 }, () => api.createRequestId(provider));
+  assert.equal(new Set(ids).size, ids.length);
+  for (const id of ids) assert.match(id, /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/);
+  const fixed = api.createRequestId({ getRandomValues: bytes => bytes.fill(255) });
+  assert.equal(fixed, "ffffffff-ffff-4fff-bfff-ffffffffffff");
 });

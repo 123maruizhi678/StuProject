@@ -32,7 +32,8 @@ from sqlalchemy.orm import Mapped, mapped_column
 from app.database import Base
 metadata = Base.metadata
 
-from app.models.common import student_profile, employee
+from app.models.common import (student_profile, employee, student_academic_event,
+    student_academic_reminder, student_application_progress)
 from app.models.student.student_types import (
     ID_TYPE,
     student_timestamp,
@@ -218,197 +219,16 @@ class MentalWarning(UpdatedAtMixin, Base):
     )
 
 
-class StudentAcademicEvent(UpdatedAtMixin, Base):
-    """教务 DDL/考试节点的最小本地镜像，不建设完整教务系统。"""
-
-    __tablename__ = "student_academic_event"
-    __table_args__ = (
-        UniqueConstraint(
-            "student_id",
-            "source_system",
-            "external_event_id",
-            name="uk_academic_source",
-        ),
-        UniqueConstraint("id", "student_id", name="uk_academic_owner"),
-        CheckConstraint("event_type IN ('ddl','exam')", name="ck_academic_type"),
-        CheckConstraint(
-            "event_status IN ('active','cancelled')", name="ck_academic_status"
-        ),
-        CheckConstraint("event_version >= 1", name="ck_academic_version"),
-        Index("idx_academic_student", "student_id", "event_status", "due_at"),
-        {**TABLE_OPTIONS, "comment": "学生学业截止及考试节点镜像表"},
-    )
-    id: Mapped[int] = mapped_column(
-        ID_TYPE, primary_key=True, autoincrement=True, comment="学业节点主键ID"
-    )
-    student_id: Mapped[int] = mapped_column(
-        ID_TYPE,
-        ForeignKey(_student_reference.c.student_id, name="fk_academic_student"),
-        nullable=False,
-        comment="学生ID，关联student_profile.student_id",
-    )
-    source_system: Mapped[str] = mapped_column(
-        ascii_string(32), nullable=False, comment="教务来源编码，如education"
-    )
-    external_event_id: Mapped[str] = mapped_column(
-        binary_string(128),
-        nullable=False,
-        comment="源系统节点ID，与学生和来源组成同步唯一键",
-    )
-    event_type: Mapped[str] = mapped_column(
-        String(20), nullable=False, comment="节点类型：ddl截止日期/exam考试"
-    )
-    title: Mapped[str] = mapped_column(
-        String(200), nullable=False, comment="论文或考试标题"
-    )
-    due_at: Mapped[datetime] = mapped_column(
-        student_timestamp(), nullable=False, comment="准确截止或考试时点，UTC"
-    )
-    source_timezone: Mapped[str] = mapped_column(
-        String(64), nullable=False, comment="来源IANA时区，如Asia/Shanghai"
-    )
-    event_status: Mapped[str] = mapped_column(
-        String(20),
-        nullable=False,
-        server_default=text("'active'"),
-        comment="节点状态：active/cancelled",
-    )
-    # event_version 是影响提醒的业务版本，不能用 updated_at 或入库次数代替。
-    event_version: Mapped[int] = mapped_column(
-        Integer,
-        nullable=False,
-        server_default=text("1"),
-        comment="节点时间或有效状态改变时递增的提醒版本",
-    )
-    source_updated_at: Mapped[datetime | None] = mapped_column(
-        student_timestamp(),
-        nullable=True,
-        comment="源系统更新时间，UTC；防止旧消息覆盖新节点",
-    )
-    synced_at: Mapped[datetime | None] = mapped_column(
-        student_timestamp(),
-        nullable=True,
-        comment="最后成功同步时间，UTC；用于展示数据新鲜度",
-    )
+class StudentAcademicEvent(Base):
+    __table__ = student_academic_event
 
 
-class StudentAcademicReminder(CreatedAtMixin, Base):
-    updated_at: Mapped[datetime] = mapped_column(student_timestamp(), nullable=False, default=utcnow, server_default=StudentCreatedDefault(), comment="提醒设置代次时间；发布不修改，六位微秒")
-    """一条节点、一个提前量保存一份提醒设置。"""
-
-    __tablename__ = "student_academic_reminder"
-    __table_args__ = (
-        UniqueConstraint(
-            "student_id",
-            "academic_event_id",
-            "lead_minutes",
-            name="uk_reminder_setting",
-        ),
-        # 组合外键阻止学生B给学生A的节点建立提醒。
-        ForeignKeyConstraint(
-            ["academic_event_id", "student_id"],
-            ["student_academic_event.id", "student_academic_event.student_id"],
-            name="fk_reminder_event",
-        ),
-        CheckConstraint("lead_minutes >= 0", name="ck_reminder_lead"),
-        CheckConstraint("event_version >= 1", name="ck_reminder_version"),
-        CheckConstraint(
-            "status IN ('pending','queued','sent','cancelled')",
-            name="ck_reminder_status",
-        ),
-        CheckConstraint(
-            "status <> 'sent' OR sent_at IS NOT NULL", name="ck_reminder_sent"
-        ),
-        Index("idx_reminder_due", "status", "notify_at"),
-        {**TABLE_OPTIONS, "comment": "学生学业提醒设置与执行状态表"},
-    )
-    id: Mapped[int] = mapped_column(
-        ID_TYPE, primary_key=True, autoincrement=True, comment="提醒主键ID"
-    )
-    student_id: Mapped[int] = mapped_column(
-        ID_TYPE, nullable=False, comment="节点所属学生，通过组合外键关联同一学生"
-    )
-    academic_event_id: Mapped[int] = mapped_column(
-        ID_TYPE, nullable=False, comment="学业节点ID，组合关联student_academic_event"
-    )
-    lead_minutes: Mapped[int] = mapped_column(
-        Integer, nullable=False, comment="提前分钟数；1440为一天，0为到点提醒"
-    )
-    notify_at: Mapped[datetime] = mapped_column(
-        student_timestamp(),
-        nullable=False,
-        comment="计划提醒时点，UTC；由节点时间减提前量计算",
-    )
-    event_version: Mapped[int] = mapped_column(
-        Integer, nullable=False, comment="对应节点版本，发送前须检查仍一致"
-    )
-    status: Mapped[str] = mapped_column(
-        String(20),
-        nullable=False,
-        server_default=text("'pending'"),
-        comment="pending待执行/queued已入队/sent已投递/cancelled已取消",
-    )
-    sent_at: Mapped[datetime | None] = mapped_column(
-        student_timestamp(), nullable=True, comment="当前版本实际成功发送时间，UTC"
-    )
+class StudentAcademicReminder(Base):
+    __table__ = student_academic_reminder
 
 
-class StudentApplicationProgress(UpdatedAtMixin, Base):
-    """一个学生的一份申请、一个阶段保留最新进度。"""
-
-    __tablename__ = "student_application_progress"
-    __table_args__ = (
-        UniqueConstraint(
-            "student_id",
-            "source_system",
-            "external_application_id",
-            "stage_code",
-            name="uk_progress_stage",
-        ),
-        CheckConstraint(
-            "stage_code IN ('document_review','school_application','visa_process')",
-            name="ck_progress_stage",
-        ),
-        Index("idx_progress_student", "student_id", "synced_at"),
-        {**TABLE_OPTIONS, "comment": "学生留学申请阶段最新进度镜像表"},
-    )
-    id: Mapped[int] = mapped_column(
-        ID_TYPE, primary_key=True, autoincrement=True, comment="阶段进度主键ID"
-    )
-    student_id: Mapped[int] = mapped_column(
-        ID_TYPE,
-        ForeignKey(_student_reference.c.student_id, name="fk_progress_student"),
-        nullable=False,
-        comment="学生ID，关联student_profile.student_id",
-    )
-    source_system: Mapped[str] = mapped_column(
-        ascii_string(32), nullable=False, comment="CRM或申请系统来源编码"
-    )
-    external_application_id: Mapped[str] = mapped_column(
-        binary_string(128),
-        nullable=False,
-        comment="源系统申请ID，用于区分不同院校和项目",
-    )
-    application_name: Mapped[str] = mapped_column(
-        String(200), nullable=False, comment="院校或申请项目展示名称"
-    )
-    stage_code: Mapped[str] = mapped_column(
-        String(32),
-        nullable=False,
-        comment="document_review文书/school_application院校/visa_process签证",
-    )
-    stage_status: Mapped[str] = mapped_column(
-        String(64), nullable=False, comment="外部契约映射的阶段状态，不由AI臆造"
-    )
-    detail: Mapped[str | None] = mapped_column(
-        String(500), nullable=True, comment="必要进度说明，如需补充材料"
-    )
-    source_updated_at: Mapped[datetime | None] = mapped_column(
-        student_timestamp(), nullable=True, comment="源系统更新时间，UTC"
-    )
-    synced_at: Mapped[datetime | None] = mapped_column(
-        student_timestamp(), nullable=True, comment="最后成功同步时间，UTC；失败不刷新"
-    )
+class StudentApplicationProgress(Base):
+    __table__ = student_application_progress
 
 
 # 建表脚本显式传入这五张表，防止其他组员新增的模型被顺带创建。

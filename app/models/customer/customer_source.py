@@ -3,7 +3,7 @@
 from sqlalchemy import BigInteger, Column, Integer, String, Text
 
 from app.database import Base
-from app.models.common import TimestampMixin
+from app.models.customer._mixins import TimestampMixin
 
 
 class CustomerSource(Base, TimestampMixin):

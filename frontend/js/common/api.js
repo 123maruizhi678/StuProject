@@ -1,6 +1,16 @@
 /** 公共请求工具：兼容 HTTP 错误与 code/message/data 业务信封。 */
 const SESSION_KEY = "stuproject.auth.session";
 
+/** HTTP 局域网地址不提供 randomUUID，getRandomValues 仍可生成安全的 UUID v4。 */
+export function createRequestId(provider = globalThis.crypto) {
+  if (typeof provider?.randomUUID === "function") return provider.randomUUID();
+  const bytes = provider.getRandomValues(new Uint8Array(16));
+  bytes[6] = (bytes[6] & 0x0f) | 0x40;
+  bytes[8] = (bytes[8] & 0x3f) | 0x80;
+  const hex = [...bytes].map(value => value.toString(16).padStart(2, "0")).join("");
+  return `${hex.slice(0,8)}-${hex.slice(8,12)}-${hex.slice(12,16)}-${hex.slice(16,20)}-${hex.slice(20)}`;
+}
+
 export class ApiError extends Error {
   constructor(message, code = 0) {
     super(message);
@@ -11,6 +21,7 @@ export class ApiError extends Error {
 
 export function clearSession() {
   sessionStorage.removeItem(SESSION_KEY);
+  for (const key of ['stuproject.live.selection','stuproject.command.preview','stuproject.student.preview']) sessionStorage.removeItem(key);
 }
 
 /** 同一标签页中的工作台与业务 iframe 同步身份事件。 */
@@ -44,6 +55,7 @@ export function saveSession(data) {
       data.token_type?.toLowerCase() !== "bearer" || !Number.isFinite(data.expires_in) || data.expires_in <= 0) {
     throw new ApiError("登录响应不完整，请联系管理员。");
   }
+  clearSession();
   sessionStorage.setItem(SESSION_KEY, JSON.stringify({
     accessToken: data.access_token,
     expiresAt: Date.now() + data.expires_in * 1000,

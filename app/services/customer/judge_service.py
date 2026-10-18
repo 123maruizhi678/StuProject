@@ -22,7 +22,7 @@ from typing import Optional
 
 from sqlalchemy.orm import Session
 
-from app.core.common.response import ConflictError, NotFoundError
+from app.services.customer.errors import ConflictError, NotFoundError
 from app.repositories.customer import customer_repository
 from app.models.customer.customer_info import CustomerInfo
 
@@ -111,7 +111,7 @@ def _compute_score(score_rules: list, info: CustomerInfo) -> Optional[float]:
                 except (TypeError, ValueError):
                     continue
         # 字符串精确匹配
-        if str(actual) in points:
+        elif str(actual) in points:
             total += float(points[str(actual)])
     return round(total, 2)
 

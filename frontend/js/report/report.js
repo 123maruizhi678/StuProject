@@ -113,17 +113,17 @@ import { requestReport as request, createReportGenerator, toBeijingIso } from ".
     var tbody = $("#reportRows");
     tbody.innerHTML = "";
     if (!data.items.length) {
-      tbody.innerHTML = '<tr><td colspan="7" class="hint">暂无授权可见的报告。</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="7" class="empty">暂无授权可见的报告。</td></tr>';
     }
     data.items.forEach(function (item) {
       var tr = document.createElement("tr");
       tr.innerHTML =
-        "<td>" + item.report_record_id + "</td>" +
+        '<td class="mono">' + item.report_record_id + "</td>" +
         "<td>" + escapeHtml(item.report_name) + "</td>" +
-        "<td>" + escapeHtml(item.report_code) + "</td>" +
-        "<td>" + formatTime(item.start_time) + " ~ " + formatTime(item.end_time) + "</td>" +
+        '<td class="mono">' + escapeHtml(item.report_code) + "</td>" +
+        '<td class="mono">' + formatTime(item.start_time) + " ~ " + formatTime(item.end_time) + "</td>" +
         '<td><span class="status ' + item.status + '">' + statusLabel(item.status) + "</span></td>" +
-        "<td>" + formatTime(item.generated_at) + "</td>" +
+        '<td class="mono">' + formatTime(item.generated_at) + "</td>" +
         '<td><button class="btn sm" data-id="' + item.report_record_id + '">详情</button></td>';
       tr.querySelector("button").addEventListener("click", function () {
         openDetail(item.report_record_id);
@@ -152,6 +152,7 @@ import { requestReport as request, createReportGenerator, toBeijingIso } from ".
 
   function renderDetail(data) {
     $("#detailTitle").textContent = data.report_name + "（#" + data.report_record_id + "）";
+    $("#detailCode").textContent = data.report_code;
     var meta = [
       ["类型", data.report_code],
       ["状态", statusLabel(data.status)],
@@ -353,12 +354,12 @@ import { requestReport as request, createReportGenerator, toBeijingIso } from ".
   function initTheme() {
     var saved = localStorage.getItem("stuproject.theme") || "dark";
     document.documentElement.dataset.theme = saved;
-    $("#themeBtn").textContent = saved === "dark" ? "🌙" : "☀️";
+    $("#themeBtn").textContent = saved === "dark" ? "☾" : "☀";
     $("#themeBtn").addEventListener("click", function () {
       var next = document.documentElement.dataset.theme === "dark" ? "light" : "dark";
       document.documentElement.dataset.theme = next;
       localStorage.setItem("stuproject.theme", next);
-      $("#themeBtn").textContent = next === "dark" ? "🌙" : "☀️";
+      $("#themeBtn").textContent = next === "dark" ? "☾" : "☀";
     });
   }
 

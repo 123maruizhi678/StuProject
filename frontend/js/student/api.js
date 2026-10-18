@@ -1,9 +1,9 @@
-import { ApiError, request, tokenStore } from "../common/api.js";
+import { ApiError, request, tokenStore, createRequestId } from "../common/api.js";
 import { assertModuleReady } from "../common/module-api.js";
 
 export { ApiError as StudentApiError, tokenStore };
 const pendingKeys = new Map();
-export const requestId = () => crypto.randomUUID();
+export const requestId = () => createRequestId();
 
 export async function api(path, { method = "GET", body, authenticated = true, key } = {}) {
   const target = "/" + path.replace(/^\//, "");

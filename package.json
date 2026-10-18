@@ -1,0 +1,16 @@
+{
+  "name": "stuproject",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node scripts/dev.mjs",
+    "start": "node scripts/dev.mjs",
+    "dev:frontend": "vite --config vite.config.mjs",
+    "test:frontend": "node --test tests/common/test_frontend.mjs",
+    "test:system": "node scripts/testing/browser-system.mjs"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.64.1",
+    "vite": "^8.3.4"
+  }
+}

@@ -314,6 +314,12 @@ def get_dify():
     return StudentAssistantDifyClient()
 
 
+def get_configured_dify():
+    if not settings.STUDENT_DIFY_KEY.get_secret_value():
+        raise BusinessException("学生助手尚未配置 STUDENT_DIFY_KEY", 503)
+    return get_dify()
+
+
 def get_query_client(db=Depends(get_db)):
     if settings.STUDENT_QUERY_BACKEND == "local":
         from app.services.student.student_local_query import LocalStudentQueryClient

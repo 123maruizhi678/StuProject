@@ -13,9 +13,9 @@ from typing import List, Optional
 from sqlalchemy.orm import Session
 
 from app.config import settings
-from app.core.common.auth import AccountContext
+from app.models.common.user_account import UserAccount as AccountContext
 from app.core.common.logger import get_logger
-from app.core.common.response import (
+from app.services.customer.errors import (
     BadRequestError,
     ConflictError,
     ForbiddenError,

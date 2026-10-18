@@ -1,52 +1,46 @@
-"""可选字段抽取（独立应用，仅辅助，不替代规则裁决）。"""
-
+"""独立客户字段 Workflow 适配：状态、版本、严格 Schema 全部通过才接受。"""
 import json
-from typing import Any, Optional
-
+import httpx
+from pydantic import ValidationError
 from app.config import settings
-from app.core.common.dify import DifyHttpClient, check_workflow_succeeded
+from app.core.common.dify import DifyHttpClient
 from app.core.common.logger import get_logger
+from app.schemas.customer.extraction import CustomerExtractFields, EXTRACT_CONTRACT_VERSION, FIELD_SCHEMA, MAX_TEXT_BYTES
 
 logger = get_logger("app.clients.customer")
 
-
 class ExtractDifyClient:
-    """客户研判字段抽取适配：调用独立 Workflow，输出规整字段字典。"""
+    def __init__(self, client: DifyHttpClient | None = None) -> None:
+        self.client = client or DifyHttpClient(api_base=settings.CUSTOMER_EXTRACT_DIFY_API_BASE or settings.DIFY_API_BASE, timeout=settings.CUSTOMER_EXTRACT_DIFY_TIMEOUT_SECONDS)
 
-    def __init__(self) -> None:
-        self.client = DifyHttpClient()
-
-    def extract_fields(self, text: str, field_schema: dict, contract_version: str) -> Optional[Any]:
-        """调用独立抽取应用；Key 缺失返回 None（确定性路径可继续）。"""
-        if not settings.CUSTOMER_EXTRACT_DIFY_API_KEY:
+    def extract_fields(self, text: str, field_schema: dict = FIELD_SCHEMA, contract_version: str = EXTRACT_CONTRACT_VERSION) -> dict | None:
+        if field_schema != FIELD_SCHEMA or contract_version != EXTRACT_CONTRACT_VERSION:
+            raise ValueError("Unsupported customer extraction contract")
+        if not isinstance(text, str) or len(text.encode("utf-8")) > MAX_TEXT_BYTES:
+            raise ValueError("Customer extraction text exceeds 100 KiB")
+        if not text.strip():
+            return {}
+        key = settings.CUSTOMER_EXTRACT_DIFY_API_KEY.get_secret_value()
+        if not key:
             return None
         payload = {
-            "inputs": {
-                "text": text,
-                "field_schema": json.dumps(field_schema, ensure_ascii=False),
-                "contract_version": contract_version,
-            },
-            "response_mode": "blocking",
-            "user": "customer-extract",
+            "inputs": {"text": text, "field_schema": json.dumps(FIELD_SCHEMA, ensure_ascii=False), "contract_version": EXTRACT_CONTRACT_VERSION},
+            "response_mode": "blocking", "user": "customer-extract",
         }
         try:
-            result = self.client.post_json_sync(
-                "/workflows/run",
-                api_key=settings.CUSTOMER_EXTRACT_DIFY_API_KEY,
-                payload=payload,
-            )
-        except Exception as exc:  # 网络/HTTP 错误不影响确定性路径
-            logger.warning("客户抽取 Dify 调用失败: %s", exc)
-            return None
-        if not check_workflow_succeeded(result):
-            logger.warning("客户抽取 Workflow 未成功: %s", result)
-            return None
-        outputs = (result.get("data") or {}).get("outputs") or {}
-        # 结束节点输出为 fields（对象）；兼容字符串 JSON 形态
-        fields = outputs.get("fields")
-        if isinstance(fields, str):
-            try:
+            result = self.client.post_json_sync("/workflows/run", api_key=key, payload=payload)
+            data = result.get("data")
+            if not isinstance(data, dict) or data.get("status") != "succeeded":
+                logger.warning("客户抽取工作流未成功，使用确定性抽取")
+                return None
+            outputs = data.get("outputs")
+            if not isinstance(outputs, dict) or outputs.get("contract_version") != EXTRACT_CONTRACT_VERSION:
+                logger.warning("客户抽取契约版本无效，使用确定性抽取")
+                return None
+            fields = outputs.get("fields")
+            if isinstance(fields, str):
                 fields = json.loads(fields)
-            except json.JSONDecodeError:
-                fields = None
-        return fields
+            return CustomerExtractFields.model_validate(fields).model_dump(exclude_none=True)
+        except (httpx.HTTPError, ValueError, TypeError, ValidationError):
+            logger.warning("客户抽取依赖失败或输出校验未通过，使用确定性抽取")
+            return None

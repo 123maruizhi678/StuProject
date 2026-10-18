@@ -1,0 +1,413 @@
+[
+  {
+    "path": "dashboard/dashboard.html",
+    "title": "工作台概览",
+    "module": "公共入口",
+    "endpoint": ""
+  },
+  {
+    "path": "agent/agent.html",
+    "title": "智能咨询",
+    "module": "客服 Agent",
+    "endpoint": ""
+  },
+  {
+    "path": "agent/courses.html",
+    "title": "课程与项目",
+    "module": "客服 Agent",
+    "endpoint": "GET /api/v1/agent/courses"
+  },
+  {
+    "path": "agent/events.html",
+    "title": "活动与讲座",
+    "module": "客服 Agent",
+    "endpoint": "GET /api/v1/agent/events"
+  },
+  {
+    "path": "agent/event-detail.html",
+    "title": "活动详情",
+    "module": "客服 Agent",
+    "endpoint": "GET /agent/events/{event_id}; POST /agent/events/signup"
+  },
+  {
+    "path": "agent/faq.html",
+    "title": "常见问题",
+    "module": "客服 Agent",
+    "endpoint": "GET /api/v1/agent/faq"
+  },
+  {
+    "path": "customer/customer.html",
+    "title": "客户研判概览",
+    "module": "客户信息研判",
+    "endpoint": ""
+  },
+  {
+    "path": "customer/sources.html",
+    "title": "资料来源",
+    "module": "客户信息研判",
+    "endpoint": "POST /api/v1/customer/source"
+  },
+  {
+    "path": "customer/source-detail.html",
+    "title": "来源详情",
+    "module": "客户信息研判",
+    "endpoint": ""
+  },
+  {
+    "path": "customer/extract.html",
+    "title": "客户字段解析",
+    "module": "客户信息研判",
+    "endpoint": ""
+  },
+  {
+    "path": "customer/results.html",
+    "title": "研判结果",
+    "module": "客户信息研判",
+    "endpoint": "POST /customer/judge; POST /customer/judge/batch; GET /customer/result"
+  },
+  {
+    "path": "customer/result-detail.html",
+    "title": "研判结果详情",
+    "module": "客户信息研判",
+    "endpoint": ""
+  },
+  {
+    "path": "customer/rules.html",
+    "title": "研判规则",
+    "module": "客户信息研判",
+    "endpoint": ""
+  },
+  {
+    "path": "customer/rule-detail.html",
+    "title": "规则详情与版本",
+    "module": "客户信息研判",
+    "endpoint": ""
+  },
+  {
+    "path": "customer/products.html",
+    "title": "研判产品目录",
+    "module": "客户信息研判",
+    "endpoint": ""
+  },
+  {
+    "path": "enterprise/enterprise.html",
+    "title": "企业工作台",
+    "module": "企业智能助手",
+    "endpoint": ""
+  },
+  {
+    "path": "enterprise/assistant.html",
+    "title": "企业智能助手",
+    "module": "企业智能助手",
+    "endpoint": ""
+  },
+  {
+    "path": "enterprise/command-preview.html",
+    "title": "工作指令确认",
+    "module": "企业智能助手",
+    "endpoint": ""
+  },
+  {
+    "path": "enterprise/customers.html",
+    "title": "客户档案",
+    "module": "企业智能助手",
+    "endpoint": "GET/POST /api/v1/enterprise/customer"
+  },
+  {
+    "path": "enterprise/customer-detail.html",
+    "title": "客户档案详情",
+    "module": "企业智能助手",
+    "endpoint": ""
+  },
+  {
+    "path": "enterprise/followups.html",
+    "title": "客户跟进",
+    "module": "企业智能助手",
+    "endpoint": ""
+  },
+  {
+    "path": "enterprise/daily-reports.html",
+    "title": "工作日报",
+    "module": "企业智能助手",
+    "endpoint": ""
+  },
+  {
+    "path": "enterprise/daily-report-new.html",
+    "title": "撰写工作日报",
+    "module": "企业智能助手",
+    "endpoint": ""
+  },
+  {
+    "path": "enterprise/daily-report-detail.html",
+    "title": "工作日报详情",
+    "module": "企业智能助手",
+    "endpoint": ""
+  },
+  {
+    "path": "enterprise/todos.html",
+    "title": "我的待办",
+    "module": "企业智能助手",
+    "endpoint": ""
+  },
+  {
+    "path": "enterprise/organization.html",
+    "title": "组织与员工",
+    "module": "企业智能助手",
+    "endpoint": ""
+  },
+  {
+    "path": "enterprise/bindings.html",
+    "title": "学生服务关系",
+    "module": "企业智能助手",
+    "endpoint": ""
+  },
+  {
+    "path": "enterprise/students.html",
+    "title": "学生管理",
+    "module": "企业智能助手",
+    "endpoint": ""
+  },
+  {
+    "path": "enterprise/student-detail.html",
+    "title": "学生档案详情",
+    "module": "企业智能助手",
+    "endpoint": ""
+  },
+  {
+    "path": "enterprise/scores.html",
+    "title": "课程与成绩",
+    "module": "企业智能助手",
+    "endpoint": ""
+  },
+  {
+    "path": "enterprise/academics.html",
+    "title": "教务事项",
+    "module": "企业智能助手",
+    "endpoint": ""
+  },
+  {
+    "path": "enterprise/courses.html",
+    "title": "课程与选课",
+    "module": "企业智能助手",
+    "endpoint": ""
+  },
+  {
+    "path": "enterprise/application-progress.html",
+    "title": "申请进度维护",
+    "module": "企业智能助手",
+    "endpoint": ""
+  },
+  {
+    "path": "enterprise/leave-review.html",
+    "title": "学生请假审批",
+    "module": "企业智能助手",
+    "endpoint": ""
+  },
+  {
+    "path": "enterprise/leave-detail.html",
+    "title": "请假审批详情",
+    "module": "企业智能助手",
+    "endpoint": ""
+  },
+  {
+    "path": "enterprise/tickets.html",
+    "title": "服务工单",
+    "module": "企业智能助手",
+    "endpoint": ""
+  },
+  {
+    "path": "enterprise/ticket-detail.html",
+    "title": "服务工单详情",
+    "module": "企业智能助手",
+    "endpoint": ""
+  },
+  {
+    "path": "enterprise/knowledge.html",
+    "title": "知识与新人指引",
+    "module": "企业智能助手",
+    "endpoint": ""
+  },
+  {
+    "path": "enterprise/knowledge-detail.html",
+    "title": "知识资料详情",
+    "module": "企业智能助手",
+    "endpoint": ""
+  },
+  {
+    "path": "enterprise/query.html",
+    "title": "业务数据查询",
+    "module": "企业智能助手",
+    "endpoint": "POST /api/v1/enterprise/nl2sql"
+  },
+  {
+    "path": "enterprise/warnings.html",
+    "title": "学生关怀跟进",
+    "module": "企业智能助手",
+    "endpoint": ""
+  },
+  {
+    "path": "enterprise/warning-detail.html",
+    "title": "关怀跟进详情",
+    "module": "企业智能助手",
+    "endpoint": ""
+  },
+  {
+    "path": "student/student-assistant.html",
+    "title": "我的学生工作台",
+    "module": "学生智能助手",
+    "endpoint": ""
+  },
+  {
+    "path": "student/chat.html",
+    "title": "学生智能助手",
+    "module": "学生智能助手",
+    "endpoint": ""
+  },
+  {
+    "path": "student/academics.html",
+    "title": "我的学业",
+    "module": "学生智能助手",
+    "endpoint": "GET /api/v1/student/academic; GET /courses; GET /scores"
+  },
+  {
+    "path": "student/progress.html",
+    "title": "我的申请进度",
+    "module": "学生智能助手",
+    "endpoint": "GET /api/v1/student/progress"
+  },
+  {
+    "path": "student/reminders.html",
+    "title": "学业提醒",
+    "module": "学生智能助手",
+    "endpoint": "GET/POST /api/v1/student/reminders"
+  },
+  {
+    "path": "student/leave.html",
+    "title": "请假办理",
+    "module": "学生智能助手",
+    "endpoint": "GET/POST /api/v1/student/leave"
+  },
+  {
+    "path": "student/leave-detail.html",
+    "title": "请假申请详情",
+    "module": "学生智能助手",
+    "endpoint": ""
+  },
+  {
+    "path": "student/tickets.html",
+    "title": "我的服务工单",
+    "module": "学生智能助手",
+    "endpoint": "GET /student/tickets; POST /student/complaint"
+  },
+  {
+    "path": "student/ticket-detail.html",
+    "title": "服务工单详情",
+    "module": "学生智能助手",
+    "endpoint": ""
+  },
+  {
+    "path": "student/notifications.html",
+    "title": "通知中心",
+    "module": "学生智能助手",
+    "endpoint": ""
+  },
+  {
+    "path": "student/care.html",
+    "title": "心情与关怀",
+    "module": "学生智能助手",
+    "endpoint": ""
+  },
+  {
+    "path": "student/action-preview.html",
+    "title": "办理事项确认",
+    "module": "学生智能助手",
+    "endpoint": ""
+  },
+  {
+    "path": "report/report.html",
+    "title": "智能报告概览",
+    "module": "智能报告",
+    "endpoint": ""
+  },
+  {
+    "path": "report/list.html",
+    "title": "报告列表",
+    "module": "智能报告",
+    "endpoint": "GET /api/v1/report/list"
+  },
+  {
+    "path": "report/generate.html",
+    "title": "生成报告",
+    "module": "智能报告",
+    "endpoint": "POST /api/v1/report/generate"
+  },
+  {
+    "path": "report/detail.html",
+    "title": "报告阅读",
+    "module": "智能报告",
+    "endpoint": "GET /api/v1/report/{report_record_id}"
+  },
+  {
+    "path": "report/configs.html",
+    "title": "报告配置",
+    "module": "智能报告",
+    "endpoint": "GET/PUT /api/v1/report/configs"
+  },
+  {
+    "path": "common/account.html",
+    "title": "个人中心",
+    "module": "公共入口",
+    "endpoint": ""
+  },
+  {
+    "path": "common/notifications.html",
+    "title": "通知中心",
+    "module": "公共入口",
+    "endpoint": ""
+  },
+  {
+    "path": "admin/accounts.html",
+    "title": "账号管理",
+    "module": "平台管理",
+    "endpoint": "GET /api/v1/admin/accounts; POST /api/v1/auth/register"
+  },
+  {
+    "path": "admin/permissions.html",
+    "title": "角色与权限",
+    "module": "平台管理",
+    "endpoint": ""
+  },
+  {
+    "path": "admin/audit.html",
+    "title": "操作记录",
+    "module": "平台管理",
+    "endpoint": ""
+  },
+  {
+    "path": "admin/settings.html",
+    "title": "平台设置",
+    "module": "平台管理",
+    "endpoint": ""
+  },
+  {
+    "path": "common/sitemap.html",
+    "title": "全部页面导航",
+    "module": "公共入口",
+    "endpoint": ""
+  },
+  {
+    "path": "index.html",
+    "title": "平台首页",
+    "module": "公共入口"
+  },
+  {
+    "path": "common/login.html",
+    "title": "统一登录",
+    "module": "公共入口"
+  },
+  {
+    "path": "common/password-reset.html",
+    "title": "账号协助",
+    "module": "公共入口"
+  }
+]
