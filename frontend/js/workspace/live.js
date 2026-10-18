@@ -75,7 +75,14 @@ function renderData(root, data, path) {
     for (const row of rows) {
       const tr = node('tr'); for (const k of visible) tr.append(node('td', format(row[k])));
       const td = node('td'), choose = node('button', readOnlyView ? '查看记录' : '选择记录', 'button secondary small'); choose.type = 'button';
-      choose.onclick = () => { remember(row, path); detail.replaceChildren(node('p', '已选择此记录。', 'live-selection')); renderObject(detail, row); }; td.append(choose); tr.append(td); body.append(tr);
+      choose.onclick = () => {
+        remember(row, path);
+        if (path === '/api/v1/report/list' && Number.isSafeInteger(Number(row.report_record_id)) && Number(row.report_record_id) > 0) {
+          location.assign('/report/detail.html?report_record_id=' + encodeURIComponent(row.report_record_id));
+          return;
+        }
+        detail.replaceChildren(node('p', '已选择此记录。', 'live-selection')); renderObject(detail, row);
+      }; td.append(choose); tr.append(td); body.append(tr);
     }
     table.append(body); wrap.append(table); root.append(wrap); const detail = node('div'); root.append(detail);
   } else if (typeof data === 'object') {
@@ -154,7 +161,8 @@ function operationCard(op, index) {
   // Request-based enterprise routes declare identifiers in the URL; infer any omitted schema parameters.
   for (const match of op.path.matchAll(/\{([^}]+)\}/g)) if (!params.some(p => p.name === match[1])) params.push({ name: match[1], in: 'path', required: true, schema: { type: match[1].endsWith('_code') ? 'string' : 'integer', minimum: 1 } });
   for (const p of params) field(form, p.name, p.schema, p.required);
-  if (resourceKey(selected.__path || '') === resourceKey(op.path)) for (const p of params.filter(p => p.in === 'path')) {
+  const detailSelection = page === 'report/detail.html' || (!selected.__path && page.endsWith('-detail.html'));
+  if (detailSelection || resourceKey(selected.__path || '') === resourceKey(op.path)) for (const p of params.filter(p => p.in === 'path')) {
     const input = $('[name="' + p.name + '"]', form); if (input && selected[p.name] !== undefined) setValue(input, selected[p.name]);
   }
   const content = op.requestBody?.content || {}, mime = Object.keys(content)[0], bodySpec = resolve(content[mime]?.schema);
@@ -209,7 +217,8 @@ function operationCard(op, index) {
   // Query-only cards can be opened without issuing writes. Never submit a mutation automatically.
   let loaded = false; card.addEventListener('toggle', () => { if (card.open && !loaded && op.method === 'GET' && !params.some(p => p.required)) { loaded = true; execute(); } });
   if (op.method === 'GET' && !params.some(p => p.required)) listQueries.push(() => hasList ? execute() : undefined);
-  if (index === 0 && op.method === 'GET' && !params.some(p => p.required)) { loaded = true; queueMicrotask(execute); }
+  const readyReport = page === 'report/detail.html' && params.filter(p => p.required).every(p => form.elements.namedItem(p.name)?.value);
+  if (index === 0 && op.method === 'GET' && (!params.some(p => p.required) || readyReport)) { loaded = true; queueMicrotask(execute); }
   if (op.path.endsWith('/confirm')) {
     const storage = op.path.includes('/enterprise/') ? 'stuproject.command.preview' : 'stuproject.student.preview';
     try { const receipt = JSON.parse(sessionStorage.getItem(storage) || 'null'); if (receipt) remember(receipt, op.path); } catch { }
@@ -248,7 +257,12 @@ async function start() {
   if (!readSession() && !isPublic) { intro.textContent = '请先登录后使用此功能。'; const link = node('a', '前往登录', 'button'); link.href = '/common/login.html'; main.append(link); return; }
   try {
     try { selected = JSON.parse(sessionStorage.getItem('stuproject.live.selection') || '{}'); } catch { }
+    if (page === 'report/detail.html') {
+      const reportId = new URLSearchParams(location.search).get('report_record_id');
+      if (reportId && Number.isSafeInteger(Number(reportId)) && Number(reportId) > 0) selected.report_record_id = Number(reportId);
+    }
     const response = await fetch('/openapi.json'); if (!response.ok) throw new Error('服务契约暂时不可用。'); schema = await response.json();
+    let access = null;
     if (readSession()) {
       access = await API.myAccess();
       $$('.user-name').forEach(x => x.textContent = (enums[access.identity_type] || access.identity_type) + ' #' + access.user_id);
@@ -258,6 +272,15 @@ async function start() {
         options = await request('/admin/accounts/options');
       }
       const logout = node('button', '退出登录', 'button secondary small'); logout.type = 'button'; logout.onclick = () => { clearSession(); location.assign('/common/login.html'); }; $('.top-actions')?.append(logout);
+      if (page.startsWith('enterprise/')) {
+        const { mountEnterpriseWorkspace } = await import('../enterprise/workspace.js');
+        intro.remove();
+        await mountEnterpriseWorkspace({ main, page, schema, access, options, field, readFields, resolve,
+          setValue, format, label, privateField, selection: selected });
+        if (footer) main.append(footer);
+        document.documentElement.dataset.liveReady = 'true';
+        return;
+      }
       if (page.startsWith('student/')) {
         studentAccess = access; studentWorkspace = await import('../student/workspace-enhancements.js');
         if (await studentWorkspace.initializeStudentWorkspace({ access, main, page })) {
@@ -266,8 +289,10 @@ async function start() {
         }
       }
     }
-    intro.textContent = '数据来自当前本地业务库。修改前请选择记录，提交时使用其当前版本。';
-    const operations = operationsForPage(page, schema.paths);
+    let operations = operationsForAccess(operationsForPage(page, schema.paths), access);
+    if (studentWorkspace && studentAccess) operations = studentWorkspace.filterStudentOperations(operations, studentAccess);
+    readOnlyView = /^(customer|report)\//.test(page) && operations.every(operation => operation.method === 'GET');
+    intro.textContent = readOnlyView ? '当前为只读查看，仅显示当前账号有权查看的信息。' : '数据来自当前本地业务库。修改前请选择记录，提交时使用其当前版本。';
     for (let index = 0; index < operations.length; index++)main.append(operationCard(operations[index], index));
     if (!operations.length) intro.textContent = '当前身份没有可用操作。';
   } catch (error) { status(intro, error.message, true); }

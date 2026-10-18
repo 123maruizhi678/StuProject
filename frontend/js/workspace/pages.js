@@ -53,6 +53,7 @@ export function operationsForAccess(operations, access) {
  });
 }
 export const LABELS={
+ announcement_id:'公告编号',pinned:'置顶',published_at:'发布时间',author_user_id:'发布人编号',message_key:'消息标识',
  status_changed_at:'状态变更时间',last_followup_at:'最近跟进时间',external_updated_at:'外部更新时间',is_archived:'是否归档',
  id:'记录编号',type:'类型',version:'当前版本',version_no:'内容版本号',ai_summary:'辅助摘要',submitted_at:'提交时间',department_id_at_submit:'提交时所属部门',
  acknowledged_at:'接手时间',closed_at:'关闭时间',finished_at:'完成时间',observed_at:'消息发生时间',analysis_version:'分析版本',

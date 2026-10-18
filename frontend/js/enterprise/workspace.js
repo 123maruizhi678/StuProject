@@ -117,7 +117,7 @@ const bindPath=(path,bindings)=>path.replace(/\{([^}]+)\}/g,(_,key)=>{
 const rowsOf=data=>Array.isArray(data)?data:data?.items||data?.rows||[];
 const destructive=op=>op.method==='DELETE'||op.path.endsWith('/close');
 
-export async function mountEnterpriseWorkspace({main,page,schema,access,options,field,readFields,resolve,setValue,format,label,privateField}){
+export async function mountEnterpriseWorkspace({main,page,schema,access,options,field,readFields,resolve,setValue,format,label,privateField,selection={}}){
   const employee=await request('/enterprise/me/permissions');
   const grants=new Set([...(access?.permissions||[]),...(employee.permissions||[])]);
   const allowed=op=>{
@@ -482,5 +482,19 @@ export async function mountEnterpriseWorkspace({main,page,schema,access,options,
     if(!creates.length)main.append(node('p','当前账号没有可用的业务操作。','live-status'));
   }
   await Promise.allSettled(controllers.map(controller=>controller.load()));
+  // 通知中心和刷新详情页沿用公共记录定位，展示前仍重新读取最新授权记录。
+  const detailResources={
+    'enterprise/customer-detail.html':'customer','enterprise/student-detail.html':'students',
+    'enterprise/daily-report-detail.html':'daily-report','enterprise/ticket-detail.html':'tickets',
+    'enterprise/knowledge-detail.html':'knowledge','enterprise/leave-detail.html':'internal/leave',
+    'enterprise/warning-detail.html':'internal/warnings',
+  };
+  const target=page==='enterprise/followups.html'&&selection.followup_id?'followups':detailResources[page];
+  if(target){
+    const config=resources[target],id=selection[config.id];
+    if(Number.isSafeInteger(Number(id))&&Number(id)>0&&all.some(op=>op.method==='GET'&&resourceForPath(op.path)===target)){
+      await openRecord(target,{[config.id]:Number(id)},selection);
+    }
+  }
   return {dialog,refresh:refreshLists};
 }
