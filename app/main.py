@@ -19,10 +19,7 @@ logger = get_logger(__name__)
 # 客服、智能报告和企业接口已迁入各技术层的业务包，不在此列。
 # 此集合只跟踪目录迁移，不代表其中模块均未启用。
 MIGRATION_PENDING_MODULES = {
-    "customer",
     "enterprise_student",
-    "student",
-    "student_leave",
 }
 
 
@@ -48,6 +45,8 @@ app.add_middleware(
 )
 register_exception_handlers(app)
 app.include_router(auth_router, prefix="/api/v1")
+from app.api.common.notification_center import router as notification_center_router
+app.include_router(notification_center_router, prefix="/api/v1")
 
 # 企业管理和配套开户接口复用本项目的唯一认证、数据库及共享映射。
 from app.api.enterprise.enterprise import router as enterprise_router
@@ -70,25 +69,13 @@ except ModuleNotFoundError:
 if enterprise_student_router is not None:
     app.include_router(enterprise_student_router, prefix="/api/v1")
 
-# S01仅接入学生请假；登录和权限判断复用组长公共依赖。
-# student_leave 仍在目录迁移中（扁平文件与其客户端未齐）：缺失时不阻塞装配，
-# 迁移归位（app/clients/student 等就绪）后随 MIGRATION_PENDING_MODULES 收敛。
-try:
-    from app.api.student_leave import create_router as create_student_leave_router
+# 学生和客户研判聚合入口已包含完整前缀；只挂载一次，避免旧请假入口重复。
+from app.api.student import router as student_router, internal_router as student_internal_router
+from app.api.customer.customer import router as customer_router
 
-    app.include_router(
-        create_student_leave_router(
-            require_permission("student.admin_service.create"), get_db
-        ),
-        prefix="/api/v1",
-    )
-except ModuleNotFoundError as exc:
-    logger.warning("student_leave 路由暂未挂载（迁移中）：%s", exc.name)
-
-# 路由注册（各业务模块就绪后在此 include，挂载到 /api/v1）
-# from app.api import customer, student
-# app.include_router(customer.router, prefix="/api/v1")
-# app.include_router(student.router, prefix="/api/v1")
+app.include_router(student_router)
+app.include_router(student_internal_router)
+app.include_router(customer_router)
 
 # 智能报告：已按业务模块分包迁入 app/api/report，五接口挂载到 /api/v1/report。
 from app.api.report import router as report_router

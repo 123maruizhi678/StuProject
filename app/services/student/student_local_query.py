@@ -122,7 +122,15 @@ class LocalStudentQueryClient(StudentQueryClient):
     def query(self, *args, **kwargs):
         actor, scene = args[:2]
         if scene == 'courses':
-            from .student_courses import own_courses
-            return own_courses(actor.actor_id, kwargs.get('limit',20), kwargs.get('offset',0))
+            from app.models.enterprise import enterprise_course as course, enterprise_student_course as enrollment
+            limit, offset = kwargs.get('limit', 20), kwargs.get('offset', 0)
+            source = enrollment.join(course, enrollment.c.course_code == course.c.course_code)
+            conditions = [enrollment.c.student_id == actor.actor_id, enrollment.c.status == 'active', course.c.status == 'active']
+            rows = self.db.execute(select(enrollment.c.course_code, course.c.course_name,
+                enrollment.c.term_code, enrollment.c.status).select_from(source).where(*conditions)
+                .order_by(enrollment.c.term_code, enrollment.c.course_code).limit(limit).offset(offset)).mappings()
+            return {'items': [dict(row) for row in rows],
+                    'total': self.db.scalar(select(func.count()).select_from(source).where(*conditions)),
+                    'limit': limit, 'offset': offset, 'query_backend': 'local_fixed_sql'}
         result = super().query(*args, **kwargs)
         return {**result, "query_backend": "local_fixed_sql"}

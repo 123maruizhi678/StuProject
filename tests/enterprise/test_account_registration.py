@@ -65,6 +65,7 @@ class RegistrationTests(unittest.TestCase):
         result=self.register({'identity_type':'customer','username':'admin-owned-customer','profile':{'full_name':'管理员负责客户','department_id':1,'employee_id':1}})
         row=self.db.execute(select(t.customer_profile).where(t.customer_profile.c.customer_id==result['customer_id'])).mappings().one()
         self.assertEqual(row['employee_id'],1)
+        self.assertEqual(row['customer_no'],f"KH-{result['customer_id']:06d}")
     def test_four_identities_and_profile_links(self):
         admin=self.register({'identity_type':'admin','username':'second-admin'},'register-admin-key')
         student=self.register({'identity_type':'student','username':'new-student','profile':{'student_no':'S20','full_name':'新学生','department_id':1}},'register-student-key')

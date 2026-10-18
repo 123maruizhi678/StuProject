@@ -1,5 +1,35 @@
 /** 公共请求工具：兼容 HTTP 错误与 code/message/data 业务信封。 */
 const SESSION_KEY = "stuproject.auth.session";
+const IDENTITIES = new Set(["admin", "employee", "student", "customer"]);
+
+function accountName(value) {
+  return typeof value === "string" ? value.trim() : "";
+}
+
+function identitySummary(data, fallbackName = "") {
+  const displayName = accountName(data?.display_name) || accountName(data?.username) || accountName(fallbackName);
+  if (!IDENTITIES.has(data?.identity_type) || !displayName) return null;
+  return { displayName, identityType: data.identity_type, userId: data.user_id ?? null };
+}
+
+/** 身份摘要仅供公共导航显示；权限仍由服务端逐次校验。 */
+function cacheIdentity(data, expectedToken) {
+  const session = readSession();
+  if (!session || session.accessToken !== expectedToken) return null;
+  const identity = identitySummary(data, session.identity?.displayName || session.accountName);
+  if (identity) sessionStorage.setItem(SESSION_KEY, JSON.stringify({ ...session, identity }));
+  return identity;
+}
+
+/** HTTP 局域网地址不提供 randomUUID，getRandomValues 仍可生成安全的 UUID v4。 */
+export function createRequestId(provider = globalThis.crypto) {
+  if (typeof provider?.randomUUID === "function") return provider.randomUUID();
+  const bytes = provider.getRandomValues(new Uint8Array(16));
+  bytes[6] = (bytes[6] & 0x0f) | 0x40;
+  bytes[8] = (bytes[8] & 0x3f) | 0x80;
+  const hex = [...bytes].map(value => value.toString(16).padStart(2, "0")).join("");
+  return `${hex.slice(0,8)}-${hex.slice(8,12)}-${hex.slice(12,16)}-${hex.slice(16,20)}-${hex.slice(20)}`;
+}
 
 export class ApiError extends Error {
   constructor(message, code = 0) {
@@ -11,6 +41,7 @@ export class ApiError extends Error {
 
 export function clearSession() {
   sessionStorage.removeItem(SESSION_KEY);
+  for (const key of ['stuproject.live.selection','stuproject.command.preview','stuproject.student.preview']) sessionStorage.removeItem(key);
 }
 
 /** 同一标签页中的工作台与业务 iframe 同步身份事件。 */
@@ -44,9 +75,12 @@ export function saveSession(data) {
       data.token_type?.toLowerCase() !== "bearer" || !Number.isFinite(data.expires_in) || data.expires_in <= 0) {
     throw new ApiError("登录响应不完整，请联系管理员。");
   }
+  clearSession();
   sessionStorage.setItem(SESSION_KEY, JSON.stringify({
     accessToken: data.access_token,
     expiresAt: Date.now() + data.expires_in * 1000,
+    accountName: accountName(data.username),
+    identity: identitySummary(data),
   }));
 }
 
@@ -78,7 +112,7 @@ export async function request(path, { method = "GET", body, authenticated = true
     clearTimeout(timeout);
   }
   const code = response.ok && Number.isInteger(result?.code) ? result.code : response.status;
-  if (code === 401 && authenticated) {
+  if (code === 401 && authenticated && readSession()?.accessToken === session?.accessToken) {
     clearSession();
     publishAuthEvent("auth:expired");
   }
@@ -94,9 +128,27 @@ export async function request(path, { method = "GET", body, authenticated = true
 }
 
 export const API = {
+  updateProfile: async (displayName, expectedName) => {
+    const token = readSession()?.accessToken;
+    const data = await request("/auth/me/profile", { method: "PATCH", body: {
+      full_name: displayName, expected_full_name: expectedName,
+    } });
+    if (readSession()?.accessToken !== token) throw new ApiError("登录身份已改变，请重新打开个人中心。");
+    cacheIdentity(data, token);
+    publishAuthEvent();
+    return data;
+  },
   publicAccess: () => request("/auth/public-access", { authenticated: false }),
-  myAccess: () => request("/auth/me/access"),
-  login: (username, password) => request("/auth/login", {
-    method: "POST", body: { username, password }, authenticated: false,
-  }),
+  myAccess: async () => {
+    const token = readSession()?.accessToken;
+    const access = await request("/auth/me/access");
+    const identity = cacheIdentity(access, token);
+    return identity ? { ...access, display_name: identity.displayName } : access;
+  },
+  login: async (username, password) => {
+    const data = await request("/auth/login", {
+      method: "POST", body: { username, password }, authenticated: false,
+    });
+    return { ...data, username };
+  },
 };

@@ -1,7 +1,6 @@
 """平台管理员开户固定服务：档案、职位角色、账号和脱敏审计同事务提交。"""
 from datetime import datetime,timezone
 from zoneinfo import ZoneInfo
-from uuid import uuid4
 from sqlalchemy import select,insert,update,func
 from sqlalchemy.exc import IntegrityError
 from fastapi import HTTPException
@@ -13,6 +12,7 @@ from app.core.common.phone_protection import phone_fields
 from app.services.common.auth_service import hash_password
 from app.core.common.system_admin import is_system_admin,ensure_admin_actor
 from app.repositories.enterprise.enterprise_repository import digest
+from app.services.common.customer_number import create_customer_profile
 
 DEFAULT_REGISTRATION_PASSWORD='123456'
 ACTION='auth.account.register'
@@ -75,9 +75,9 @@ class AccountRegistrationService:
                 employee=self.db.execute(select(t.employee).where(t.employee.c.employee_id==values['employee_id']).with_for_update()).mappings().first()
                 if not employee or employee['status']!='active' or employee['department_id']!=values['department_id'] or not ({'consultant','admin'}&set(employee['role_codes'])):invalid('客户负责人必须为同部门有效顾问或管理员')
             if 'phone' in values:values.update(phone_fields(values.pop('phone')))
-            values.update(customer_no='CUS'+uuid4().hex[:20],status='new',source_channel='admin_registration',authority_source='local',is_archived=False,status_changed_at=now)
+            values.update(status='new',source_channel='admin_registration',authority_source='local',is_archived=False,status_changed_at=now)
         values.update(row_version=1,created_at=now,updated_at=now)
-        object_id=self.db.execute(insert(table).values(**values)).inserted_primary_key[0]
+        object_id=create_customer_profile(self.db,values)['customer_id'] if identity=='customer' else self.db.execute(insert(table).values(**values)).inserted_primary_key[0]
         return object_id,values['department_id'],roles,None
 
     def register(self,payload,key):

@@ -1,4 +1,4 @@
-import { ApiError, readSession, request } from "../common/api.js";
+import { ApiError, readSession, request, createRequestId } from "../common/api.js";
 
 export async function requestReport(method, path, body, headers) {
   const token = readSession()?.accessToken;
@@ -12,7 +12,7 @@ export function createReportGenerator(send = requestReport) {
   return {
     async generate(body) {
       const signature = JSON.stringify(body);
-      if (!pending.has(signature)) pending.set(signature, `report-${crypto.randomUUID()}`);
+      if (!pending.has(signature)) pending.set(signature, `report-${createRequestId()}`);
       const result = await send("POST", "/report/generate", body, { "Idempotency-Key": pending.get(signature) });
       pending.delete(signature);
       return result;

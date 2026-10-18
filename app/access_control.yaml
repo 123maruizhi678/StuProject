@@ -2,13 +2,25 @@ version: 1
 # Backend API authorization remains mandatory; frontend visibility is not security.
 roles:
   admin:
-    permissions: [admin.dashboard, report.generate, report.read, report.config.read, report.config.write]
+    permissions: [admin.dashboard, report.generate, report.read, report.config.read, report.config.write, customer.source.read, customer.source.create, customer.source.parse, customer.source.file, customer.judge.create, customer.judge.batch, customer.result.read, customer.rule.read, customer.rule.manage]
   employee:
     permissions: [dashboard.employee, student.profile.read, student.admin_service.review, service_ticket.read, service_ticket.handle]
   customer:
     permissions: [dashboard.customer, course_project.read, event_signup.create, service_ticket.create, service_ticket.read_own]
   student:
-    permissions: [dashboard.student, student.profile.read_own, student.admin_service.create, student.admin_service.read_own, student.notification.read_own]
+    permissions: [dashboard.student, student.profile.read_own, student.admin_service.create, student.admin_service.read_own, student.admin_service.withdraw_own, student.notification.read_own, student.mental.create_own, student.reminder.manage_own, student.chat, student.action.confirm, student.academic.read_own, student.progress.read_own, student.course.read_own, student.score.read_own, service_ticket.create, service_ticket.read_own, student.ticket.reply_own, student.ticket.confirm_own, student.ticket.rate_own]
+# 员工角色仅由数据库有效档案提供，心理处置使用专属角色。
+employee_roles:
+  teacher:
+    permissions: [student.notification.read]
+  academic:
+    permissions: [student.academic.maintain]
+  consultant:
+    permissions: [student.progress.maintain]
+  manager:
+    permissions: [student.admin_service.assign, student.progress.maintain]
+  counselor:
+    permissions: [student.notification.read, student.warning.read, student.warning.handle]
 # Page IDs and routes are metadata for a future frontend; these do not create pages.
 pages:
   home: {title: Home, route: /, public: true}
@@ -23,10 +35,12 @@ pages:
   student_profile: {title: Student profile, route: /student/profile, requires_auth: true, permission_any: [student.profile.read, student.profile.read_own]}
   service_tickets: {title: Service tickets, route: /tickets, requires_auth: true, permission_any: [service_ticket.read, service_ticket.read_own, service_ticket.handle]}
   report: {title: 智能报告, route: /report, requires_auth: true, permission_any: [report.generate, report.read, report.config.read, report.config.write]}
+  customer_research: {title: 客户研判, route: /customer/customer.html, requires_auth: true, permission_any: [customer.source.create, customer.result.read]}
 modules:
   agent_center: {title: 客服 Agent, pages: [agent]}
   admin_workspace: {title: Administration, required_any: [admin.dashboard], pages: [admin_dashboard]}
-  employee_workspace: {title: Employee workspace, required_any: [dashboard.employee], pages: [employee_dashboard]}
+  employee_workspace: {title: Employee workspace, required_any: [dashboard.employee, enterprise.access], pages: [employee_dashboard]}
+  customer_research: {title: 客户研判, required_any: [customer.source.create, customer.result.read], pages: [customer_research]}
   customer_workspace: {title: Customer workspace, required_any: [dashboard.customer], pages: [customer_dashboard]}
   student_workspace: {title: Student workspace, required_any: [dashboard.student], pages: [student_dashboard, student_profile]}
   ticket_center:
@@ -37,3 +51,495 @@ modules:
     title: 智能报告
     required_any: [report.generate, report.read, report.config.read, report.config.write]
     pages: [report]
+
+# 公共工作台与共享导航：仅列出既有接口授权允许的入口。
+navigation:
+  modules:
+  - id: agent_center
+    title: 客服咨询
+    description: 咨询问答、课程与活动信息
+    symbol: ◌
+  - id: customer_research
+    title: 客户信息研判
+    description: 资料解析、规则匹配与研判结果
+    symbol: ⌁
+  - id: employee_workspace
+    title: 企业智能助手
+    description: 按岗位协同处理客户、教务与日常事务
+    symbol: ▦
+  - id: student_workspace
+    title: 学生智能助手
+    description: 学习、申请与学生服务
+    symbol: ◇
+  - id: report_center
+    title: 智能报告
+    description: 查看分析报告与已授权的报告工具
+    symbol: ▤
+  - id: admin_workspace
+    title: 平台管理
+    description: 账号、角色与平台管理入口
+    symbol: ✦
+  - id: account_center
+    title: 个人中心
+    description: 查看当前身份与个人访问权限
+    symbol: ○
+  pages:
+  - route: /common/password-reset.html
+    title: 账号协助
+    menu: false
+    authenticated: false
+  - route: /common/workspace.html
+    title: 通知中心
+    menu: false
+  - route: /agent/agent.html
+    title: 智能咨询
+    module: agent_center
+    authenticated: false
+  - route: /agent/courses.html
+    title: 课程与项目
+    module: agent_center
+    authenticated: false
+  - route: /agent/events.html
+    title: 活动与讲座
+    module: agent_center
+    authenticated: false
+  - route: /agent/event-detail.html
+    title: 活动详情
+    module: agent_center
+    authenticated: false
+    menu: false
+  - route: /agent/faq.html
+    title: 常见问题
+    module: agent_center
+    authenticated: false
+  - route: /customer/customer.html
+    title: 客户研判概览
+    module: customer_research
+    any_permissions:
+    - customer.source.create
+    - customer.result.read
+  - route: /customer/sources.html
+    title: 资料来源
+    module: customer_research
+    any_permissions:
+    - customer.source.read
+  - route: /customer/source-detail.html
+    title: 来源详情
+    module: customer_research
+    any_permissions:
+    - customer.source.read
+    menu: false
+  - route: /customer/extract.html
+    title: 客户字段解析
+    module: customer_research
+    any_permissions:
+    - customer.source.parse
+  - route: /customer/results.html
+    title: 研判结果
+    module: customer_research
+    any_permissions:
+    - customer.result.read
+  - route: /customer/result-detail.html
+    title: 研判结果详情
+    module: customer_research
+    any_permissions:
+    - customer.result.read
+    menu: false
+  - route: /customer/rules.html
+    title: 研判规则
+    module: customer_research
+    any_permissions:
+    - customer.rule.read
+  - route: /customer/rule-detail.html
+    title: 规则详情与版本
+    module: customer_research
+    any_permissions:
+    - customer.rule.read
+    menu: false
+  - route: /customer/products.html
+    title: 研判产品目录
+    module: customer_research
+    any_permissions:
+    - customer.rule.read
+  - route: /enterprise/enterprise.html
+    title: 企业工作台
+    module: employee_workspace
+    any_permissions:
+    - enterprise.access
+    identities:
+    - admin
+    - employee
+  - route: /enterprise/assistant.html
+    title: 企业智能助手
+    module: employee_workspace
+    any_permissions:
+    - enterprise.command
+    identities:
+    - admin
+    - employee
+  - route: /enterprise/command-preview.html
+    title: 工作指令确认
+    module: employee_workspace
+    any_permissions:
+    - enterprise.command
+    identities:
+    - admin
+    - employee
+    menu: false
+  - route: /enterprise/customers.html
+    title: 客户档案
+    module: employee_workspace
+    any_permissions:
+    - enterprise.customer.read
+    identities:
+    - admin
+    - employee
+  - route: /enterprise/customer-detail.html
+    title: 客户档案详情
+    module: employee_workspace
+    any_permissions:
+    - enterprise.customer.read
+    identities:
+    - admin
+    - employee
+    menu: false
+  - route: /enterprise/followups.html
+    title: 客户跟进
+    module: employee_workspace
+    any_permissions:
+    - enterprise.customer.read
+    identities:
+    - admin
+    - employee
+  - route: /enterprise/daily-reports.html
+    title: 工作日报
+    module: employee_workspace
+    any_permissions:
+    - enterprise.daily.read
+    identities:
+    - admin
+    - employee
+  - route: /enterprise/daily-report-new.html
+    title: 撰写工作日报
+    module: employee_workspace
+    any_permissions:
+    - enterprise.daily.write_own
+    identities:
+    - admin
+    - employee
+    menu: false
+  - route: /enterprise/daily-report-detail.html
+    title: 工作日报详情
+    module: employee_workspace
+    any_permissions:
+    - enterprise.daily.read
+    identities:
+    - admin
+    - employee
+    menu: false
+  - route: /enterprise/todos.html
+    title: 我的待办
+    module: employee_workspace
+    any_permissions:
+    - enterprise.todo.read_own
+    identities:
+    - admin
+    - employee
+  - route: /enterprise/organization.html
+    title: 组织与员工
+    module: employee_workspace
+    any_permissions:
+    - enterprise.organization.read
+    identities:
+    - admin
+    - employee
+  - route: /enterprise/bindings.html
+    title: 学生服务关系
+    module: employee_workspace
+    any_permissions:
+    - enterprise.binding.manage
+    identities:
+    - admin
+    - employee
+  - route: /enterprise/students.html
+    title: 学生管理
+    module: employee_workspace
+    any_permissions:
+    - enterprise.student.read
+    identities:
+    - admin
+    - employee
+  - route: /enterprise/student-detail.html
+    title: 学生档案详情
+    module: employee_workspace
+    any_permissions:
+    - enterprise.student.read
+    identities:
+    - admin
+    - employee
+    menu: false
+  - route: /enterprise/scores.html
+    title: 课程与成绩
+    module: employee_workspace
+    any_permissions:
+    - enterprise.score.read
+    identities:
+    - admin
+    - employee
+  - route: /enterprise/academics.html
+    title: 教务事项
+    module: employee_workspace
+    any_permissions:
+    - enterprise.academic.write
+    identities:
+    - admin
+    - employee
+  - route: /enterprise/courses.html
+    title: 课程与选课
+    module: employee_workspace
+    any_permissions:
+    - enterprise.score.read
+    - enterprise.score.write
+    identities:
+    - admin
+    - employee
+  - route: /enterprise/application-progress.html
+    title: 申请进度维护
+    module: employee_workspace
+    any_permissions:
+    - enterprise.progress.write
+    identities:
+    - admin
+    - employee
+  - route: /enterprise/leave-review.html
+    title: 学生请假审批
+    module: employee_workspace
+    any_permissions:
+    - student.admin_service.review
+    identities:
+    - admin
+    - employee
+  - route: /enterprise/leave-detail.html
+    title: 请假审批详情
+    module: employee_workspace
+    any_permissions:
+    - student.admin_service.review
+    identities:
+    - admin
+    - employee
+    menu: false
+  - route: /enterprise/tickets.html
+    title: 服务工单
+    module: employee_workspace
+    any_permissions:
+    - enterprise.ticket.read
+    identities:
+    - admin
+    - employee
+  - route: /enterprise/ticket-detail.html
+    title: 服务工单详情
+    module: employee_workspace
+    any_permissions:
+    - enterprise.ticket.read
+    identities:
+    - admin
+    - employee
+    menu: false
+  - route: /enterprise/knowledge.html
+    title: 知识与新人指引
+    module: employee_workspace
+    any_permissions:
+    - enterprise.knowledge.read
+    identities:
+    - admin
+    - employee
+  - route: /enterprise/knowledge-detail.html
+    title: 知识资料详情
+    module: employee_workspace
+    any_permissions:
+    - enterprise.knowledge.read
+    identities:
+    - admin
+    - employee
+    menu: false
+  - route: /enterprise/query.html
+    title: 业务数据查询
+    module: employee_workspace
+    any_permissions:
+    - enterprise.query
+    identities:
+    - admin
+    - employee
+  - route: /enterprise/warnings.html
+    title: 学生关怀跟进
+    module: employee_workspace
+    any_permissions:
+    - student.warning.read
+    identities:
+    - admin
+    - employee
+  - route: /enterprise/warning-detail.html
+    title: 关怀跟进详情
+    module: employee_workspace
+    any_permissions:
+    - student.warning.read
+    identities:
+    - admin
+    - employee
+    menu: false
+  - route: /student/student-assistant.html
+    title: 我的学生工作台
+    module: student_workspace
+    any_permissions:
+    - dashboard.student
+    identities:
+    - student
+  - route: /student/chat.html
+    title: 学生智能助手
+    module: student_workspace
+    any_permissions:
+    - student.chat
+    identities:
+    - student
+  - route: /student/academics.html
+    title: 我的学业
+    module: student_workspace
+    any_permissions:
+    - student.course.read_own
+    - student.score.read_own
+    - student.academic.read_own
+    identities:
+    - student
+  - route: /student/progress.html
+    title: 我的申请进度
+    module: student_workspace
+    any_permissions:
+    - student.progress.read_own
+    identities:
+    - student
+  - route: /student/reminders.html
+    title: 学业提醒
+    module: student_workspace
+    any_permissions:
+    - student.reminder.manage_own
+    identities:
+    - student
+  - route: /student/leave.html
+    title: 请假办理
+    module: student_workspace
+    any_permissions:
+    - student.admin_service.read_own
+    - student.admin_service.create
+    identities:
+    - student
+  - route: /student/leave-detail.html
+    title: 请假申请详情
+    module: student_workspace
+    any_permissions:
+    - student.admin_service.read_own
+    identities:
+    - student
+    menu: false
+  - route: /student/tickets.html
+    title: 我的服务工单
+    module: student_workspace
+    any_permissions:
+    - service_ticket.read_own
+    identities:
+    - student
+  - route: /student/ticket-detail.html
+    title: 服务工单详情
+    module: student_workspace
+    any_permissions:
+    - service_ticket.read_own
+    identities:
+    - student
+    menu: false
+  - route: /student/notifications.html
+    title: 通知中心
+    module: student_workspace
+    any_permissions:
+    - student.notification.read_own
+    identities:
+    - student
+  - route: /student/care.html
+    title: 心情与关怀
+    module: student_workspace
+    any_permissions:
+    - student.mental.create_own
+    identities:
+    - student
+  - route: /student/action-preview.html
+    title: 办理事项确认
+    module: student_workspace
+    any_permissions:
+    - student.action.confirm
+    identities:
+    - student
+    menu: false
+  - route: /report/report.html
+    title: 智能报告概览
+    module: report_center
+    any_permissions:
+    - report.read
+  - route: /report/list.html
+    title: 报告列表
+    module: report_center
+    any_permissions:
+    - report.read
+  - route: /report/generate.html
+    title: 生成报告
+    module: report_center
+    any_permissions:
+    - report.generate
+  - route: /report/detail.html
+    title: 报告阅读
+    module: report_center
+    any_permissions:
+    - report.read
+    menu: false
+  - route: /report/configs.html
+    title: 报告配置
+    module: report_center
+    any_permissions:
+    - report.config.read
+    - report.config.write
+  - route: /common/account.html
+    title: 个人中心
+    module: account_center
+  - route: /common/notifications.html
+    title: 通知中心
+    menu: false
+  - route: /admin/accounts.html
+    title: 账号管理
+    module: admin_workspace
+    any_permissions:
+    - common.accounts.manage
+  - route: /admin/permissions.html
+    title: 角色与权限
+    module: admin_workspace
+    any_permissions:
+    - common.accounts.manage
+  - route: /admin/audit.html
+    title: 操作记录
+    module: admin_workspace
+    any_permissions:
+    - enterprise.audit.read
+  - route: /admin/settings.html
+    title: 平台设置
+    module: admin_workspace
+    any_permissions:
+    - report.config.read
+    - report.config.write
+  - route: /common/sitemap.html
+    title: 全部页面导航
+    menu: false
+    authenticated: false
+
+  - route: /common/notification-detail.html
+    title: 通知详情
+    menu: false
+  - route: /common/announcement-manage.html
+    title: 公共通知管理
+    module: admin_workspace
+    any_permissions: [common.accounts.manage]

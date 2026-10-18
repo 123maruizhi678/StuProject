@@ -1,16 +1,20 @@
 // 首页交互：导航滚动态、入场动画、视频兜底。
 (function () {
+  document.documentElement.classList.add("has-home-js");
   // 1. 导航在滚动后变为实底
   var nav = document.getElementById("siteNav");
   function onScroll() {
-    if (nav) nav.classList.toggle("scrolled", window.scrollY > 40);
+    if (nav) nav.classList.toggle("scrolled", document.body.classList.contains("policy-page") || window.scrollY > 40);
   }
   window.addEventListener("scroll", onScroll, { passive: true });
   onScroll();
 
   // 2. 视频自动播放兜底（部分浏览器需用户交互后才能有声播放，静音自动播放通常允许）
   var video = document.querySelector(".hero-video");
-  if (video) {
+  if (video && window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    video.pause();
+    video.removeAttribute("autoplay");
+  } else if (video) {
     var tryPlay = function () {
       var p = video.play();
       if (p && p.catch) p.catch(function () { /* 静音自动播放被阻止时保持 poster 展示 */ });

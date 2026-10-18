@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>通知详情 · 留学项目平台</title>
+  <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="../css/common/style.css" />
+  <link rel="stylesheet" href="../css/workspace/layout.css" />
+  <link rel="stylesheet" href="../css/common/workspace.css" />
+</head>
+<body data-notice-view="detail">
+  <a class="skip-link" href="#main-content">跳至主要内容</a>
+  <div class="mobile-scrim"></div>
+  <aside class="app-rail" aria-label="平台导航">
+    <a class="rail-brand" href="../index.html"><span class="brand-emblem">✦</span><span><strong>留学项目平台</strong><small>STUDY ABROAD</small></span></a>
+    <nav class="rail-scroll" aria-label="模块导航"></nav>
+  </aside>
+  <div class="workspace">
+    <header class="app-topbar">
+      <button class="icon-button menu-button" type="button" data-menu aria-label="打开导航" aria-expanded="false">☰</button>
+      <div class="crumb"><b>通知中心</b></div><div class="top-spacer"></div>
+      <div class="top-actions"><a class="user-chip" href="account.html"><span class="avatar">·</span><span class="user-name">正在读取身份</span></a><button class="button secondary small" id="workspace-logout" type="button">退出登录</button></div>
+    </header>
+    <main class="workspace-main" id="main-content">
+      <div class="page-heading"><div><div class="eyebrow">MESSAGE DETAILS</div><h1>通知详情</h1></div><div class="actions"><a class="button secondary" href="workspace.html">返回通知中心</a></div></div>
+      <p id="detail-status" role="status">正在读取通知……</p>
+      <article class="section-card notice-detail" id="notice-detail" hidden><div class="notice-detail-meta" id="detail-meta"></div><h2 id="detail-title"></h2><div class="notice-detail-body" id="detail-body"></div><a class="button" id="notice-related" hidden>查看相关办理记录 →</a></article>
+      <footer class="page-footer"><span>✦ 留学项目平台 · 专业服务，连接未来</span><a href="../index.html">返回首页</a></footer>
+    </main>
+  </div>
+  <script type="module" src="../js/common/notification-center.js"></script>
+</body>
+</html>

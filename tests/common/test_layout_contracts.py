@@ -50,14 +50,18 @@ class LayoutContracts(unittest.TestCase):
         self.assertIn("/api/v1/agent/chat", schema["paths"])
         self.assertIn("/api/v1/enterprise/customer", schema["paths"])
         self.assertNotIn("enterprise", MIGRATION_PENDING_MODULES)
-        self.assertIn("student_leave", MIGRATION_PENDING_MODULES)
+        self.assertNotIn("student_leave", MIGRATION_PENDING_MODULES)
+        self.assertIn("/api/v1/student/leave", schema["paths"])
+        self.assertIn("/api/v1/customer/source", schema["paths"])
         self.assertNotIn("agent", MIGRATION_PENDING_MODULES)
 
     def test_frontend_local_resources_exist(self):
         html = (ROOT / "frontend/index.html").read_text(encoding="utf-8")
-        assets = re.findall(r'(?:src|href)="(/static/[^"?]+)', html)
-        self.assertEqual(len(assets), 2)
+        assets = re.findall(r'(?:src|href)="([^"?#]+)', html)
+        self.assertGreater(len(assets), 2)
         for asset in assets:
+            if "://" in asset or asset.startswith(("data:", "tel:", "mailto:", "javascript:")):
+                continue
             self.assertTrue((ROOT / "frontend" / asset.removeprefix("/static/")).is_file(), asset)
 
     def test_relocated_report_script_dry_run(self):
