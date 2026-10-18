@@ -22,17 +22,41 @@ function time(value) {
   }).format(date);
 }
 function messageLink(item, publicNotice = false) {
-  const link = node("a", undefined, "notice-row" + (item.read_at ? "" : " unread"));
+  const unread = !item.read_at;
+  const link = node("a", undefined, "notice-row" + (unread ? " unread" : ""));
   link.href = "/common/notification-detail.html?key=" + encodeURIComponent(item.key);
   link.dataset.messageKey = item.key;
-  const dot = node("span", item.read_at ? "已读" : "未读", "notice-read-state");
+  const dot = node("span", unread ? "未读" : "已读", "notice-read-state");
   const body = node("div", undefined, "notice-row-body");
   const title = node("div", undefined, "notice-row-title");
   title.append(node("span", publicNotice ? item.pinned ? "置顶" : "公告" : labels[item.kind] || "重要事项", "notice-kind"), node("strong", item.title));
-  body.append(title, node("p", item.content.slice(0, 160), "notice-excerpt"));
+  const content = item.content || "这条通知没有补充内容。";
+  body.append(title, node("p", publicNotice ? content.slice(0, 160) : content, publicNotice ? "notice-excerpt" : "notice-excerpt notice-full-content"));
   const date = node("time", time(item.published_at || item.sent_at || item.created_at));
   link.append(dot, body, date, node("span", "›", "notice-row-arrow"));
-  return link;
+  if (publicNotice) return link;
+  const row = node("article", undefined, "notice-entry" + (unread ? " unread" : ""));
+  const button = node("button", unread ? "标记已读" : "已读", "button" + (unread ? "" : " secondary") + " notice-mark-read");
+  button.type = "button"; button.disabled = !unread; button.dataset.readKey = item.key;
+  button.setAttribute("aria-label", (unread ? "标记已读：" : "已读：") + item.title);
+  button.onclick = async () => {
+    if (button.disabled) return;
+    const token = readSession()?.accessToken;
+    button.disabled = true;
+    const message = $("#personal-notice-status");
+    try {
+      await request("/common/notifications/" + encodeURIComponent(item.key) + "/read", { method: "POST" });
+      if (!token || readSession()?.accessToken !== token || !row.isConnected) return;
+      message.textContent = "已标记为已读：" + item.title;
+      window.dispatchEvent(new Event("student:notifications-changed"));
+      await loadPersonal();
+    } catch (error) {
+      if (readSession()?.accessToken !== token || !row.isConnected) return;
+      button.disabled = false; message.textContent = "标记已读失败：" + error.message;
+    }
+  };
+  row.append(link, button);
+  return row;
 }
 function showError(container, error) {
   if (container) container.replaceChildren(node("p", error.message + "，可点击刷新重试。", "notice-empty notice-error"));
@@ -47,6 +71,26 @@ async function loadPublic() {
     if (!data.items.length) container.append(node("p", "暂无公共通知", "notice-empty"));
   } catch (error) { showError(container, error); }
 }
+// The existing API supports all/unread. Build read-only pages from its own
+// filtered results so totals and pagination stay correct without a new endpoint.
+async function personalPage(params, readOnly, revision, token) {
+  if (!readOnly) return request("/common/notifications?" + params);
+  const query = new URLSearchParams(params);
+  const pageOffset = Number(params.get("offset") || 0);
+  const pageSize = Number(params.get("limit") || size);
+  query.delete("unread"); query.set("limit", "100");
+  const rows = []; let fetched = 0, unreadCount = 0;
+  for (;;) {
+    query.set("offset", String(fetched));
+    const data = await request("/common/notifications?" + query);
+    if (revision !== personalRevision || readSession()?.accessToken !== token) return null;
+    unreadCount = data.unread_count;
+    rows.push(...data.items.filter(item => Boolean(item.read_at)));
+    fetched += data.items.length;
+    if (!data.items.length || fetched >= data.total) break;
+  }
+  return { items: rows.slice(pageOffset, pageOffset + pageSize), total: rows.length, unread_count: unreadCount };
+}
 async function loadPersonal() {
   const current = ++personalRevision;
   const token = readSession()?.accessToken;
@@ -55,8 +99,8 @@ async function loadPersonal() {
   if ($("#notice-kind").value) params.set("kind", $("#notice-kind").value);
   if ($("#notice-query").value.trim()) params.set("q", $("#notice-query").value.trim());
   try {
-    const data = await request("/common/notifications?" + params);
-    if (current !== personalRevision || !$("#personal-notices") || readSession()?.accessToken !== token) return;
+    const data = await personalPage(params, $("#notice-read").value === "read", current, token);
+    if (!data || current !== personalRevision || !$("#personal-notices") || readSession()?.accessToken !== token) return;
     if (offset && !data.items.length && data.total <= offset) { offset = 0; return loadPersonal(); }
     $("#personal-notices").replaceChildren(...data.items.map(item => messageLink(item)));
     if (!data.items.length) $("#personal-notices").append(node("p", "暂无符合条件的个人消息", "notice-empty"));
@@ -94,6 +138,7 @@ async function loadDetail() {
     try {
       await request("/common/notifications/" + encodeURIComponent(key) + "/read", { method: "POST" });
       status.textContent = "已读";
+      window.dispatchEvent(new Event("student:notifications-changed"));
     } catch (error) { status.textContent = "通知已加载，标记已读失败：" + error.message; }
   } catch (error) { status.textContent = error.message; }
   document.documentElement.dataset.notificationReady = "true";

@@ -32,6 +32,16 @@ export function renderNavigation(access) {
     renderIdentity(access);
     return;
   }
+  for (const rail of document.querySelectorAll(".app-rail")) {
+    const brand = rail.querySelector(".rail-brand");
+    if (!brand) continue;
+    let mission = rail.querySelector(".rail-mission");
+    if (!mission) {
+      mission = node("p", "致力让生活更美好", "rail-mission");
+      mission.setAttribute("aria-label", "学校使命");
+      brand.after(mission);
+    }
+  }
   const { current, moduleId, menuPath } = navigationLocation(location.pathname, access);
   for (const nav of document.querySelectorAll(".rail-scroll")) {
     const scrollTop = nav.scrollTop;
