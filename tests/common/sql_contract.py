@@ -5,6 +5,9 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 TYPE = r"(?:BIGINT|INTEGER|INT|TINYINT|VARCHAR|CHAR|TEXT|JSON|DATETIME|DATE|DECIMAL|BOOLEAN|VARBINARY)\b"
 
+# 由 scripts/migrate_notification_center.py 独立 table.create 建表，不在 all.sql 基线内，无独立 DDL 可对照。
+STANDALONE_MIGRATION_TABLES = frozenset({"platform_announcement", "platform_notification_read"})
+
 
 def columns_for(table):
     source = (ROOT / "scripts/sql/all.sql").read_text(encoding="utf-8-sig")
