@@ -541,6 +541,48 @@ class ReportGenerationTest(unittest.TestCase):
                 entries,
             )
 
+    def test_anonymize_for_model_allows_mental_aggregate_totals(self):
+        """心理周报的「总数」聚合指标（无中间段）必须通过白名单；明细键仍被拒。"""
+        from app.services.report.report_anonymizer import (
+            AnonymizationError,
+            anonymize_for_model,
+        )
+
+        entries = {
+            "mental_assessment_count": {
+                "value": 3, "unit": "次", "availability": "available",
+            },
+            "mental_risk_high_count": {
+                "value": 1, "unit": "次", "availability": "available",
+            },
+            "mental_warning_count": {
+                "value": 2, "unit": "次", "availability": "available",
+            },
+            "mental_warning_pending_count": {
+                "value": 1, "unit": "次", "availability": "available",
+            },
+            "mental_assessment_change_rate": {
+                "value": 50.0, "unit": "%", "availability": "available",
+            },
+            "mental_warning_change_rate": {
+                "value": None, "unit": "%", "availability": "not_computable",
+            },
+        }
+        allowed = anonymize_for_model("mental_weekly", entries)
+        self.assertEqual(set(allowed), set(entries))
+
+        # 明细键（如情绪值）不在 assessment|warning|risk 类别，仍必须被拒。
+        with self.assertRaises(AnonymizationError):
+            anonymize_for_model(
+                "mental_weekly",
+                {
+                    **entries,
+                    "mental_emotion_score": {
+                        "value": 20, "unit": "", "availability": "available",
+                    },
+                },
+            )
+
     # -- 调度 ----------------------------------------------------------------
 
     def test_scheduler_scan_creates_missing_windows_once(self):
