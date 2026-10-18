@@ -14,7 +14,8 @@ const enums = {admin:'平台管理员',employee:'员工',student:'学生',custom
   complaint:'投诉',suggestion:'建议',personal:'事假',exam:'考试',ddl:'截止事项',student_visible:'学生可见',internal:'内部',
   document_review:'文书审核',school_application:'院校申请',visa_process:'签证办理',class_teacher:'班主任',score_editor:'成绩维护',
   service_advisor:'服务顾问',customer_overview:'客户经营分析',daily_report:'员工日报汇总',weekly_report:'员工周报',
-  mental_weekly:'学生心理周报',complaint_weekly:'投诉处理周报'};
+  mental_weekly:'学生心理周报',complaint_weekly:'投诉处理周报',
+  running:'生成中',success:'已生成',failed:'失败','Asia/Shanghai':'北京时间'};
 const privateField=key=>/password|ciphertext|lookup_token|secret|request_hash|parameters_hash/.test(key)||['token','action_token','conversation_token','request_key','__path'].includes(key);
 const publicValue=value=>Array.isArray(value)?value.map(publicValue):value&&typeof value==='object'?Object.fromEntries(Object.entries(value).filter(([key])=>!privateField(key)).map(([key,item])=>[key,publicValue(item)])):value;
 const format = value => value===null||value===undefined?'—':typeof value==='boolean'?(value?'是':'否'):typeof value==='object'?JSON.stringify(publicValue(value),null,2):enums[value]||String(value);

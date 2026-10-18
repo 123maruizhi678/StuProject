@@ -18,7 +18,7 @@
     - 普通员工、客户、学生与匿名访客一律拒绝。
 除生成链路外，查询与配置操作不直接调用 Dify。
 """
-from typing import Annotated
+from typing import Annotated, Literal
 
 from fastapi import APIRouter, BackgroundTasks, Depends, Header, Query, Request
 from sqlalchemy.orm import Session
@@ -28,6 +28,7 @@ from app.core.common.response import BusinessException, ResultCode, success
 from app.database import get_db
 from app.schemas.report import (
     REPORT_CODES,
+    REPORT_STATUSES,
     GenerateReportRequest,
     ReportConfigOut,
     ReportListOut,
@@ -95,8 +96,10 @@ def list_reports(
     access: Annotated[
         ReportAccess, Depends(require_report_action("report.read"))
     ],
-    report_code: str | None = None,
-    status: str | None = None,
+    # 枚举查询参数：OpenAPI 暴露 enum，前端（live.js）据此渲染下拉框；
+    # 非法取值走 schema 层校验，由统一异常处理器转为 200 + code=400 信封。
+    report_code: Literal[tuple(REPORT_CODES)] | None = None,
+    status: Literal[tuple(REPORT_STATUSES)] | None = None,
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
 ):
