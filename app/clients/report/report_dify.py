@@ -51,25 +51,38 @@ class ReportDifyClient:
         )
 
     def generate_report(
-        self, report_code: str, metrics: dict, user: str = DEFAULT_CALL_USER
+        self,
+        report_code: str,
+        metrics: dict,
+        user: str = DEFAULT_CALL_USER,
+        *,
+        daily_summaries: list[str] | None = None,
     ) -> str:
-        """同步调用报告生成工作流，返回报告正文。"""
+        """同步调用报告生成工作流，返回报告正文。
+
+        daily_summaries 为日报/周报内容级摘要（复用 employee_daily_report.ai_summary），
+        非空时作为第三个 input 传入；为空不传，兼容尚未更新该 input 的 Workflow。
+        """
         api_key = settings.REPORT_DIFY_API_KEY
         if not api_key:
             raise ReportDifyError(
                 "未配置报告生成 Dify 工作流 API Key（REPORT_DIFY_API_KEY）"
             )
 
+        inputs: dict[str, str] = {
+            "report_code": report_code,
+            # 指标以 JSON 字符串传入，工作流内按需解析后写分析。
+            "metrics": json.dumps(metrics, ensure_ascii=False, sort_keys=True),
+        }
+        if daily_summaries:
+            inputs["daily_summaries"] = json.dumps(daily_summaries, ensure_ascii=False)
+
         try:
             response = self.http.post_json_sync(
                 "/workflows/run",
                 api_key=api_key,
                 payload={
-                    "inputs": {
-                        "report_code": report_code,
-                        # 指标以 JSON 字符串传入，工作流内按需解析后写分析。
-                        "metrics": json.dumps(metrics, ensure_ascii=False, sort_keys=True),
-                    },
+                    "inputs": inputs,
                     "response_mode": "blocking",
                     "user": user,
                 },
