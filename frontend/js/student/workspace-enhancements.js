@@ -1,5 +1,4 @@
 import {api,tokenStore} from './api.js';
-import {request} from '../common/api.js';
 import {setAccess,can,studentPermissions} from './access.js';
 const filePage={ 'student-assistant':'overview','leave-detail':'leave','ticket-detail':'tickets','action-preview':'chat' };
 const pageKey=path=>{const name=path.split('/').at(-1).replace(/\.html$/,'');return filePage[name]||name;};
@@ -23,7 +22,7 @@ export function startUnread(bell){
  const badge=document.createElement('span');badge.className='student-unread-count';badge.hidden=true;badge.setAttribute('aria-hidden','true');bell.append(badge);
  let stopped=false,running=false;
  async function refresh(){if(stopped||running||document.hidden||tokenStore.get()!==token)return;running=true;
-  try{const r=await request('/common/notifications?limit=1&offset=0&unread=true');if(stopped||tokenStore.get()!==token)return;const total=r.unread_count??r.total;badge.textContent=total>99?'99+':String(total);badge.hidden=!total;bell.setAttribute('aria-label',`通知中心，${total} 条未读消息`);bell.title=`${total} 条未读消息`;}catch{badge.hidden=true;bell.title='未读数量暂不可用';}finally{running=false;}}
+  try{const r=await api('student/notifications?limit=1&offset=0&unread=true');if(stopped||tokenStore.get()!==token)return;badge.textContent=r.total>99?'99+':String(r.total);badge.hidden=!r.total;bell.setAttribute('aria-label',`消息中心，${r.total} 条未读消息`);bell.title=`${r.total} 条未读消息`;}catch{badge.hidden=true;bell.title='未读数量暂不可用';}finally{running=false;}}
  const timer=setInterval(refresh,30000);
  function stop(){stopped=true;clearInterval(timer);badge.hidden=true;document.removeEventListener('visibilitychange',refresh);window.removeEventListener('student:notifications-changed',refresh);window.removeEventListener('auth:changed',stop);window.removeEventListener('auth:expired',stop);}
  document.addEventListener('visibilitychange',refresh);window.addEventListener('student:notifications-changed',refresh);window.addEventListener('auth:changed',stop);window.addEventListener('auth:expired',stop);window.addEventListener('pagehide',stop,{once:true});refresh();return {refresh,stop};
@@ -32,20 +31,13 @@ export async function initializeStudentWorkspace({access,main,page}){
  setAccess(access);
  const style=document.createElement('link');style.rel='stylesheet';style.href='/css/student/workspace-enhancements.css';document.head.append(style);
  document.querySelectorAll('.rail-link[href]').forEach(link=>{const path=new URL(link.href,location.href).pathname;if(path.includes('/student/'))link.hidden=!allowed(access,pageKey(path));});
- const bell=document.querySelector('.top-actions a[href*="student/notifications"],.top-actions a[href="/common/workspace.html"]');
+ const bell=document.querySelector('.top-actions a[href*="student/notifications"]');
  if(bell){bell.hidden=!allowed(access,'notifications');if(!bell.hidden)startUnread(bell);}
  if(!allowed(access,pageKey(page))){const p=document.createElement('p');p.className='live-error';p.textContent='当前账号没有此学生页面权限，请返回已授权的工作空间。';main.append(p);return true;}
  if(can('student.profile.read_own')){
   try{const profile=await api('student/profile');document.querySelectorAll('.user-name').forEach(n=>{n.textContent=profile.full_name||'学生 #'+access.user_id;});document.querySelectorAll('.user-chip .avatar').forEach(n=>{n.textContent=(profile.full_name||'学生').slice(0,1);});}catch{/* 姓名不可用时保留公共账号编号，不阻止业务。 */}
  }
  const token=tokenStore.get();window.addEventListener('auth:changed',()=>{if(tokenStore.get()!==token){setAccess(null);main.replaceChildren();const link=document.createElement('a');link.href='/login.html';link.textContent='登录状态已变化，请重新登录。';main.append(link);}},{once:true});
- if(pageKey(page)==='notifications'){
-  location.replace('/common/workspace.html');return true;
- }
- if(pageKey(page)==='care'){
-  const region=document.createElement('section');region.className='student-live';main.append(region);
-  const care=await import('./care-workspace.js');await care.render(region);return true;
- }
  if(pageKey(page)==='chat'){
   const region=document.createElement('section');region.className='student-live';main.append(region);const chat=await import('./chat.js');await chat.render(region);return true;
  }

@@ -1,7 +1,6 @@
 /** 公共请求工具：兼容 HTTP 错误与 code/message/data 业务信封。 */
 const SESSION_KEY = "stuproject.auth.session";
 const IDENTITIES = new Set(["admin", "employee", "student", "customer"]);
-let accessRequest = null, accessRequestToken = null;
 
 function accountName(value) {
   return typeof value === "string" ? value.trim() : "";
@@ -18,11 +17,7 @@ function cacheIdentity(data, expectedToken) {
   const session = readSession();
   if (!session || session.accessToken !== expectedToken) return null;
   const identity = identitySummary(data, session.identity?.displayName || session.accountName);
-  const shell = data?.navigation ? {
-    updatedAt: Date.now(), access: { user_id: data.user_id, identity_type: data.identity_type,
-      display_name: identity?.displayName || "", roles: data.roles || [], navigation: data.navigation },
-  } : session.shell;
-  if (identity || data?.navigation) sessionStorage.setItem(SESSION_KEY, JSON.stringify({ ...session, identity: identity || session.identity, shell }));
+  if (identity) sessionStorage.setItem(SESSION_KEY, JSON.stringify({ ...session, identity }));
   return identity;
 }
 
@@ -45,7 +40,6 @@ export class ApiError extends Error {
 }
 
 export function clearSession() {
-  accessRequest = null; accessRequestToken = null;
   sessionStorage.removeItem(SESSION_KEY);
   for (const key of ['stuproject.live.selection','stuproject.command.preview','stuproject.student.preview']) sessionStorage.removeItem(key);
 }
@@ -74,18 +68,6 @@ export function readSession() {
   } catch { /* 不使用损坏或过期的会话。 */ }
   clearSession();
   return null;
-}
-
-export function readNavigationPreview() {
-  const shell = readSession()?.shell;
-  if (!shell || !Number.isFinite(shell.updatedAt) || Date.now() - shell.updatedAt >= 300000) return null;
-  const preview = shell.access;
-  return preview && typeof preview.navigation?.routes === 'object' && Array.isArray(preview.navigation?.modules) ? preview : null;
-}
-
-export function saveNavigationState(state) {
-  const session = readSession();
-  if (session) sessionStorage.setItem(SESSION_KEY, JSON.stringify({ ...session, navigationState: state }));
 }
 
 export function saveSession(data) {
@@ -146,13 +128,6 @@ export async function request(path, { method = "GET", body, authenticated = true
 }
 
 export const API = {
-  myContact: () => request("/auth/me/contact"),
-  updateContact: (phone, expectedVersion, currentPassword) => request("/auth/me/contact", {
-    method: "PATCH", body: { phone, expected_version: expectedVersion, current_password: currentPassword },
-  }),
-  changePassword: (currentPassword, newPassword) => request("/auth/me/password", {
-    method: "POST", body: { current_password: currentPassword, new_password: newPassword },
-  }),
   updateProfile: async (displayName, expectedName) => {
     const token = readSession()?.accessToken;
     const data = await request("/auth/me/profile", { method: "PATCH", body: {
@@ -164,16 +139,11 @@ export const API = {
     return data;
   },
   publicAccess: () => request("/auth/public-access", { authenticated: false }),
-  myAccess: () => {
+  myAccess: async () => {
     const token = readSession()?.accessToken;
-    if (accessRequest && accessRequestToken === token) return accessRequest;
-    accessRequestToken = token;
-    const shared = request("/auth/me/access").then(access => {
-      const identity = cacheIdentity(access, token);
-      return identity ? { ...access, display_name: identity.displayName } : access;
-    }).finally(() => { if (accessRequest === shared) { accessRequest = null; accessRequestToken = null; } });
-    accessRequest = shared;
-    return shared;
+    const access = await request("/auth/me/access");
+    const identity = cacheIdentity(access, token);
+    return identity ? { ...access, display_name: identity.displayName } : access;
   },
   login: async (username, password) => {
     const data = await request("/auth/login", {
