@@ -67,6 +67,9 @@ class MetricsResult:
     source_record_count: int = 0
     snapshot_at: datetime | None = None
     manifest: dict = field(default_factory=dict)
+    # 日报/周报内容级摘要：复用企业模块 employee_daily_report.ai_summary（047），
+    # 仅作模型输入，不进对外指标投影（public_metric_json 剔除 _ 保留区）。
+    daily_summaries: list[str] = field(default_factory=list)
 
 
 # ---------------------------------------------------------------------------
@@ -252,11 +255,14 @@ def compute_metrics(
         _require_tables(conn, report_code)
         snapshot_at = _read_db_clock(conn)
         source_counts: dict[str, int] = {}
+        daily_summaries: list[str] = []
 
         if report_code == "customer_overview":
             entries = _customer_overview(conn, start_utc, end_utc, source_counts)
         elif report_code in ("daily_report", "weekly_report"):
-            entries = _daily_report(conn, start_utc, end_utc, source_counts)
+            entries, daily_summaries = _daily_report(
+                conn, start_utc, end_utc, source_counts
+            )
         elif report_code == "mental_weekly":
             entries = _mental_weekly(conn, start_utc, end_utc, source_counts)
         else:  # complaint_weekly
@@ -281,6 +287,7 @@ def compute_metrics(
             "source_counts_by_table": source_counts,
             "snapshot_at": snapshot_at.isoformat() + "Z" if snapshot_at else None,
         },
+        daily_summaries=daily_summaries,
     )
     return result
 
@@ -339,6 +346,22 @@ def _customer_overview(
         int(new_count or 0), "created_at 在窗口内的 distinct customer_id，含后来归档"
     )
 
+    # 新增客户同环比：与上一等长同边界窗口比较（038 命名约定 *_change_rate）。
+    span = end_utc - start_utc
+    prev_start, prev_end = start_utc - span, start_utc
+    prev_new = conn.execute(
+        text(
+            "SELECT COUNT(DISTINCT customer_id) FROM customer_profile "
+            "WHERE created_at >= :ps AND created_at < :pe"
+        ),
+        {"ps": prev_start, "pe": prev_end},
+    ).scalar()
+    entries["customer_new_change_rate"] = _rate_entry(
+        int(new_count or 0) - int(prev_new or 0),
+        int(prev_new or 0),
+        "(本期量−上期量)/上期量×100，与上一等长同边界窗口比较",
+    )
+
     followups = conn.execute(
         text(
             "SELECT COUNT(DISTINCT followup_id) AS n, "
@@ -384,7 +407,7 @@ def _daily_report(
     start_utc: datetime,
     end_utc: datetime,
     source_counts: dict,
-) -> dict:
+) -> tuple[dict, list[str]]:
     entries: dict[str, dict] = {}
     # report_date 为北京时间业务日期：窗口两端换算北京时间后按日期过滤。
     start_date = start_utc.replace(tzinfo=timezone.utc).astimezone(BUSINESS_TZ).date()
@@ -414,7 +437,24 @@ def _daily_report(
         "count", "作废事件时间在窗口内的 distinct 日报ID（可信审计事件）",
         "缺可信作废事件历史，不按 report_date 倒推",
     )
-    return entries
+
+    # 内容级摘要：复用企业模块 employee_daily_report.ai_summary（047），
+    # 不重新对 submitted_content 摘要；ai_summary 列缺失时退回空列表（数量指标不受影响）。
+    daily_summaries: list[str] = []
+    if "ai_summary" in _columns(conn, "employee_daily_report"):
+        rows = conn.execute(
+            text(
+                "SELECT ai_summary FROM employee_daily_report "
+                "WHERE report_date >= :d0 AND report_date < :d1 "
+                "AND status = 'submitted' AND ai_summary IS NOT NULL "
+                "AND TRIM(ai_summary) <> '' ORDER BY report_date, employee_id"
+            ),
+            params,
+        ).mappings()
+        daily_summaries = [
+            str(row["ai_summary"]).strip() for row in rows if str(row["ai_summary"]).strip()
+        ]
+    return entries, daily_summaries
 
 
 # ---------------------------------------------------------------------------
@@ -555,6 +595,22 @@ def _complaint_weekly(
         "ticket_type=complaint 且 created_at 在窗口内的 distinct ticket_id",
     )
     source_counts["service_ticket"] = int(new_count or 0)
+
+    # 投诉新增同环比：与上一等长同边界窗口比较（需求：投诉新增同环比变化）。
+    span = end_utc - start_utc
+    prev_start, prev_end = start_utc - span, start_utc
+    prev_new = conn.execute(
+        text(
+            "SELECT COUNT(DISTINCT ticket_id) FROM service_ticket "
+            "WHERE created_at >= :ps AND created_at < :pe AND ticket_type = 'complaint'"
+        ),
+        {"ps": prev_start, "pe": prev_end},
+    ).scalar()
+    entries["complaint_new_change_rate"] = _rate_entry(
+        int(new_count or 0) - int(prev_new or 0),
+        int(prev_new or 0),
+        "(本期量−上期量)/上期量×100，与上一等长同边界窗口比较",
+    )
 
     for row in conn.execute(
         text(
