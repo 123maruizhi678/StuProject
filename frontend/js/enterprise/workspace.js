@@ -467,18 +467,6 @@ export async function mountEnterpriseWorkspace({main,page,schema,access,options,
     filters.addEventListener('submit',event=>{event.preventDefault();controller.load();});controllers.push(controller);return controller;
   }
 
-  if(page==='enterprise/assistant.html'){
-    const {mountEnterpriseAssistant}=await import('./assistant.js');
-    return mountEnterpriseAssistant({main,api,label,
-      available:{command:!!findOp('POST',E+'command'),query:!!findOp('POST',E+'nl2sql'),knowledge:!!findOp('POST',E+'onboarding/ask'),voice:!!findOp('POST',E+'voice/transcribe'),confirm:!!findOp('POST',E+'command/confirm')},
-      renderResult(target,data){
-        if(Array.isArray(data?.rows)||Array.isArray(data?.items)||Array.isArray(data))table(target,data,E+'nl2sql');
-        else if(data&&typeof data==='object')renderObject(target,data);
-        else target.append(node('p',String(data??'操作成功。')));
-      },
-      openConfirmation(data){const op=findOp('POST',E+'command/confirm');if(!op)return;const g=begin('确认办理');content.append(actionForm(op,null,g,{receipt:data}));message('请核对办理内容，点击确认后才会执行。');},
-    });
-  }
   const lists=pageOps.filter(op=>op.method==='GET'&&!op.path.includes('{')&&resources[resourceForPath(op.path)]);
   const tools=pageOps.filter(op=>op.method==='POST'&&!op.path.includes('{')&&(
     !resources[resourceForPath(op.path)]||op.path.endsWith('/phone-candidates'))&&!op.path.endsWith('/confirm'));

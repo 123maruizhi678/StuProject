@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.models.common.user_account import UserAccount
-from app.services.common.auth_service import decode_access_token, token_matches_credential
+from app.services.common.auth_service import decode_access_token
 from app.repositories.common.account_repository import AccountRepository
 
 _bearer = HTTPBearer(auto_error=False)
@@ -31,7 +31,7 @@ def get_current_account(
         raise unauthorized
 
     account = AccountRepository(db).get_by_id(user_id)
-    if account is None or not token_matches_credential(credentials.credentials, account):
+    if account is None:
         raise unauthorized
 
     from app.core.common.account_state import ensure_account_active

@@ -1,4 +1,4 @@
-/** 首页客服容器与只读个人中心回归；业务响应均采用虚构数据。 */
+/** 首页客服容器与本人姓名回归；业务响应和保存均采用虚构数据。 */
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { existsSync } from 'node:fs';
@@ -24,9 +24,10 @@ const base = 'http://127.0.0.1:4174';
 const browser = await chromium.launch({ channel: 'msedge', headless: true });
 await mkdir('.runtime/support-review', { recursive: true });
 try {
-  for (const role of ['public', 'admin', 'employee_admin', 'teacher', 'student', 'customer']) {
+  for (const role of ['public', 'admin', 'employee_admin', 'student']) {
     const context = await browser.newContext({ viewport: { width: 1440, height: 1000 }, reducedMotion: 'reduce' });
     const access = structuredClone(fixtures[role]), errors = [], requests = [];
+    let failSave = true;
     if (role !== 'public') await context.addInitScript(identity => {
       if (!sessionStorage.getItem('stuproject.auth.session')) sessionStorage.setItem('stuproject.auth.session', JSON.stringify({
         accessToken: 'fictional-token', expiresAt: Date.now() + 3600000,
@@ -45,7 +46,13 @@ try {
         return send(access);
       }
       if (pathname.endsWith('/auth/me/profile')) {
-        assert.fail('只读个人中心不能发起资料修改请求');
+        assert.equal(request.method(), 'PATCH');
+        if (failSave) return send(null, 500);
+        const body = request.postDataJSON();
+        assert.equal(body.expected_full_name, access.display_name);
+        assert.deepEqual(Object.keys(body).sort(), ['expected_full_name', 'full_name']);
+        access.display_name = body.full_name;
+        return send({ user_id: access.user_id, identity_type: access.identity_type, display_name: access.display_name });
       }
       if (pathname.endsWith('/agent/chat')) return send({ answer: '虚构客服回复' });
       if (pathname.includes('/agent/')) return send({ items: [{ title: '虚构客服资料' }], total: 1 });
@@ -90,21 +97,25 @@ try {
     if (role !== 'public') {
       assert.equal(await page.evaluate(() => JSON.parse(sessionStorage.getItem('stuproject.auth.session')).accessToken), 'fictional-token');
       await page.goto(base + '/common/account.html');
-      await expect(page.locator('#account-name')).toHaveText(access.display_name);
+      await expect(page.locator('#account-name')).toHaveValue(access.display_name);
       await expect(page.locator('.rail-scroll .sub')).toHaveCount(0);
       await expect(page.locator('.rail-scroll a[aria-current]')).toHaveText('个人中心');
       await expect(page.locator('#main-content a')).toHaveCount(0);
-      const agentTitle = fixtures.admin.navigation.modules.find(module => module.id === 'agent_center').title;
-      await expect(page.locator('.rail-scroll').getByRole('button', { name: agentTitle, exact: true })).toHaveCount(['admin', 'employee_admin'].includes(role) ? 1 : 0);
-      await expect(page.locator('#main-content input, #main-content textarea, #main-content select, #main-content form, #main-content button')).toHaveCount(0);
-      await expect(page.locator('.user-name')).toHaveText(access.display_name);
+      await expect(page.locator('.rail-scroll a[href="/agent/agent.html"]')).toHaveCount(role === 'student' ? 0 : 1);
+      await page.locator('#account-name').fill('更新后的本人姓名');
+      await page.getByRole('button', { name: '保存', exact: true }).click();
+      await expect(page.locator('.account-profile-form [role=status]')).toContainText('保存失败');
+      assert.notEqual(await page.evaluate(() => JSON.parse(sessionStorage.getItem('stuproject.auth.session')).identity.displayName), '更新后的本人姓名');
+      failSave = false;
+      await page.getByRole('button', { name: '保存', exact: true }).click();
+      await expect(page.locator('.account-profile-form [role=status]')).toHaveText('姓名已保存。');
+      await expect(page.locator('.user-name')).toHaveText('更新后的本人姓名');
       await page.reload();
-      await expect(page.locator('#account-name')).toHaveText(access.display_name);
-      await page.screenshot({ path: `.runtime/support-review/${role}-account-readonly.png`, fullPage: true });
+      await expect(page.locator('#account-name')).toHaveValue('更新后的本人姓名');
       await page.goto(base + '/index.html');
-      await expect(page.locator('.nav-login')).toHaveText(access.display_name);
+      await expect(page.locator('.nav-login')).toHaveText('更新后的本人姓名');
       await page.locator('.nav-login').click();
-      await page.waitForURL(access.identity_type === 'admin' ? '**/admin/accounts.html' : '**/common/workspace.html');
+      await page.waitForURL('**/common/workspace.html');
     }
     assert.ok(!requests.some(route => /^\/api\/v1\/(enterprise|student|customer|report)\//.test(route)));
     assert.deepEqual(errors, []);

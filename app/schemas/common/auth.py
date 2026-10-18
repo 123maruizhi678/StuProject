@@ -1,5 +1,5 @@
 """认证接口 Pydantic 数据结构：定义登录请求字段及输入长度约束。"""
-from pydantic import BaseModel, ConfigDict, Field, SecretStr, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 import unicodedata
 
 
@@ -20,16 +20,3 @@ class UpdateProfileRequest(BaseModel):
         if any(unicodedata.category(char).startswith("C") for char in value):
             raise ValueError("姓名不能包含控制字符")
         return value
-
-
-class ChangePasswordRequest(BaseModel):
-    model_config = ConfigDict(extra="forbid")
-    current_password: SecretStr = Field(min_length=1, max_length=256)
-    new_password: SecretStr = Field(min_length=8, max_length=256)
-
-
-class UpdateContactRequest(BaseModel):
-    model_config = ConfigDict(extra="forbid")
-    phone: str = Field(min_length=7, max_length=32)
-    expected_version: int = Field(ge=1)
-    current_password: SecretStr = Field(min_length=1, max_length=256)

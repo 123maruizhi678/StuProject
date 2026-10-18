@@ -91,9 +91,6 @@ class Settings(BaseSettings):
     ENTERPRISE_DIFY_API_BASE: str = ""
     ENTERPRISE_DIFY_API_KEY: str = Field(default="", repr=False)
     ENTERPRISE_DIFY_CONTRACT_VERSION: str = "enterprise-v1"
-    # Knowledge API key is distinct from the Workflow application key.
-    ENTERPRISE_DIFY_DATASET_API_KEY: SecretStr = Field(default=SecretStr(""), repr=False)
-    ENTERPRISE_DIFY_DATASET_API_BASE: str = ""
     ENTERPRISE_CONFIRM_SECRET: str = Field(default="", repr=False)
     ENTERPRISE_PHONE_ENCRYPTION_KEY: str = Field(default="", repr=False)
     ENTERPRISE_PHONE_LOOKUP_SECRET: str = Field(default="", repr=False)

@@ -61,7 +61,7 @@ def create_source(
 ):
     service = CustomerService(db)
     if file is not None:
-        source = service.create_source(account, file_name=file.filename, file_bytes=file.file.read())
+        source = service.create_source(account, file_name=file.filename, file_bytes=file.file.read(20*1024*1024+1))
     else:
         source = service.create_source(account, text=text)
     return success(serialize_source(source))
@@ -152,3 +152,43 @@ def update_rule(
 ):
     rule = CustomerService(db).update_rule(account, body)
     return success(serialize_rule(rule, body.product_code))
+
+
+# 当前文件画像入口：与既有可配置产品记录隔离，不重写历史产品或数据库规则。
+from app.schemas.customer.profile import ProfileEvaluationRequest
+from app.services.customer.profile_rules import catalog, evaluate_profile
+from app.services.customer.profile_input import preview_input
+
+
+@router.get("/profile/catalog")
+def profile_catalog(account=Depends(require_research_read("customer.rule.read"))):
+    return success(catalog())
+
+
+@router.post("/profile/analyze")
+def profile_analyze(
+    text: Optional[str] = Form(None), file: Optional[UploadFile] = File(None),
+    account=Depends(require_permission("customer.judge.create")),
+):
+    # 不持久化原件或分析结果；保存来源仍由既有来源接口显式发起。
+    return success(preview_input(text=text, file_name=file.filename if file else None,
+        file_bytes=file.file.read(20*1024*1024+1) if file else None))
+
+
+@router.post("/profile/evaluate")
+def profile_evaluate(body: ProfileEvaluationRequest,
+                     account=Depends(require_permission("customer.judge.create"))):
+    return success(evaluate_profile(body.facts.model_dump(exclude_none=True)))
+
+
+@router.get("/source/{source_id}/profile")
+def source_profile(source_id: int,
+                   account=Depends(require_research_read("customer.source.read")), db=Depends(get_db)):
+    detail=CustomerService(db).get_source_detail(account,source_id)
+    items=[]
+    for info in detail["fields"]:
+        items.append({"customer_info_id":info["id"], "row_number":len(items)+1,
+                      "facts":info["profile_fields"], "warnings":info.get("profile_warnings", []),
+                      "error":None,"evaluation":evaluate_profile(info["profile_fields"])})
+    return success({"source":detail["source"],"items":items,"total":len(items),"persisted":False,
+                    "notice":"按文件规则实时计算；保存的来源资料保持不变，本次输出不是历史结果快照"})
