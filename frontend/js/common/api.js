@@ -11,6 +11,7 @@ export class ApiError extends Error {
 
 export function clearSession() {
   sessionStorage.removeItem(SESSION_KEY);
+  for (const key of ['stuproject.live.selection','stuproject.command.preview','stuproject.student.preview']) sessionStorage.removeItem(key);
 }
 
 /** 同一标签页中的工作台与业务 iframe 同步身份事件。 */
@@ -44,6 +45,7 @@ export function saveSession(data) {
       data.token_type?.toLowerCase() !== "bearer" || !Number.isFinite(data.expires_in) || data.expires_in <= 0) {
     throw new ApiError("登录响应不完整，请联系管理员。");
   }
+  clearSession();
   sessionStorage.setItem(SESSION_KEY, JSON.stringify({
     accessToken: data.access_token,
     expiresAt: Date.now() + data.expires_in * 1000,

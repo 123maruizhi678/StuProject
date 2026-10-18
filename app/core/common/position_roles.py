@@ -7,7 +7,7 @@ from app.core.common.response import BusinessException
 @lru_cache(maxsize=1)
 def position_catalog():
     data=yaml.safe_load((BASE_DIR/'app/position_roles.yaml').read_text(encoding='utf-8'))
-    allowed={'employee','consultant','manager','teacher','academic','admin'}
+    allowed={'employee','consultant','manager','teacher','academic','admin','counselor'}
     if not isinstance(data,dict) or any(not isinstance(k,str) or not isinstance(v,list) or not v or any(r not in allowed for r in v) or 'employee' not in v for k,v in data.items()):
         raise RuntimeError('职位映射配置无效')
     return data

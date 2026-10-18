@@ -8,6 +8,9 @@ from typing import Optional
 from fastapi import APIRouter, Depends, File, Form, UploadFile
 from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
+from sqlalchemy import select, func
+from fastapi import Query
+from app.models.customer import CustomerSource, Product
 
 from app.models.common.user_account import UserAccount as AccountContext
 from app.core.common.authorization import require_permission
@@ -29,6 +32,30 @@ from app.services.customer.customer_service import (
 )
 
 router = APIRouter(prefix="/api/v1/customer", tags=["customer"])
+
+
+@router.get("/source")
+def list_sources(limit: int = Query(20, ge=1, le=100), offset: int = Query(0, ge=0),
+                 account=Depends(require_permission("customer.source.parse")), db=Depends(get_db)):
+    rows = db.scalars(select(CustomerSource).order_by(CustomerSource.id.desc()).limit(limit).offset(offset)).all()
+    return success({"items": [serialize_source(row) for row in rows],
+                    "total": db.scalar(select(func.count()).select_from(CustomerSource)), "limit": limit, "offset": offset})
+
+
+@router.get("/source/{source_id}")
+def get_source(source_id: int, account=Depends(require_permission("customer.source.parse")), db=Depends(get_db)):
+    from app.services.customer.errors import NotFoundError
+    row = db.get(CustomerSource, source_id)
+    if row is None:
+        raise NotFoundError("资料来源不存在")
+    from app.repositories.customer.customer_repository import list_info_by_source
+    return success({"source": serialize_source(row), "fields": [serialize_info(i) for i in list_info_by_source(db, source_id)]})
+
+
+@router.get("/product")
+def list_products(account=Depends(require_permission("customer.rule.read")), db=Depends(get_db)):
+    rows = db.scalars(select(Product).order_by(Product.id)).all()
+    return success([{c.name: getattr(row, c.name) for c in Product.__table__.c} for row in rows])
 
 
 @router.post("/source")

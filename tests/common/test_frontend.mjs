@@ -176,10 +176,9 @@ test("401 同步到同源工作台及 iframe", async () => {
   assert.deepEqual([rootEvents, childEvents], [1, 1]);
 });
 
-test("待联调模块阻止旧接口调用", async () => {
+test("已接入模块调用真实接口，未实现看板保持阻止", async () => {
   const adapter = await loadTree("../../frontend/js/common/module-api.js");
   globalThis.fetch = async () => { assert.fail("未就绪模块不应发起网络请求"); };
-  await assert.rejects(adapter.API.post("/student/leave", { student_id: 1 }), error => error.code === 503);
   await assert.rejects(adapter.API.get("/dashboard/overview"), error => error.code === 503);
   globalThis.fetch = async url => {
     assert.equal(url, "/api/v1/enterprise/customer");

@@ -8,6 +8,7 @@
 老师: [employee, teacher]
 教师: [employee, teacher]
 班主任: [employee, teacher]
+学生关怀老师: [employee, teacher, counselor]
 教务: [employee, academic]
 教务专员: [employee, academic]
 企业管理员: [employee, admin]

@@ -32,6 +32,9 @@ class Settings(BaseSettings):
     # 旧版 NL2SQL 通用密钥保留为兼容回退；新配置建议使用按场景密钥。
     DIFY_API_KEY: str = Field(default="", repr=False)
     DIFY_SQL_OUTPUT_KEY: str = "sql"
+    DIFY_NL2SQL_API_KEY: str = Field(default="", repr=False)
+    DIFY_NL2SQL_OUTPUT_KEY: str = "sql"
+    CUSTOMER_UPLOAD_DIR: Path = BASE_DIR / ".runtime" / "customer-uploads"
     # Dify HTTP 请求超时秒数（客服 / NL2SQL / 报告工作流共用）。
     DIFY_API_TIMEOUT_SECONDS: float = 60.0
     # 客户研判独立字段抽取 Workflow；空密钥保留确定性解析能力。
@@ -46,6 +49,29 @@ class Settings(BaseSettings):
     STUDENT_DIFY_KEY: SecretStr = Field(default=SecretStr(""), repr=False)
     # 学生会话及办理确认凭证使用独立签名密钥。
     STUDENT_ACTION_SECRET: str = Field(default="", repr=False)
+    STUDENT_TOKEN_ISSUER: str = "stuproject"
+    STUDENT_ACTION_TTL_SECONDS: int = Field(default=300, ge=1, le=3600)
+    STUDENT_ANALYSIS_VERSION: str = "student-v1"
+    STUDENT_QUERY_BACKEND: Literal["local", "external"] = "local"
+    STUDENT_KNOWLEDGE_FILE: Path = BASE_DIR / ".runtime" / "student-knowledge.json"
+    STUDENT_COURSES_FILE: Path = BASE_DIR / ".runtime" / "student-courses.json"
+    STUDENT_HTTP_TIMEOUT: float = Field(default=30, gt=0, le=300)
+    STUDENT_NL2SQL_URL: str = ""
+    STUDENT_NL2SQL_TOKEN: str = Field(default="", repr=False)
+    STUDENT_EDUCATION_URL: str = ""
+    STUDENT_EDUCATION_TOKEN: str = Field(default="", repr=False)
+    STUDENT_CRM_URL: str = ""
+    STUDENT_CRM_TOKEN: str = Field(default="", repr=False)
+    STUDENT_SYNC_ENABLED: bool = False
+    STUDENT_SYNC_TOKEN: SecretStr = Field(default=SecretStr(""), repr=False)
+    STUDENT_SYNC_INTERVAL_SECONDS: int = Field(default=300, ge=1)
+    STUDENT_SYNC_ALLOWED_SOURCES: list[str] = []
+    STUDENT_SYNC_ALLOWED_STUDENT_IDS: list[int] = []
+    STUDENT_LEAVE_ASSIGNMENT_SCOPES: dict[int, list[int]] = {}
+    STUDENT_WARNING_ASSIGNER_IDS: list[int] = []
+    STUDENT_WARNING_ASSIGNMENT_SCOPES: dict[int, list[int]] = {}
+    STUDENT_NOTIFICATION_LEASE_SECONDS: int = Field(default=60, ge=1)
+    STUDENT_NOTIFICATION_MAX_ATTEMPTS: int = Field(default=5, ge=1)
     # 报告生成工作流专用配置；地址为空时回退 DIFY_API_BASE。
     REPORT_DIFY_API_BASE: str = ""
     REPORT_DIFY_API_KEY: str = Field(default="", repr=False)

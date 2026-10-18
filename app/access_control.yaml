@@ -2,13 +2,25 @@ version: 1
 # Backend API authorization remains mandatory; frontend visibility is not security.
 roles:
   admin:
-    permissions: [admin.dashboard, report.generate, report.read, report.config.read, report.config.write]
+    permissions: [admin.dashboard, report.generate, report.read, report.config.read, report.config.write, customer.source.create, customer.source.parse, customer.source.file, customer.judge.create, customer.judge.batch, customer.result.read, customer.rule.read, customer.rule.manage]
   employee:
     permissions: [dashboard.employee, student.profile.read, student.admin_service.review, service_ticket.read, service_ticket.handle]
   customer:
     permissions: [dashboard.customer, course_project.read, event_signup.create, service_ticket.create, service_ticket.read_own]
   student:
-    permissions: [dashboard.student, student.profile.read_own, student.admin_service.create, student.admin_service.read_own, student.notification.read_own]
+    permissions: [dashboard.student, student.profile.read_own, student.admin_service.create, student.admin_service.read_own, student.admin_service.withdraw_own, student.notification.read_own, student.mental.create_own, student.reminder.manage_own, student.chat, student.action.confirm, student.academic.read_own, student.progress.read_own, student.course.read_own, student.score.read_own, service_ticket.create, service_ticket.read_own, student.ticket.reply_own, student.ticket.confirm_own, student.ticket.rate_own]
+# 员工角色仅由数据库有效档案提供，心理处置使用专属角色。
+employee_roles:
+  teacher:
+    permissions: [student.notification.read]
+  academic:
+    permissions: [student.academic.maintain]
+  consultant:
+    permissions: [student.progress.maintain]
+  manager:
+    permissions: [student.admin_service.assign, student.progress.maintain]
+  counselor:
+    permissions: [student.notification.read, student.warning.read, student.warning.handle]
 # Page IDs and routes are metadata for a future frontend; these do not create pages.
 pages:
   home: {title: Home, route: /, public: true}

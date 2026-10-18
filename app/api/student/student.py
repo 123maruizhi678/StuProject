@@ -20,7 +20,7 @@ from app.schemas.student.student import (
     SyncRequest,
 )
 from app.services.student.student_service import warnings
-from app.clients.student.student_clients import get_dify, get_query_client, get_source_client
+from app.clients.student.student_clients import get_dify, get_configured_dify, get_query_client, get_source_client
 from app.services.student.student_chat import StudentChatService
 from app.services.student.student_sync import StudentSyncService
 
@@ -41,7 +41,7 @@ def mental_monitor(
     actor=Depends(get_principal),
     key=Depends(request_key),
     service=Depends(get_service),
-    dify=Depends(get_dify),
+    dify=Depends(get_configured_dify),
 ):
     return success(StudentChatService(service,dify,None).monitor(actor,key,body))
 
@@ -83,7 +83,7 @@ def student_chat(
     actor=Depends(get_principal),
     key=Depends(request_key),
     service=Depends(get_service),
-    dify=Depends(get_dify),
+    dify=Depends(get_configured_dify),
     query=Depends(get_query_client),
 ):
     return success(StudentChatService(service, dify, query).chat(actor, key, body))
