@@ -1,29 +1,27 @@
 import { API, request, readSession, saveSession, clearSession, createRequestId } from '../common/api.js';
 import { PAGE_RESOURCES, operationsForPage, operationsForAccess, LABELS } from './pages.js';
 
-const $ = (q, root = document) => root.querySelector(q);
-const $$ = (q, root = document) => [...root.querySelectorAll(q)];
-const page = location.pathname.replace(/^\/static\//, '/').replace(/^\//, '');
-let readOnlyView = false;
-const style = document.createElement('link'); style.rel = 'stylesheet'; style.href = '/css/workspace/live.css'; document.head.append(style);
-const node = (tag, text, cls) => { const n = document.createElement(tag); if (text !== undefined) n.textContent = text; if (cls) n.className = cls; return n; };
-const label = key => LABELS[key] || (key ? key.replaceAll('_', ' ') : '业务记录');
-const status = (root, text, error = false) => { root.replaceChildren(node('p', text, error ? 'live-error' : 'live-status')); };
-const enums = {
-  admin: '平台管理员', employee: '员工', student: '学生', customer: '客户', approved: '同意', rejected: '驳回',
-  active: '有效', disabled: '停用', pending: '待处理', in_progress: '进行中', completed: '已完成', cancelled: '已取消',
-  new: '新客户', contacting: '跟进中', qualified: '意向确认', signed: '已签约', lost: '已流失', local: '本地维护', admin_registration: '管理员开户',
-  complaint: '投诉', suggestion: '建议', personal: '事假', exam: '考试', ddl: '截止事项', student_visible: '学生可见', internal: '内部',
-  document_review: '文书审核', school_application: '院校申请', visa_process: '签证办理', class_teacher: '班主任', score_editor: '成绩维护',
-  service_advisor: '服务顾问', customer_overview: '客户经营分析', daily_report: '员工日报汇总', weekly_report: '员工周报',
-  mental_weekly: '学生心理周报', complaint_weekly: '投诉处理周报'
-};
-const privateField = key => /password|ciphertext|lookup_token|secret|request_hash|parameters_hash/.test(key) || ['token', 'action_token', 'conversation_token', 'request_key', '__path'].includes(key);
-const publicValue = value => Array.isArray(value) ? value.map(publicValue) : value && typeof value === 'object' ? Object.fromEntries(Object.entries(value).filter(([key]) => !privateField(key)).map(([key, item]) => [key, publicValue(item)])) : value;
-const format = value => value === null || value === undefined ? '—' : typeof value === 'boolean' ? (value ? '是' : '否') : typeof value === 'object' ? JSON.stringify(publicValue(value), null, 2) : enums[value] || String(value);
-let schema, selected = {}, options = {}, studentWorkspace = null, studentAccess = null;
-const forms = [], listQueries = [];
-const resourceKey = path => path.split('/').slice(3, path.includes('/internal/') ? 6 : 5).join('/');
+const $ = (q, root=document) => root.querySelector(q);
+const $$ = (q, root=document) => [...root.querySelectorAll(q)];
+const page = location.pathname.replace(/^\/static\//,'/').replace(/^\//,'');
+const style = document.createElement('link'); style.rel='stylesheet'; style.href='/css/workspace/live.css'; document.head.append(style);
+const node = (tag, text, cls) => { const n=document.createElement(tag); if(text!==undefined)n.textContent=text; if(cls)n.className=cls;return n; };
+const label = key => LABELS[key] || (key ? key.replaceAll('_',' ') : '业务记录');
+const status = (root, text, error=false) => { root.replaceChildren(node('p',text,error?'live-error':'live-status')); };
+const enums = {admin:'平台管理员',employee:'员工',student:'学生',customer:'客户',approved:'同意',rejected:'驳回',
+  active:'有效',disabled:'停用',pending:'待处理',in_progress:'进行中',completed:'已完成',cancelled:'已取消',
+  new:'新客户',contacting:'跟进中',qualified:'意向确认',signed:'已签约',lost:'已流失',local:'本地维护',admin_registration:'管理员开户',
+  complaint:'投诉',suggestion:'建议',personal:'事假',exam:'考试',ddl:'截止事项',student_visible:'学生可见',internal:'内部',
+  document_review:'文书审核',school_application:'院校申请',visa_process:'签证办理',class_teacher:'班主任',score_editor:'成绩维护',
+  service_advisor:'服务顾问',customer_overview:'客户经营分析',daily_report:'员工日报汇总',weekly_report:'员工周报',
+  mental_weekly:'学生心理周报',complaint_weekly:'投诉处理周报',
+  running:'生成中',success:'已生成',failed:'失败','Asia/Shanghai':'北京时间'};
+const privateField=key=>/password|ciphertext|lookup_token|secret|request_hash|parameters_hash/.test(key)||['token','action_token','conversation_token','request_key','__path'].includes(key);
+const publicValue=value=>Array.isArray(value)?value.map(publicValue):value&&typeof value==='object'?Object.fromEntries(Object.entries(value).filter(([key])=>!privateField(key)).map(([key,item])=>[key,publicValue(item)])):value;
+const format = value => value===null||value===undefined?'—':typeof value==='boolean'?(value?'是':'否'):typeof value==='object'?JSON.stringify(publicValue(value),null,2):enums[value]||String(value);
+let schema, selected={}, options={}, studentWorkspace=null, studentAccess=null;
+const forms=[], listQueries=[];
+const resourceKey=path=>path.split('/').slice(3,path.includes('/internal/')?6:5).join('/');
 const resolve = raw => {
   let value = raw || {};
   if (value.$ref) value = schema.components?.schemas?.[value.$ref.split('/').at(-1)] || {};

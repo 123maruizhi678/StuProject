@@ -25,7 +25,7 @@ from app.clients.report import ReportDifyError, ReportModelOutcomeUnknown
 from app.core.common.response import BusinessException
 from app.core.report import ReportAccess, ReportScope
 from app.models.report import REPORT_TABLES, ReportConfig, ReportRecord
-from app.schemas.report import GenerateReportRequest
+from app.schemas.report import REPORT_CODES, GenerateReportRequest
 from app.services.report import report_service
 from app.services.report import report_service as service_module
 from app.tasks.report.report_tasks import (
@@ -363,7 +363,6 @@ class ReportGenerationTest(unittest.TestCase):
 
     def test_window_validation(self):
         cases = [
-            GenerateReportRequest(report_code="daily_report", timezone="UTC"),
             GenerateReportRequest(
                 report_code="daily_report",
                 start_time=bj(2026, 10, 12),
@@ -399,12 +398,26 @@ class ReportGenerationTest(unittest.TestCase):
                 start_time=bj_aware(2026, 10, 12).replace(microsecond=1500),
                 end_time=bj_aware(2026, 10, 13),
             ),
-            GenerateReportRequest(report_code="not_a_report"),
         ]
         for payload in cases:
             with self.assertRaises(BusinessException) as caught:
                 self._generate(payload=payload)
             self.assertEqual(caught.exception.code, 400, payload.model_dump())
+
+    def test_schema_rejects_invalid_enum_values(self):
+        """report_code / timezone 在 schema 层收敛为枚举：非法取值直接拒绝
+        （经统一异常处理器对前端呈现 200 + code=400 信封），不再进入服务层。"""
+        from pydantic import ValidationError
+
+        with self.assertRaises(ValidationError):
+            GenerateReportRequest(report_code="not_a_report")
+        with self.assertRaises(ValidationError):
+            GenerateReportRequest(report_code="daily_report", timezone="UTC")
+        # 五类代码均可通过 schema，时区默认为北京时间。
+        for code in REPORT_CODES:
+            self.assertEqual(
+                GenerateReportRequest(report_code=code).timezone, "Asia/Shanghai"
+            )
 
     def test_valid_explicit_window_accepted(self):
         payload = GenerateReportRequest(
