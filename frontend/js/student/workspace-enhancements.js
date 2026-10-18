@@ -38,6 +38,13 @@ export async function initializeStudentWorkspace({access,main,page}){
   try{const profile=await api('student/profile');document.querySelectorAll('.user-name').forEach(n=>{n.textContent=profile.full_name||'学生 #'+access.user_id;});document.querySelectorAll('.user-chip .avatar').forEach(n=>{n.textContent=(profile.full_name||'学生').slice(0,1);});}catch{/* 姓名不可用时保留公共账号编号，不阻止业务。 */}
  }
  const token=tokenStore.get();window.addEventListener('auth:changed',()=>{if(tokenStore.get()!==token){setAccess(null);main.replaceChildren();const link=document.createElement('a');link.href='/login.html';link.textContent='登录状态已变化，请重新登录。';main.append(link);}},{once:true});
+ if(pageKey(page)==='notifications'){
+  const region=document.createElement('section');region.className='student-live';main.append(region);const notifications=await import('./notifications.js');await notifications.render(region);return true;
+ }
+ if(pageKey(page)==='care'){
+  const region=document.createElement('section');region.className='student-live';main.append(region);
+  const care=await import('./care-workspace.js');await care.render(region);return true;
+ }
  if(pageKey(page)==='chat'){
   const region=document.createElement('section');region.className='student-live';main.append(region);const chat=await import('./chat.js');await chat.render(region);return true;
  }

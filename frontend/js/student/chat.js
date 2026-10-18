@@ -9,7 +9,7 @@ export async function render(root){
  const remember=id=>{try{sessionStorage.setItem(storageKey,id);}catch{}};
  const saved=()=>{try{return sessionStorage.getItem(storageKey);}catch{return null;}};
  root.innerHTML+=`<div class="student-chat-actions"><button class="button secondary" id="new-chat">${icon('spark')}新会话</button></div>
- <div class="chat-layout"><section class="panel chat-panel"><div class="panel-head"><div class="row"><span class="dot"></span><div><h3>星桥 · 学生助手</h3><p>咨询与办理，一段对话就能开始</p></div></div><button class="button ghost compact" id="reload-chat">刷新记录</button></div>
+ <div class="chat-layout"><section class="panel chat-panel"><div class="panel-head"><div class="row"><span class="dot"></span><div><h3>粤教 · 学生助手</h3><p>咨询与办理，一段对话就能开始</p></div></div><button class="button ghost compact" id="reload-chat">刷新记录</button></div>
  <button class="button ghost compact hidden" id="older-messages">加载更早消息</button><div class="chat-log" id="chat-log" role="log" aria-live="polite"></div><div class="pending-action hidden" id="pending-action"></div>
  <form class="chat-composer" id="chat-form"><label class="visually-hidden" for="chat-message">你的消息</label><div class="composer-box"><textarea id="chat-message" rows="2" required maxlength="10000" placeholder="描述你想咨询或办理的事情……"></textarea><button class="button send" type="submit" aria-label="发送消息">${icon('send')}</button></div><div class="composer-footer"><span>Enter 换行 · Ctrl / ⌘ + Enter 发送</span><span>办理信息由你确认</span></div><p class="field-error" id="chat-error" role="alert"></p></form></section>
  <aside class="chat-side chat-history-side stack"><section class="panel"><div class="panel-head"><h2>历史会话</h2>${icon('clock')}</div><div id="session-list"></div><p class="history-note">历史办理预览仅供查看，请到对应业务记录核实结果。</p></section><section class="panel"><div class="panel-head"><h3>${icon('shield')} 你始终掌握决定权</h3></div><div class="panel-body"><p class="muted small">申请和工单需要核对并确认后才会提交。历史记录从服务端读取，浏览器仅记住当前会话编号。</p></div></section></aside></div>`;
@@ -42,6 +42,17 @@ export async function render(root){
  reload.onclick=async()=>{if(activeId)await openSession(activeId);else{await sessions.load(true);if(sessions.rows.length)await openSession(sessions.rows[0].session_id);}};
  input.onkeydown=e=>{if(e.key==='Enter'&&(e.ctrlKey||e.metaKey)){e.preventDefault();form.requestSubmit();}};
  form.onsubmit=async e=>{e.preventDefault();if(inFlight||blocked)return;const message=input.value.trim();if(!message)return;if(pending){error.textContent='请先确认或取消待办理信息，再继续对话。';return;}inFlight=true;controls();error.textContent='';try{sessionStorage.removeItem(storageKey);}catch{}const thinking=bubble('正在理解你的需求，请稍候……');
-  try{const result=await api('student/chat',{method:'POST',body:{message,conversation_token:conversation}});thinking.line.remove();log.querySelector('.chat-welcome')?.remove();bubble(message,true);answer(result);conversation=result.conversation_token;activeId=result.session_id;remember(activeId);input.value='';if(result.pending_action)presentPending(result.pending_action);await sessions.load(true);}catch(err){thinking.line.remove();error.textContent=err.message+' 请刷新记录核实后再继续。';blocked=true;}finally{inFlight=false;controls();if(!blocked)input.focus();log.scrollTop=log.scrollHeight;}
+  try{const result=await api('student/chat',{method:'POST',body:{message,conversation_token:conversation}});thinking.line.remove();log.querySelector('.chat-welcome')?.remove();bubble(message,true);answer(result);conversation=result.conversation_token;activeId=result.session_id;remember(activeId);input.value='';if(result.pending_action)presentPending(result.pending_action);await sessions.load(true);}catch(err){
+   thinking.line.remove();
+   const unconfigured=err.code===503&&/STUDENT_DIFY_KEY/.test(err.message)&&/尚未配置/.test(err.message);
+   if(unconfigured){
+    blocked=false;remember(activeId||'new');
+    error.textContent='智能对话尚未接入，暂时无法发送。你可以通过以下入口查询或办理业务：';
+    for(const [text,page,permission] of [['查看请假审批','leave','student.admin_service.read_own'],['查看课程与成绩','academics','student.course.read_own'],['查看申请进度','progress','student.progress.read_own'],['查看服务工单','tickets','service_ticket.read_own']]){
+     if(!can(permission))continue;
+     const link=document.createElement('a');link.className='text-link';link.href='/student/'+page+'.html';link.textContent=text;error.append(document.createTextNode('　'),link);
+    }
+   }else{error.textContent=err.message+' 请刷新记录核实后再继续。';blocked=true;}
+  }finally{inFlight=false;controls();if(!blocked)input.focus();log.scrollTop=log.scrollHeight;}
  };
 }
