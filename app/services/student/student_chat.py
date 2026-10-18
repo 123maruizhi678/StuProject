@@ -28,6 +28,40 @@ class StudentChatService:
     def __init__(self,service,dify,query):
         self.service,self.dify,self.query=service,dify,query
         self.db=service.db
+    def history_list(self, actor, limit=20, offset=0):
+        from sqlalchemy import func
+        from app.services.student.student_service import public_row
+        self.service.student(actor)
+        where = sessions.c.student_id == actor.actor_id
+        rows = self.db.execute(select(sessions).where(where).order_by(sessions.c.updated_at.desc(), sessions.c.session_id).limit(limit).offset(offset)).mappings().all()
+        items = []
+        for row in rows:
+            first = self.db.scalar(select(turns.c.message).where(turns.c.session_id == row['session_id'], turns.c.student_id == actor.actor_id).order_by(turns.c.id).limit(1))
+            items.append({**public_row(row), 'title': (first or '新会话')[:60]})
+        return {'items': items, 'total': self.db.scalar(select(func.count()).select_from(sessions).where(where)), 'limit': limit, 'offset': offset}
+
+    def history_detail(self, actor, session_id, limit=20, offset=0):
+        from sqlalchemy import func
+        from app.services.student.student_service import public_row
+        self.service.student(actor)
+        row = self.db.execute(select(sessions).where(sessions.c.session_id == session_id, sessions.c.student_id == actor.actor_id)).mappings().first()
+        if not row:
+            raise BusinessException('会话不存在', 404)
+        where = (turns.c.session_id == session_id, turns.c.student_id == actor.actor_id)
+        pending = bool(self.db.scalar(select(turns.c.id).where(*where, turns.c.result.is_(None)).limit(1)))
+        # 倒序分页，页内按对话顺序返回；历史预览不重新签发办理凭证。
+        rows = self.db.execute(select(turns).where(*where).order_by(turns.c.id.desc()).limit(limit).offset(offset)).mappings().all()
+        items = []
+        for turn in reversed(rows):
+            result = turn['result']
+            items.append(public_row({'id': turn['id'], 'message': turn['message'], 'created_at': turn['created_at'],
+                'answer': result.get('answer') if result else None, 'pending': result is None,
+                'data': result.get('data') if result else None, 'sources': result.get('sources', []) if result else [],
+                'had_action': bool(result and result.get('pending_action'))}))
+        token = None if pending else sign_token({'subject': actor.key, 'session_id': session_id, 'version': row['version']}, 'student-conversation', 86400)
+        return {'session_id': session_id, 'items': items, 'total': self.db.scalar(select(func.count()).select_from(turns).where(*where)),
+                'limit': limit, 'offset': offset, 'blocked': pending, 'conversation_token': token}
+
     def _permission(self,actor,action):
         required=ACTION_PERMISSIONS.get(action)
         if required and required not in actor.scopes:
@@ -165,7 +199,7 @@ class StudentChatService:
         if decision.intent in ('life','upgrade') and not knowledge:
             decision.answer='当前资料库没有可核实的相关资料，请联系服务老师补充或确认。'
         token=sign_token({'subject':actor.key,'session_id':sid,'version':version+1},'student-conversation',86400)
-        result={'intent':decision.intent,'answer':decision.answer,'data':data,'pending_action':pending,
+        result={'session_id':sid,'intent':decision.intent,'answer':decision.answer,'data':data,'pending_action':pending,
             'conversation_token':token,'workflow_run_id':run_id,
             'sources':[{k:d[k] for k in ('id','title','source')} for d in knowledge]}
         try:

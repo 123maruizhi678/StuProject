@@ -345,3 +345,19 @@ for business_router in (router, internal_router, student_leave.router,
 router.include_router(student_leave.router)
 router.include_router(student_ticket.router)
 internal_router.include_router(student_leave.internal_router)
+
+
+@router.get('/chat/sessions')
+def chat_history(actor=Depends(get_principal), service=Depends(get_service), limit: int=Query(20,ge=1,le=100), offset: int=Query(0,ge=0)):
+    return success(StudentChatService(service, None, None).history_list(actor, limit, offset))
+
+
+@router.get('/chat/sessions/{session_id}')
+def chat_history_detail(session_id: str, actor=Depends(get_principal), service=Depends(get_service), limit: int=Query(20,ge=1,le=100), offset: int=Query(0,ge=0)):
+    return success(StudentChatService(service, None, None).history_detail(actor, session_id, limit, offset))
+
+
+@router.get('/profile')
+def own_profile(actor=Depends(get_principal), service=Depends(get_service)):
+    row = service.student(actor)
+    return success({key: row[key] for key in ('student_id', 'student_no', 'full_name')})

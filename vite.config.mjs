@@ -1,4 +1,5 @@
 import { defineConfig } from 'vite';
+import { frontendPort, localOrigin } from './scripts/local-address.mjs';
 
 export default defineConfig({
   root: 'frontend',
@@ -18,8 +19,8 @@ export default defineConfig({
     },
   }],
   server: {
-    host: '0.0.0.0', port: 80, strictPort: true,
-    open: process.env.NO_OPEN !== '1' ? 'http://192.168.5.12/login.html' : false,
+    host: '0.0.0.0', port: frontendPort, strictPort: true,
+    open: process.env.NO_OPEN !== '1' ? `${localOrigin}/login.html` : false,
     proxy: {
       '/api': { target: 'http://127.0.0.1:8000', changeOrigin: true },
       '/health': { target: 'http://127.0.0.1:8000', changeOrigin: true },
