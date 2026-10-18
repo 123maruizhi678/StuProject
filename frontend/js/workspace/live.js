@@ -19,7 +19,7 @@ const enums = {admin:'平台管理员',employee:'员工',student:'学生',custom
 const privateField=key=>/password|ciphertext|lookup_token|secret|request_hash|parameters_hash/.test(key)||['token','action_token','conversation_token','request_key','__path'].includes(key);
 const publicValue=value=>Array.isArray(value)?value.map(publicValue):value&&typeof value==='object'?Object.fromEntries(Object.entries(value).filter(([key])=>!privateField(key)).map(([key,item])=>[key,publicValue(item)])):value;
 const format = value => value===null||value===undefined?'—':typeof value==='boolean'?(value?'是':'否'):typeof value==='object'?JSON.stringify(publicValue(value),null,2):enums[value]||String(value);
-let schema, selected={}, options={}, studentWorkspace=null, studentAccess=null;
+let schema, selected={}, options={}, studentWorkspace=null, studentAccess=null, readOnlyView=false;
 const forms=[], listQueries=[];
 const resourceKey=path=>path.split('/').slice(3,path.includes('/internal/')?6:5).join('/');
 const resolve = raw => {
