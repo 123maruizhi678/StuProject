@@ -207,7 +207,7 @@ export async function mountEnterpriseWorkspace({main,page,schema,access,options,
     }));
     const weight=key=>timeColumns.get(key)==='time'?2.4:timeColumns.get(key)==='date'?1.1:1;
     const totalWeight=visible.reduce((sum,key)=>sum+weight(key),0);
-    const thead=node('thead'),tr=node('tr');for(const key of visible){const th=node('th',label(key));th.scope='col';th.style.width=`calc((100% - ${onChoose?88:0}px) * ${weight(key)/totalWeight})`;tr.append(th);}if(onChoose){const th=node('th','操作','enterprise-record-action');th.scope='col';tr.append(th);}thead.append(tr);el.append(thead);
+    const thead=node('thead'),tr=node('tr');for(const key of visible){const th=node('th',label(key));th.scope='col';th.style.width=`${100*weight(key)/totalWeight}%`;tr.append(th);}if(onChoose){const th=node('th','操作','enterprise-record-action');th.scope='col';tr.append(th);}thead.append(tr);el.append(thead);
     const tbody=node('tbody');for(const row of rows){
       const tr=node('tr');for(const key of visible){const cell=node('td');cell.dataset.label=label(key);cell.dataset.field=key;const value=node('span',tableValue(row[key],key),'enterprise-cell-value');if(timeColumns.get(key))value.classList.add('enterprise-cell-time');else value.title=value.textContent;cell.append(value);tr.append(cell);}
       if(onChoose){const td=node('td',undefined,'enterprise-record-action');td.dataset.label='操作';td.append(button('选择记录',()=>onChoose(row)));tr.append(td);}tbody.append(tr);
