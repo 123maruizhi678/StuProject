@@ -11,7 +11,8 @@ from app.core.common.response import success
 from app.database import get_db
 from app.models.common.user_account import UserAccount
 from app.repositories.common.account_repository import AccountRepository
-from app.schemas.common.auth import LoginRequest, UpdateProfileRequest
+from app.schemas.common.auth import LoginRequest, UpdateProfileRequest, ChangePasswordRequest, UpdateContactRequest
+from app.services.common import self_account
 from app.services.common.auth_service import authenticate, create_access_token
 
 router = APIRouter(prefix="/auth", tags=["authentication"])
@@ -72,3 +73,23 @@ def update_my_profile(
 ):
     name = AccountRepository(db).update_full_name(account, payload.full_name, payload.expected_full_name)
     return success({"user_id": account.user_id, "identity_type": account.identity_type, "display_name": name})
+
+
+@router.post("/me/password")
+def change_my_password(payload: ChangePasswordRequest,
+    account: Annotated[UserAccount, Depends(get_current_account)],
+    db: Annotated[Session, Depends(get_db)]):
+    return success(self_account.change_password(db, account, payload))
+
+
+@router.get("/me/contact")
+def get_my_contact(account: Annotated[UserAccount, Depends(get_current_account)],
+    db: Annotated[Session, Depends(get_db)]):
+    return success(self_account.student_contact(db, account))
+
+
+@router.patch("/me/contact")
+def update_my_contact(payload: UpdateContactRequest,
+    account: Annotated[UserAccount, Depends(get_current_account)],
+    db: Annotated[Session, Depends(get_db)]):
+    return success(self_account.update_student_contact(db, account, payload))

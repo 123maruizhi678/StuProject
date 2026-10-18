@@ -24,7 +24,7 @@ try {
       accessToken: 'fictional-token', expiresAt: Date.now() + 3600000,
       identity: { displayName: identity.display_name, identityType: identity.identity_type },
     })), fixtures[role]);
-    const read = new Set(), errors = [];
+    const read = new Set(), errors = [], notificationRequests = [];
     let readFails = false;
     const announcements = [{ announcement_id: 1, title: '留学服务安排', content: '<script>window.noticeInjected=true</script>\n第二段正文',
       status: 'published', pinned: true, published_at: '2026-10-18T01:00:00Z', expires_at: null, row_version: 1 }];
@@ -36,6 +36,7 @@ try {
     }, components: { schemas: {} } } }));
     await context.route('**/api/**', async route => {
       const request = route.request(), url = new URL(request.url()), pathname = decodeURIComponent(url.pathname);
+      if (pathname.startsWith('/api/v1/common/notifications') || pathname === '/api/v1/common/announcements') notificationRequests.push(pathname);
       const send = (data, status = 200) => route.fulfill({ status, json: { code: status === 200 ? 0 : status, data, message: status === 200 ? 'ok' : '测试错误' } });
       if (pathname.endsWith('/auth/me/access')) return send(fixtures[role]);
       if (pathname.endsWith('/admin/openapi.json')) return route.fulfill({ json: { paths: {}, components: { schemas: {} } } });
@@ -75,6 +76,30 @@ try {
       return send({});
     });
     const page = await context.newPage(); page.on('pageerror', error => errors.push(error.message));
+    if (role === 'admin') {
+      for (const route of ['/common/workspace.html', '/common/notifications.html', '/dashboard/dashboard.html', '/common/notification-detail.html?key=business%3A23']) {
+        await page.goto(base + route);
+        await page.waitForURL('**/admin/accounts.html');
+        await page.locator('html[data-live-ready=true]').waitFor();
+        await expect(page.locator('.rail-scroll')).not.toContainText('通知中心');
+        await expect(page.locator('a[href="/common/workspace.html"]:visible')).toHaveCount(0);
+      }
+      assert.deepEqual(notificationRequests, [], '管理员不加载通知数据或自动标记已读');
+      await page.goto(base + '/common/announcement-manage.html'); await page.locator('html[data-notification-ready=true]').waitFor();
+      await expect(page.getByRole('link', { name: '返回通知中心', exact: true })).toHaveCount(0);
+      await expect(page.locator('.crumb')).toHaveText('平台管理/公共通知管理');
+      await page.locator('#announcement-title').fill('新建的公共通知'); await page.locator('#announcement-content').fill('发布正文');
+      await page.locator('#announcement-state').selectOption('published'); await page.locator('#announcement-pinned').check();
+      await page.locator('#announcement-save').click(); await expect(page.locator('#announcement-form-status')).toHaveText('保存成功。');
+      assert.equal(announcements.at(-1).title, '新建的公共通知');
+      await page.locator('#announcement-state').selectOption('withdrawn'); await page.locator('#announcement-save').click();
+      await expect(page.locator('#announcement-form-status')).toHaveText('保存成功。');
+      assert.equal(announcements.at(-1).status, 'withdrawn');
+      await page.screenshot({ path: '.runtime/notification-review/admin-management.png', fullPage: true });
+      assert.deepEqual(errors, []); await context.close();
+      console.log('admin: no notification center, legacy route redirects, no notification reads, announcement management retained');
+      continue;
+    }
     const overview = async () => { await page.goto(base + '/common/workspace.html'); await page.locator('html[data-notification-ready=true]').waitFor(); };
     await overview();
     await expect(page.locator('h1')).toHaveText('通知中心');
@@ -138,18 +163,7 @@ try {
     await page.goto(base + '/common/notification-detail.html?key=business%3A999');
     await expect(page.locator('#detail-status')).toContainText('测试错误');
     await expect(page.locator('#notice-detail')).toBeHidden();
-    if (role === 'admin') {
-      await page.goto(base + '/common/announcement-manage.html'); await page.locator('html[data-notification-ready=true]').waitFor();
-      await page.locator('#announcement-title').fill('新建的公共通知'); await page.locator('#announcement-content').fill('发布正文');
-      await page.locator('#announcement-state').selectOption('published'); await page.locator('#announcement-pinned').check();
-      await page.locator('#announcement-save').click(); await expect(page.locator('#announcement-form-status')).toHaveText('保存成功。');
-      assert.equal(announcements.at(-1).title, '新建的公共通知');
-      await page.locator('#announcement-state').selectOption('withdrawn'); await page.locator('#announcement-save').click();
-      await expect(page.locator('#announcement-form-status')).toHaveText('保存成功。');
-      assert.equal(announcements.at(-1).status, 'withdrawn');
-    } else {
-      await page.goto(base + '/common/announcement-manage.html'); await expect(page.locator('#main-content')).toContainText('暂无访问权限');
-    }
+    await page.goto(base + '/common/announcement-manage.html'); await expect(page.locator('#main-content')).toContainText('暂无访问权限');
     await overview();
     for (const width of [390, 320]) {
       await page.setViewportSize({ width, height: 844 });
