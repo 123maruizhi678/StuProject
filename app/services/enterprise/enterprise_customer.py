@@ -1,6 +1,5 @@
 """客户及跟进固定业务服务，不允许模型直接写库。"""
 from datetime import datetime,timezone
-from uuid import uuid4
 from sqlalchemy import select,insert,update
 from app.config import settings
 from app.models import common as t
@@ -8,6 +7,7 @@ from app.models.enterprise import customer_followup
 from app.core.enterprise.enterprise_authorization import error
 from app.repositories.enterprise.enterprise_repository import EnterpriseRepository,public,RESOURCES,digest
 from app.core.common.phone_protection import phone_fields
+from app.services.common.customer_number import create_customer_profile
 
 def utc(value):
     if value is None:return None
@@ -25,9 +25,9 @@ class CustomerService:
                 if owner!=ctx.employee_id and 'manager' not in ctx.roles and not ctx.is_admin:error(403,'不能为其他顾问建档')
                 owner_row=self.owner(owner)
                 if 'phone' in values:values.update(phone_fields(values.pop('phone')))
-                values.update(customer_no='CUS'+uuid4().hex[:20],employee_id=owner,department_id=owner_row['department_id'] if ctx.is_admin else ctx.department_id,source_channel='local',status='new',authority_source='local',status_changed_at=now,is_archived=False,row_version=1,created_at=now,updated_at=now)
-                result=db.execute(insert(t.customer_profile).values(**values));cid=result.inserted_primary_key[0]
-                return public({**values,'customer_id':cid}),None,'customer_profile',cid
+                values.update(employee_id=owner,department_id=owner_row['department_id'] if ctx.is_admin else ctx.department_id,source_channel='local',status='new',authority_source='local',status_changed_at=now,is_archived=False,row_version=1,created_at=now,updated_at=now)
+                result=create_customer_profile(db,values);cid=result['customer_id']
+                return public(result),None,'customer_profile',cid
             row=self.repo.one('customer',customer_id,lock=True)
             if row['is_archived']:error(409,'已归档客户不可修改')
             if row['authority_source']!='local':error(409,'外部权威档案不能冒充本地修改')

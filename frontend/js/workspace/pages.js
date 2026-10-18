@@ -26,7 +26,48 @@ export function operationsForPage(page,paths){
   return rank(a)-rank(b)||a.path.split('/').length-b.path.split('/').length;
  });
 }
+
+// 菜单与表单均采用服务端精确动作权限，查看资料不隐含解析或原件下载权限。
+export function operationsForAccess(operations, access) {
+ const permissions = new Set(access?.permissions || []);
+ return operations.filter(operation => {
+  const { path, method } = operation;
+  let permission;
+  if (path.startsWith('/api/v1/customer/')) {
+   if (method === 'GET') permission = path.endsWith('/file') ? 'customer.source.file'
+    : path.includes('/source') ? 'customer.source.read'
+    : path.includes('/result') ? 'customer.result.read' : 'customer.rule.read';
+   else if (path.includes('/parse')) permission = 'customer.source.parse';
+   else if (path.endsWith('/source')) permission = 'customer.source.create';
+   else if (path.endsWith('/judge/batch')) permission = 'customer.judge.batch';
+   else if (path.endsWith('/judge')) permission = 'customer.judge.create';
+   else if (path.endsWith('/rule')) permission = 'customer.rule.manage';
+   else return false;
+  } else if (path.startsWith('/api/v1/report/')) {
+   permission = path.includes('/configs') ? (method === 'GET' ? 'report.config.read' : 'report.config.write')
+    : path.endsWith('/generate') && method === 'POST' ? 'report.generate'
+    : method === 'GET' ? 'report.read' : null;
+   if (!permission) return false;
+  } else return true;
+  return permissions.has(permission);
+ });
+}
 export const LABELS={
+ status_changed_at:'状态变更时间',last_followup_at:'最近跟进时间',external_updated_at:'外部更新时间',is_archived:'是否归档',
+ id:'记录编号',type:'类型',version:'当前版本',version_no:'内容版本号',ai_summary:'辅助摘要',submitted_at:'提交时间',department_id_at_submit:'提交时所属部门',
+ acknowledged_at:'接手时间',closed_at:'关闭时间',finished_at:'完成时间',observed_at:'消息发生时间',analysis_version:'分析版本',
+ apply_content:'申请内容',apply_type:'申请类型',edu_related_data:'教务相关资料',course_scope_code:'授权课程编码',
+ emotion_score:'情绪评分',emotion_tag:'情绪标签',risk_level:'风险等级',trigger_reason:'触发原因',follower_id:'处理员工编号',follower_status:'跟进处理状态',handling_result:'处理结果',profile_id:'评估记录编号',history_data:'历史评估记录',
+ external_application_id:'外部申请编号',external_document_id:'外部文档编号',external_employee_id:'外部员工编号',external_event_id:'外部事项编号',external_request_id:'外部请求编号',external_student_id:'外部学生编号',external_customer_id:'外部客户编号',crm_student_id:'客户管理系统学生编号',
+ source_event_id:'来源事件编号',source_system:'来源系统',source_timezone:'来源时区',source_updated_at:'来源更新时间',synced_at:'同步时间',workflow_run_id:'工作流运行编号',
+ ticket_no:'工单编号',ticket_record_id:'工单处理记录编号',priority:'优先级',handling_department_id:'处理部门编号',first_response_at:'首次响应时间',response_due_at:'响应截止时间',resolution_due_at:'解决截止时间',solution:'解决方案',resolved_at:'解决时间',reopen_count:'重新打开次数',cycle_no:'处理轮次',to_status:'处理后状态',record_type:'记录类型',record_key:'记录去重标识',service_code:'服务编码',sla_snapshot:'服务时限快照',
+ index_status:'知识索引状态',reviewer_employee_id:'审核员工编号',delivery_status:'发送状态',attempt_count:'尝试发送次数',next_retry_at:'下次重试时间',lease_until:'任务占用截止时间',last_error_code:'最近错误编码',dedupe_key:'通知去重标识',
+ notify_at:'计划提醒时间',schedule_base_at:'提醒基准时间',schedule_operation_id:'提醒安排操作编号',
+ operation_log_id:'操作记录编号',operation_key:'操作唯一标识',change_reason:'变更原因',error_code:'错误编码',before_data:'变更前数据',after_data:'变更后数据',result_reference:'操作结果',
+ records:'相关记录',items:'记录列表',rows:'查询结果',columns:'结果字段',total:'记录总数',count:'数量',unread_count:'未读数量',unread:'未读状态',tree:'组织层级',kind:'业务类型',
+ citations:'引用资料',sources:'资料来源',confidence:'可信度',needs_clarification:'是否需要补充说明',clarification:'补充说明',intent:'业务意图',collaboration:'协作说明',auto_merge:'是否自动合并',
+ mode:'回答方式',missing_fields:'待补充字段',expires_in:'有效时长（秒）',resource:'业务对象',candidates:'候选记录',authorized_targets:'可操作对象',contract_version:'业务契约版本',sql:'查询语句',truncated:'是否已截断',parameters:'业务参数',success:'是否成功',
+ policy_version:'策略版本',started_at:'开始时间',hours:'服务时限',clock:'计时方式',response_hours:'响应时限（小时）',resolution_hours:'解决时限（小时）',row_count:'结果记录数',schema_version:'数据结构版本',
  customer_no:'客户编号',source_channel:'来源渠道',authority_source:'维护来源',employee_name:'员工姓名',
  product_name:'产品名称',source_type:'资料类型',file_name:'文件名称',matched:'是否符合条件',score:'研判得分',
  matched_fields:'符合条件的字段',unmatched_reasons:'不符合原因',input_snapshot:'研判依据',
@@ -35,7 +76,7 @@ export const LABELS={
  event_code:'业务事件',entity_type:'业务类型',entity_id:'业务编号',operation_status:'处理状态',action_code:'业务动作',
  approval_comment:'审批意见',reviewer_id:'审批人',reviewed_at:'审批时间',report_content:'报告正文',metric_json:'统计指标',
  fail_reason:'未完成原因',source_record_count:'统计记录数',ai_status:'辅助分析状态',assignment_pending:'待分派',
- username:'账号',identity_type:'账号身份',profile:'业务档案',full_name:'姓名',employee_no:'员工编号',student_no:'学号',department_id:'部门编号',employee_id:'员工编号',student_id:'学生编号',customer_id:'客户编号',position_title:'职位',
+ username:'账号',identity_type:'账号身份',profile:'业务档案',full_name:'姓名',employee_no:'员工编号',student_no:'学号',department_id:'部门编号',employee_id:'员工编号',student_id:'学生编号',customer_id:'客户内部编号',position_title:'职位',
  customer:'客户档案',source:'资料来源',result:'研判结果',rule:'研判规则',product:'产品','daily-report':'工作日报',students:'学生档案',scores:'学生成绩',courses:'课程','student-courses':'学生选课','academic-events':'学业节点','application-progress':'申请进度',
  tickets:'服务工单',knowledge:'知识资料',notifications:'通知',employees:'员工',departments:'部门','student-bindings':'学生服务关系','operation-logs':'操作记录',todos:'待办',organization:'组织结构',leave:'请假',warnings:'关怀跟进',reminders:'学业提醒',academic:'学业节点',progress:'申请进度',
  configs:'报告配置',generate:'生成报告',list:'报告列表',chat:'智能对话',complaint:'提交反馈',command:'工作指令',confirm:'确认办理',ask:'知识问答',nl2sql:'业务查询',transcribe:'语音转文字',accounts:'账号',register:'创建账号',options:'开户选项',permissions:'权限',access:'访问权限',

@@ -104,7 +104,8 @@ def public_access() -> dict:
     return {"pages": pages, "modules": modules}
 
 
-def access_for(identity_type: str, user_id: int) -> dict:
+def access_for(identity_type: str, user_id: int, role_codes: list[str] | None = None,
+               extra_permissions: set[str] | None = None) -> dict:
     """Return the pages and modules visible to one authenticated account."""
     policy = load_access_control()
     role = policy["roles"].get(identity_type)
@@ -114,7 +115,7 @@ def access_for(identity_type: str, user_id: int) -> dict:
             detail="Identity has no access policy",
         )
 
-    permissions = set(role.get("permissions", []))
+    permissions = permissions_for(identity_type, role_codes) | (extra_permissions or set())
     pages = {
         page_id: page
         for page_id, page in policy["pages"].items()

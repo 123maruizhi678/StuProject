@@ -45,6 +45,8 @@ app.add_middleware(
 )
 register_exception_handlers(app)
 app.include_router(auth_router, prefix="/api/v1")
+from app.api.common.notification_center import router as notification_center_router
+app.include_router(notification_center_router, prefix="/api/v1")
 
 # 企业管理和配套开户接口复用本项目的唯一认证、数据库及共享映射。
 from app.api.enterprise.enterprise import router as enterprise_router
