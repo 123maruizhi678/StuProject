@@ -128,6 +128,13 @@ export async function request(path, { method = "GET", body, authenticated = true
 }
 
 export const API = {
+  myContact: () => request("/auth/me/contact"),
+  updateContact: (phone, expectedVersion, currentPassword) => request("/auth/me/contact", {
+    method: "PATCH", body: { phone, expected_version: expectedVersion, current_password: currentPassword },
+  }),
+  changePassword: (currentPassword, newPassword) => request("/auth/me/password", {
+    method: "POST", body: { current_password: currentPassword, new_password: newPassword },
+  }),
   updateProfile: async (displayName, expectedName) => {
     const token = readSession()?.accessToken;
     const data = await request("/auth/me/profile", { method: "PATCH", body: {
