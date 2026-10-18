@@ -31,10 +31,11 @@
       <section class="section-card notice-section" aria-labelledby="personal-title">
         <div class="section-title"><div><h2 id="personal-title">与我相关</h2><p class="muted tiny">办理状态、服务回复与重要事项</p></div><span class="notice-unread" id="personal-unread">—</span></div>
         <form class="notice-filters" id="notification-filters">
-          <label>阅读状态<select id="notice-read"><option value="all">全部消息</option><option value="unread">未读消息</option></select></label>
+          <label>阅读状态<select id="notice-read"><option value="all">全部消息</option><option value="unread">未读消息</option><option value="read">已读消息</option></select></label>
           <label>消息类型<select id="notice-kind"><option value="">全部类型</option><option value="status">办理状态</option><option value="reply">服务回复</option><option value="important">重要事项</option></select></label>
           <label class="notice-search">搜索<input id="notice-query" type="search" maxlength="200" placeholder="搜索标题或内容" /></label><button class="button secondary" type="submit">查询</button>
         </form>
+        <p id="personal-notice-status" class="notice-action-status" role="status"></p>
         <div id="personal-notices" aria-live="polite"><p class="notice-empty">正在读取个人消息……</p></div>
         <div class="notice-pagination"><button class="button secondary small" id="notice-prev" type="button" disabled>上一页</button><span id="notice-page">第 1 页</span><button class="button secondary small" id="notice-next" type="button" disabled>下一页</button></div>
       </section>

@@ -38,6 +38,16 @@ export function renderNavigation(access = navigationAccess || {}, { preview = fa
     document.documentElement.dataset.navigationReady = 'true';
     return;
   }
+  for (const rail of document.querySelectorAll(".app-rail")) {
+    const brand = rail.querySelector(".rail-brand");
+    if (!brand) continue;
+    let mission = rail.querySelector(".rail-mission");
+    if (!mission) {
+      mission = node("p", "致力让生活更美好", "rail-mission");
+      mission.setAttribute("aria-label", "学校使命");
+      brand.after(mission);
+    }
+  }
   const { current, moduleId, menuPath } = navigationLocation(location.pathname, access);
   const savedState = readSession()?.navigationState;
   if (!restoredNavigationState) {

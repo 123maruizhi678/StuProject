@@ -22,6 +22,7 @@ export function pagePath(value) {
       "/student-assistant": "/student/student-assistant.html", "/admin": "/admin/accounts.html",
       "/admin/accounts": "/admin/accounts.html", "/dashboard/dashboard.html": WORKSPACE_PATH,
       "/common/notifications.html": WORKSPACE_PATH,
+      "/student/notifications.html": WORKSPACE_PATH,
     })[path] || path;
   } catch { return null; }
 }
@@ -38,7 +39,9 @@ export function visibleModules(access) {
   return modules.filter(module => typeof module.title === "string" && canOpenPage(module.entry, access))
     .map(module => ({ ...module, entry: pagePath(module.entry),
       pages: (Array.isArray(module.pages) ? module.pages : [])
-        .filter(page => !/^\/(?:static\/)?enterprise\/enterprise\.html$/.test(page.route) && canOpenPage(page.route, access)).map(page => ({ ...page, route: pagePath(page.route) })),
+        .filter(page => !/^\/(?:static\/)?enterprise\/enterprise\.html$/.test(page.route) &&
+          canOpenPage(page.route, access) && pagePath(page.route) !== WORKSPACE_PATH)
+        .map(page => ({ ...page, route: pagePath(page.route) })),
     }));
 }
 
