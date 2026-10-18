@@ -28,7 +28,10 @@ const moduleSchema = { paths: {
   '/api/v1/customer/judge': { post: {} }, '/api/v1/customer/judge/batch': { post: {} },
   '/api/v1/customer/rule': { get: {}, put: {} }, '/api/v1/customer/product': { get: {} },
   '/api/v1/report/list': { get: {} }, '/api/v1/report/{report_record_id}': { get: {} },
-  '/api/v1/report/generate': { post: {} }, '/api/v1/report/configs': { get: {} },
+  '/api/v1/report/generate': { post: { requestBody: { content: { 'application/json': { schema: {
+    type: 'object', required: ['report_code'], properties: { report_code: { type: 'string' },
+      start_time: { type: 'string', format: 'date-time' }, end_time: { type: 'string', format: 'date-time' } },
+  } } } } } }, '/api/v1/report/configs': { get: {} },
   '/api/v1/report/configs/{report_code}': { put: {} },
 }, components: { schemas: {} } };
 try {
@@ -36,6 +39,7 @@ try {
     const context = await browser.newContext({ viewport: { width: 1440, height: 1000 }, reducedMotion: 'reduce' });
     let active = role;
     const requests = [], errors = [];
+    const reportAttempts = [];
     await context.route('**/openapi.json', route => route.fulfill({ json: moduleSchema }));
     await context.route('**/api/**', route => {
       const request = route.request(), pathname = new URL(request.url()).pathname;
@@ -46,6 +50,17 @@ try {
       }
       if (pathname.endsWith('/auth/me/access')) return route.fulfill({ json: { code: 0, data: fixtures[active] } });
       if (pathname.endsWith('/auth/public-access')) return route.fulfill({ json: { code: 0, data: fixtures.public } });
+      if (pathname.endsWith('/report/generate') && request.method() === 'POST') {
+        reportAttempts.push({ key: request.headers()['idempotency-key'], body: request.postDataJSON() });
+        return route.fulfill({ json: reportAttempts.length === 1 ? { code: 503, message: '模拟生成失败，请重试', data: null }
+          : { code: 0, data: { report_record_id: 7, status: 'pending' } } });
+      }
+      if (pathname.endsWith('/report/list')) return route.fulfill({ json: { code: 0, data: {
+        items: [{ report_record_id: 7, report_name: '虚构报告', status: 'success' }], total: 1,
+      } } });
+      if (pathname.endsWith('/report/7')) return route.fulfill({ json: { code: 0, data: {
+        report_record_id: 7, report_content: '虚构报告正文', status: 'success',
+      } } });
       if (pathname.endsWith('/common/announcements') || pathname.endsWith('/common/notifications')) return route.fulfill({ json: { code: 0, data: { items: [], total: 0, unread_count: 0 } } });
       if (pathname.endsWith('/openapi.json')) return route.fulfill({ json: { paths: {}, components: { schemas: {} } } });
       return route.fulfill({ json: { code: 0, data: {} } });
@@ -104,6 +119,7 @@ try {
         '/customer/rules.html', '/customer/products.html', '/report/report.html', '/report/list.html']) {
         await page.goto(base + route);
         await page.locator('html[data-live-ready=true]').waitFor();
+        await expect(page.locator('.live-error')).toHaveCount(0);
         assert.ok(await page.locator('[data-operation^="GET "]').count() > 0, route + ' 应有查询');
         const writes = page.locator('[data-operation^="POST "], [data-operation^="PUT "]');
         if (role === 'manager') {
@@ -122,6 +138,27 @@ try {
         await page.goto(base + '/report/generate.html');
         await expect(page.locator('#main-content')).toContainText('暂无访问权限');
       }
+      await page.goto(base + '/report/list.html');
+      await page.getByRole('button', { name: '查看记录', exact: true }).click();
+      await page.waitForURL('**/report/detail.html?report_record_id=7');
+      await expect(page.locator('.live-result')).toContainText('虚构报告正文');
+      await expect(page.locator('.rail-scroll .sub.active')).toHaveAttribute('href', '/report/list.html');
+      await page.reload();
+      await expect(page.locator('.live-result')).toContainText('虚构报告正文');
+      if (role === 'admin') {
+        await page.goto(base + '/report/generate.html');
+        await page.locator('[name=report_code]').fill('daily_report');
+        await page.locator('[name=start_time]').fill('2026-10-17T00:00');
+        await page.locator('[name=end_time]').fill('2026-10-18T00:00');
+        await page.getByRole('button', { name: '确认提交', exact: true }).click();
+        await expect(page.locator('.live-error')).toContainText('模拟生成失败');
+        await page.getByRole('button', { name: '确认提交', exact: true }).click();
+        await expect(page.locator('.live-result')).toContainText('待处理');
+        assert.equal(reportAttempts.length, 2);
+        assert.ok(reportAttempts[0].key);
+        assert.equal(reportAttempts[0].key, reportAttempts[1].key);
+        assert.equal(reportAttempts[1].body.start_time, '2026-10-17T00:00+08:00');
+      } else assert.equal(reportAttempts.length, 0);
       await page.goto(base + '/common/workspace.html');
     }
     if (role === 'counselor') {

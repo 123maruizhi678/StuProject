@@ -60,7 +60,7 @@ class LayoutContracts(unittest.TestCase):
         assets = re.findall(r'(?:src|href)="([^"?#]+)', html)
         self.assertGreater(len(assets), 2)
         for asset in assets:
-            if "://" in asset or asset.startswith("data:"):
+            if "://" in asset or asset.startswith(("data:", "tel:", "mailto:", "javascript:")):
                 continue
             self.assertTrue((ROOT / "frontend" / asset.removeprefix("/static/")).is_file(), asset)
 

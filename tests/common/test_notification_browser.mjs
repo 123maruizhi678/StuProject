@@ -30,11 +30,17 @@ try {
       status: 'published', pinned: true, published_at: '2026-10-18T01:00:00Z', expires_at: null, row_version: 1 }];
     const messages = Array.from({ length: 23 }, (_, i) => ({ key: 'business:' + (23 - i), title: (i % 3 === 1 ? '服务回复' : '办理提醒') + (23 - i),
       content: '消息正文内容', kind: ['status', 'reply', 'important'][i % 3], created_at: '2026-10-18T02:00:00Z', read_at: null }));
-    await context.route('**/openapi.json', route => route.fulfill({ json: { paths: {}, components: { schemas: {} } } }));
+    await context.route('**/openapi.json', route => route.fulfill({ json: { paths: {
+      '/api/v1/student/leave': { get: {} }, '/api/v1/student/leave/{apply_id}': { get: {} },
+      '/api/v1/enterprise/customer': { get: {} }, '/api/v1/enterprise/customer/{customer_id}': { get: {} },
+    }, components: { schemas: {} } } }));
     await context.route('**/api/**', async route => {
       const request = route.request(), url = new URL(request.url()), pathname = decodeURIComponent(url.pathname);
       const send = (data, status = 200) => route.fulfill({ status, json: { code: status === 200 ? 0 : status, data, message: status === 200 ? 'ok' : '测试错误' } });
       if (pathname.endsWith('/auth/me/access')) return send(fixtures[role]);
+      if (pathname.endsWith('/admin/openapi.json')) return route.fulfill({ json: { paths: {}, components: { schemas: {} } } });
+      if (pathname.endsWith('/enterprise/customer/31')) return send({ customer_id: 31, full_name: '通知关联客户', row_version: 2 });
+      if (pathname.endsWith('/enterprise/customer')) return send({ items: [], total: 0 });
       if (pathname.endsWith('/common/announcements/manage')) return send({ items: announcements.map(item => ({ ...item, key: 'announcement:' + item.announcement_id })), total: announcements.length });
       if (pathname.endsWith('/common/announcements') && request.method() === 'POST') {
         const body = request.postDataJSON();
@@ -62,7 +68,9 @@ try {
         if (!item) return send(null, 404);
         if (reading) { if (readFails) return send(null, 500); read.add(key); return send({ key, read_at: '2026-10-18T03:00:00Z' }); }
         return send({ ...item, key, kind: key.startsWith('announcement:') ? 'announcement' : item.kind,
-          related: key.startsWith('business:') && role === 'student' ? { route: '/student/leave-detail.html', selection: { apply_id: 77 } } : null });
+          related: key.startsWith('business:') ? (role === 'student'
+            ? { route: '/student/leave-detail.html', selection: { apply_id: 77 } }
+            : { route: '/enterprise/customer-detail.html', selection: { customer_id: 31 } }) : null });
       }
       return send({});
     });
@@ -91,6 +99,8 @@ try {
       await expect(page.locator('#notice-related')).toHaveAttribute('href', '/student/leave-detail.html');
       await page.locator('#notice-related').click();
       await page.locator('html[data-live-ready=true]').waitFor();
+      await expect(page.locator('.live-error')).toHaveCount(0);
+      await expect(page.locator('[name=apply_id]')).toHaveValue('77');
       assert.equal(await page.evaluate(() => JSON.parse(sessionStorage.getItem('stuproject.live.selection')).apply_id), 77);
       const directory = page.locator('.rail-scroll .sub.active');
       await expect(directory).toHaveText('请假办理');
@@ -104,6 +114,13 @@ try {
       await expect(page.locator('#detail-status')).toHaveText('已读');
       await page.goForward();
       await expect(directory).toHaveText('请假办理');
+    } else {
+      await page.locator('#notice-related').click();
+      await page.locator('html[data-live-ready=true]').waitFor();
+      await expect(page.locator('.enterprise-dialog')).toBeVisible();
+      await expect(page.locator('.enterprise-dialog')).toContainText('通知关联客户');
+      await expect(page.locator('.live-error')).toHaveCount(0);
+      await expect(page.locator('.rail-scroll .sub.active')).toHaveAttribute('href', '/enterprise/customers.html');
     }
     await overview(); await expect(page.locator('#personal-unread')).toHaveText('22 条未读');
     await page.locator('#notice-read').selectOption('unread');
