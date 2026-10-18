@@ -76,6 +76,7 @@ export function renderNavigation(access) {
     if (!raw || raw.startsWith("#")) continue;
     const path = pagePath(anchor.href);
     if (!path) continue;
+    if (/\/enterprise\/enterprise\.html(?:[?#]|$)/.test(anchor.href)) anchor.href = '/enterprise/assistant.html';
     if (path === WORKSPACE_PATH) {
       anchor.href = WORKSPACE_PATH;
       if (/^(我的工作台|工作台|公共入口)$/.test(anchor.textContent.trim())) anchor.textContent = "通知中心";
