@@ -562,6 +562,9 @@ def drain(
             bind=bind,
             already_claimed=True,
         )
+        # run_generation 在独立会话提交终态；本会话缓存仍是领取时的 running，
+        # 过期后重读才能拿到真实终态（SessionLocal 关闭了 expire_on_commit）。
+        db.expire_all()
         record = repo.get_record(db, lease.record_id)
         if record is None:
             summary["skipped"].append(
