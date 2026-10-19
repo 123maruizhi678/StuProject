@@ -1,0 +1,48 @@
+/* 智能报告渲染样式：正文 Markdown 排版 + 详情辅助。
+ * 只作用于报告页由 workspace.js 渲染的内容，与共享布局解耦。 */
+
+/* 图表所需的设计令牌与工具提示样式：Viz 库（js/common/charts.js）依赖
+ * --s1..--s4 / --grid / --surface / --border-strong 这些变量，它们原本只
+ * 定义在未被任何页面引用的 business.css 中；此处补齐浅色主题取值，避免
+ * 报告页图表渲染成无色/无尺寸。 */
+:root {
+  --s1: #6c9bd6; --s2: #e08e6b; --s3: #7fbfa0; --s4: #d9b56b;
+  --grid: rgba(15, 23, 42, 0.06);
+  --surface: rgba(255, 255, 255, 0.72);
+  --border-strong: rgba(15, 23, 42, 0.16);
+}
+.chart-wrap { position: relative; width: 100%; }
+.chart-wrap svg { display: block; width: 100%; height: auto; }
+.viz-tooltip {
+  position: absolute; pointer-events: none; background: #fff; color: #29231e;
+  border: 1px solid #e5dfd5; border-radius: 8px; padding: 8px 12px; font-size: 12px;
+  line-height: 1.5; z-index: 50; box-shadow: 0 5px 22px rgba(61, 36, 7, 0.06);
+  max-width: 240px; display: none;
+}
+.viz-tooltip .tt-val { font-weight: 700; color: #8c1515; }
+.badge.neutral { background: #f1eee8; color: #776c5c; }
+
+.report-body h1,
+.report-body h2,
+.report-body h3,
+.report-body h4 { line-height: 1.4; margin: 1.1em 0 .5em; color: #29231e; }
+.report-body h1 { font-size: 20px; }
+.report-body h2 { font-size: 17px; border-bottom: 1px solid #e5dfd5; padding-bottom: 6px; }
+.report-body h3 { font-size: 15px; }
+.report-body h4 { font-size: 14px; }
+.report-body p { margin: .6em 0; line-height: 1.75; }
+.report-body ul,
+.report-body ol { margin: .6em 0; padding-left: 1.6em; }
+.report-body li { margin: .25em 0; line-height: 1.7; }
+.report-body strong { font-weight: 600; }
+.report-body code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: .9em; background: #f3efe8; padding: 1px 6px; border-radius: 4px;
+}
+.report-body table { border-collapse: collapse; width: 100%; margin: .8em 0; font-size: 14px; }
+.report-body th,
+.report-body td { border: 1px solid #e5dfd5; padding: 8px 12px; text-align: left; vertical-align: top; }
+.report-body th { background: #faf7f2; font-weight: 600; }
+
+/* 详情「其他与不可用指标」统计卡：小号数值，容纳长文案。 */
+.stat-value--sm { font-size: 15px; line-height: 1.4; overflow-wrap: anywhere; }
