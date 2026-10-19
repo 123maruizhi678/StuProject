@@ -288,6 +288,14 @@ async function start() {
           if (footer) main.append(footer); document.documentElement.dataset.liveReady = 'true'; return;
         }
       }
+      if (page === 'report/report.html' || page === 'report/list.html' || page === 'report/detail.html') {
+        const { mountReportWorkspace } = await import('../report/workspace.js');
+        intro.remove();
+        await mountReportWorkspace({ main, page, access, selected });
+        if (footer) main.append(footer);
+        document.documentElement.dataset.liveReady = 'true';
+        return;
+      }
     }
     let operations = operationsForAccess(operationsForPage(page, schema.paths), access);
     if (studentWorkspace && studentAccess) operations = studentWorkspace.filterStudentOperations(operations, studentAccess);
