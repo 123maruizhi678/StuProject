@@ -1,4 +1,4 @@
-import { request, readSession, clearSession } from "./api.js";
+import { request, readSession } from "./api.js";
 import { mountNavigation } from "./navigation.js";
 import { canOpenPage, WORKSPACE_PATH } from "./navigation-model.js";
 
@@ -165,7 +165,6 @@ function setupManagement() {
 }
 
 document.documentElement.classList.add("permission-loading");
-$("#workspace-logout").onclick = () => { clearSession(); location.replace("/common/login.html"); };
 document.addEventListener("click", event => {
   if (event.target.closest("[data-menu]")) {
     const open = document.body.classList.toggle("rail-open");

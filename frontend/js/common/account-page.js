@@ -1,5 +1,5 @@
 // 个人中心只维护当前登录账号的公共资料。
-import { API, readSession, clearSession } from "./api.js";
+import { API, readSession } from "./api.js";
 import { workspaceModules } from "./navigation-model.js";
 import { renderIdentity } from "./navigation.js";
 
@@ -45,9 +45,5 @@ export function renderAccount(access) {
   });
   card.append(form, details);
   main.replaceChildren(card);
-  const logout = node("button", "退出登录", "button secondary small");
-  logout.type = "button";
-  logout.onclick = () => { clearSession(); location.replace("/common/login.html"); };
-  document.querySelector(".top-actions")?.append(logout);
   document.documentElement.dataset.liveReady = "true";
 }

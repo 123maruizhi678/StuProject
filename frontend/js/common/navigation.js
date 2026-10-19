@@ -1,6 +1,7 @@
 import { API, readSession, clearSession } from "./api.js";
 import { WORKSPACE_PATH, pagePath, canOpenPage, workspaceModules, navigationLocation } from "./navigation-model.js";
 import { isSupportFrame, renderSupportNavigation } from "./support-context.js";
+import { renderTopbar } from "./topbar.js";
 
 const roleNames = { admin: "平台管理员", employee: "企业员工", student: "学生", customer: "客户" };
 const node = (tag, text, className) => {
@@ -30,6 +31,7 @@ export function renderNavigation(access) {
     renderIdentity(access);
     return;
   }
+  renderTopbar(access);
   const { current, moduleId, menuPath } = navigationLocation(location.pathname, access);
   for (const nav of document.querySelectorAll(".rail-scroll")) {
     const scrollTop = nav.scrollTop;

@@ -1,4 +1,4 @@
-import { API, request, readSession, saveSession, clearSession, createRequestId } from '../common/api.js';
+import { API, request, readSession, saveSession, createRequestId } from '../common/api.js';
 import { PAGE_RESOURCES, operationsForPage, operationsForAccess, LABELS } from './pages.js';
 
 const $ = (q, root=document) => root.querySelector(q);
@@ -265,13 +265,11 @@ async function start() {
     let access = null;
     if (readSession()) {
       access = await API.myAccess();
-      $$('.user-name').forEach(x => x.textContent = (enums[access.identity_type] || access.identity_type) + ' #' + access.user_id);
       if (access.identity_type === 'admin') {
         const r = await fetch('/api/v1/admin/openapi.json', { headers: { Authorization: 'Bearer ' + readSession().accessToken } });
         if (r.ok) { const admin = await r.json(); schema.paths = { ...schema.paths, ...admin.paths }; schema.components.schemas = { ...schema.components.schemas, ...admin.components.schemas }; }
         options = await request('/admin/accounts/options');
       }
-      const logout = node('button', '退出登录', 'button secondary small'); logout.type = 'button'; logout.onclick = () => { clearSession(); location.assign('/common/login.html'); }; $('.top-actions')?.append(logout);
       if (page.startsWith('enterprise/')) {
         const { mountEnterpriseWorkspace } = await import('../enterprise/workspace.js');
         intro.remove();
